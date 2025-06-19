@@ -25,7 +25,12 @@ const MusicPlayerWrapper = ({ className = "" }) => {
         return;
       }
 
-      const existingScript = document.querySelector('script[src="/player.js"]');
+      // Determine script path based on environment
+      const scriptPath = import.meta.env.DEV
+        ? '/player.js'  // Dev server will serve from public/
+        : '/bemused/frontend/player.js';  // Production path
+
+      const existingScript = document.querySelector(`script[src="${scriptPath}"]`);
       if (existingScript) {
         console.log('Script tag exists, waiting for load...');
         existingScript.onload = () => setIsPlayerReady(true);
@@ -34,7 +39,7 @@ const MusicPlayerWrapper = ({ className = "" }) => {
 
       console.log('Loading player script...');
       const script = document.createElement('script');
-      script.src = '/player.js';
+      script.src = scriptPath;
       script.onload = () => {
         console.log('Player script loaded successfully');
         setIsPlayerReady(true);
