@@ -1,6 +1,7 @@
 // src/components/Track.jsx
 import { useState } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
+import { formatDuration } from '../utils/formatters';
 
 const Track = ({ track, index, trackCount, isPlaying = false }) => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -98,7 +99,7 @@ const Track = ({ track, index, trackCount, isPlaying = false }) => {
               fontWeight: 'normal',
               marginLeft: '0.5rem'
             }}>
-              ({track.duration})
+              ({formatDuration(track.duration)})
             </span>
           )}
         </h4>
