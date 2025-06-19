@@ -346,7 +346,13 @@
   font-size: 1rem;
   line-height: 1;
   transition: all 0.15s ease;
-  opacity: 0.7;
+  opacity: 1; /* Always visible on mobile */
+  flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .track-ellipsis:hover {
@@ -512,10 +518,16 @@
   height: calc(100vh - 9em);
   background-color: #2c3e50;
   border-right: 1px solid #34495e;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 1000;
   padding: 1rem;
   color: white;
+  /* Enable smooth scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent text selection during drag */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .music-player-playlist-container .playlist {
@@ -528,13 +540,18 @@
 .music-player-playlist-container .track-item {
   display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid #34495e;
   cursor: pointer;
   font-size: 0.875rem;
   color: white;
   background: transparent;
   transition: all 0.2s ease;
+  /* Mobile touch optimization */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+  min-height: 48px; /* Ensure good touch targets */
+  position: relative;
 }
 
 .music-player-playlist-container .track-item:hover {
@@ -546,8 +563,11 @@
   color: white;
 }
 
+/* Drag and drop styles with mobile support */
 .music-player-playlist-container .track-item[draggable="true"] {
   cursor: grab;
+  /* Allow both drag and scroll on mobile */
+  touch-action: pan-y;
 }
 
 .music-player-playlist-container .track-item[draggable="true"]:active {
@@ -556,16 +576,23 @@
 
 .music-player-playlist-container .track-item.dragging {
   opacity: 0.2;
+  transform: scale(1.05);
 }
 
 .music-player-playlist-container .track-text {
   flex: 1;
   color: white;
+  /* Prevent text selection during drag */
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none; /* Prevent interference with drag events */
 }
 
 .music-player-playlist-container .track-prefix {
   margin-right: 8px;
   color: white;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .music-player-playlist-container .drag-handle {
@@ -573,6 +600,22 @@
   opacity: 0.7;
   font-size: 16px;
   color: white;
+  padding: 4px;
+  margin-left: 8px;
+  /* Better touch target */
+  min-width: 24px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.music-player-playlist-container .drag-handle:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
 .playlist-backdrop {
@@ -756,13 +799,14 @@
   }
   
   .track-item {
-    padding: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    min-height: 48px;
   }
   
   .track-play-button {
-    width: 20px;
-    height: 20px;
-    margin-right: 0.75rem;
+    width: 24px;
+    height: 24px;
+    margin-right: 0.5rem;
   }
   
   .track-title {
@@ -770,17 +814,21 @@
   }
   
   .track-ellipsis {
-    padding: 2px 6px;
-    font-size: 0.9rem;
+    padding: 4px;
+    font-size: 1.2rem;
+    min-width: 36px;
+    min-height: 36px;
+    opacity: 1; /* Always visible on mobile */
   }
   
   .track-dropdown {
-    min-width: 120px;
+    min-width: 140px;
   }
   
   .track-dropdown button {
-    padding: 6px 10px;
-    font-size: 0.8rem;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    min-height: 40px; /* Better touch targets */
   }
   
   .now-playing {
