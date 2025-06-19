@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const getBaseURL = () => {
   if (import.meta.env.DEV) {
-    return '/api'; // Use proxy in development
+    return '/api';
   } else {
     return 'https://patf.com/bemused';
   }
@@ -16,7 +16,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -37,10 +36,16 @@ export const apiService = {
   
   // Artists
   getRandomArtists: (size = 60) => api.get(`/artists/random?size=${size}`),
-  getArtist: (id) => api.get(`/artist/${id}`),
+  getArtist: (id) => api.get(`/artist/${id}`), // Returns { artist, summary, albums }
+  
+  // Albums  
+  getAlbum: (id) => api.get(`/album/${id}`), // Returns { artist, album, tracks }
   
   // Search
   search: (query) => api.get(`/search?q=${encodeURIComponent(query)}`),
+
+  // log
+  log: (id) => api.get(`/log/${id}`),
   
   // Image URL helpers
   getImageUrl: (imagePath, context = 'base') => {

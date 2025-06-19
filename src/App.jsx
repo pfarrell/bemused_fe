@@ -1,28 +1,34 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
 import Home from './pages/Home';
 import Search from './pages/Search';
+import Artist from './pages/Artist';
+import Album from './pages/Album';
 import Library from './pages/Library';
 import Login from './pages/Login';
-import AudioPlayerWrapper from './components/player/AudioPlayerWrapper';
 
 function App() {
   return (
     <Router>
-      <div className="app min-h-screen flex flex-col">
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/library" element={<Library />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
-        </main>
-        
-        {/* Fixed player at bottom */}
-        <div className="player-section border-t bg-white">
-          <AudioPlayerWrapper />
-        </div>
+      <div className="app h-screen overflow-hidden">
+        <Routes>
+          {/* Login page without layout */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* All other pages use the shared layout */}
+          <Route path="/*" element={
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/artist/:id" element={<Artist />} />
+                <Route path="/album/:id" element={<Album />} />
+                <Route path="/library" element={<Library />} />
+              </Routes>
+            </Layout>
+          } />
+        </Routes>
       </div>
     </Router>
   );

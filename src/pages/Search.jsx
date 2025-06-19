@@ -1,14 +1,13 @@
 // src/pages/Search.jsx
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import ArtistGrid from '../components/ArtistGrid';
-import AlbumGrid from '../components/AlbumGrid';
-import SearchBar from '../components/SearchBar';
+import Loading from '../components/Loading';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [results, setResults] = useState({ artists: [], albums: [], tracks: [] });
+  const navigate = useNavigate();
+  const [results, setResults] = useState({ artists: [], albums: [], tracks: [], playlists: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -24,7 +23,6 @@ const Search = () => {
       const response = await apiService.search(searchQuery);
       setResults(response.data);
       
-      // Update URL if this was a new search
       if (searchQuery !== query) {
         setSearchParams({ q: searchQuery });
       }
@@ -42,109 +40,192 @@ const Search = () => {
     }
   }, [query]);
 
-  const handleArtistClick = (artist) => {
-    // TODO: Navigate to artist page
-    console.log('Navigate to artist:', artist.id);
+  const handleTrackClick = (track) => {
+    console.log('Play track:', track);
+    // TODO: Add to playlist and play
   };
 
-  const handleAlbumClick = (album) => {
-    // TODO: Navigate to album page or play album
-    console.log('Navigate to album:', album.id);
+  const handlePlaylistClick = (playlist) => {
+    console.log('Load playlist:', playlist.id);
   };
+
+  if (loading) {
+    return (
+      <Loading message="Searching" />
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '3rem' }}>
+        <p style={{ color: '#ef4444', fontSize: '1.125rem' }}>{error}</p>
+      </div>
+    );
+  }
+
+  if (!query) {
+    return (
+      <div style={{ textAlign: 'center', padding: '3rem' }}>
+        <p style={{ color: '#6b7280' }}>Enter a search term to find music</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="search-page min-h-screen bg-gray-50">
-      {/* Header with search */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">P-Share</h1>
-            <SearchBar 
-              onSearch={performSearch} 
-              className="flex-1 max-w-2xl"
-            />
+    <div>
+      {/* Artists Section */}
+      {results.artists && results.artists.length > 0 && (
+        <div className="search-section">
+          <h2 className="search-section-title">Artists ({results.artists.length})</h2>
+          <div className="artist-grid" style={{ padding: '0' }}>
+            <div className="artist-grid-container">
+              {results.artists.map((artist) => (
+                <div
+                  key={artist.id}
+                  className="artist-card"
+                  onClick={() => navigate(`/artist/${artist.id}`)}
+                >
+                  <div className="artist-card-image">
+                    <img
+                      src={apiService.getImageUrl(artist.image_path, 'artist_search')}
+                      alt={artist.name}
+                      onError={(e) => {
+                        console.log(`Failed to load artist image: ${e.target.src}`);
+                      }}
+                    />
+                  </div>
+                  <div className="artist-card-title">
+                    <h3>{artist.name}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Searching...</p>
+      {/* Albums Section */}
+      {results.albums && results.albums.length > 0 && (
+        <div className="search-section">
+          <h2 className="search-section-title">Albums ({results.albums.length})</h2>
+          <div className="artist-grid" style={{ padding: '0' }}>
+            <div className="artist-grid-container">
+              {results.albums.map((album) => (
+                <div
+                  key={album.id}
+                  className="artist-card"
+                  onClick={() => navigate(`/album/${album.id}`)}
+                >
+                  <div className="artist-card-image">
+                    <img
+                      src={apiService.getImageUrl(album.image_path, 'album_small')}
+                      alt={`${album.title} by ${album.artist}`}
+                      onError={(e) => {
+                        console.log(`Failed to load album image: ${e.target.src}`);
+                      }}
+                    />
+                  </div>
+                  <div className="artist-card-title">
+                    <h3>{album.title}</h3>
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
+                      {album.artist}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {error && (
-          <div className="text-center py-12">
-            <p className="text-red-600 text-xl">{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && query && (
-          <>
-            <h2 className="text-xl font-semibold mb-4">
-              Search results for "{query}"
-            </h2>
-
-            {/* Artists */}
-            {results.artists && results.artists.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-medium mb-4">Artists</h3>
-                <ArtistGrid 
-                  artists={results.artists} 
-                  onArtistClick={handleArtistClick}
-                  imageContext="artist_search"
-                />
-              </div>
-            )}
-
-            {/* Albums */}
-            {results.albums && results.albums.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-medium mb-4">Albums</h3>
-                <AlbumGrid 
-                  albums={results.albums} 
-                  onAlbumClick={handleAlbumClick}
-                  imageContext="album_small"
-                />
-              </div>
-            )}
-
-            {/* Tracks */}
-            {results.tracks && results.tracks.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-medium mb-4">Tracks</h3>
-                <div className="bg-white rounded-lg shadow">
-                  {results.tracks.map((track, index) => (
-                    <div 
-                      key={track.id || index}
-                      className="p-4 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => console.log('Play track:', track)}
-                    >
-                      <h4 className="font-medium">{track.title}</h4>
-                      <p className="text-gray-600 text-sm">{track.artist} • {track.album}</p>
-                      {track.duration && (
-                        <p className="text-gray-500 text-xs">{track.duration}</p>
-                      )}
-                    </div>
-                  ))}
+      {/* Playlists Section */}
+      {results.playlists && results.playlists.length > 0 && (
+        <div className="search-section">
+          <h2 className="search-section-title">Playlists ({results.playlists.length})</h2>
+          <div className="track-list">
+            {results.playlists.map((playlist) => (
+              <div 
+                key={playlist.id}
+                className="track-item"
+                onClick={() => handlePlaylistClick(playlist)}
+              >
+                <div className="track-play-button">
+                  <span style={{ fontSize: '0.75rem' }}>♪</span>
+                </div>
+                <div className="track-info">
+                  <h4 className="track-title">{playlist.name}</h4>
+                  <p className="track-artist-album">
+                    {playlist.track_count} tracks
+                  </p>
                 </div>
               </div>
-            )}
+            ))}
+          </div>
+        </div>
+      )}
 
-            {/* No results */}
-            {results.artists?.length === 0 && 
-             results.albums?.length === 0 && 
-             results.tracks?.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-600">No results found for "{query}"</p>
+      {/* Tracks Section */}
+      {results.tracks && results.tracks.length > 0 && (
+        <div className="search-section">
+          <h2 className="search-section-title">Tracks ({results.tracks.length})</h2>
+          <div className="track-list">
+            {results.tracks.map((track, index) => (
+              <div 
+                key={track.id || index}
+                className="track-item"
+                onClick={() => handleTrackClick(track)}
+              >
+                <div className="track-play-button">
+                  <span style={{ fontSize: '0.75rem' }}>▶</span>
+                </div>
+                <div className="track-info">
+                  <h4 className="track-title">{track.title}</h4>
+                  <p className="track-artist-album">
+                    <a href="#" onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (track.artist_id) {
+                        navigate(`/artist/${track.artist_id}`);
+                      } else {
+                        console.log('Go to artist:', track.artist); 
+                      }
+                    }}>
+                      {track.artist}
+                    </a>
+                    {track.album && (
+                      <>
+                        {' '} 
+                        <a href="#" onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (track.album_id) {
+                            navigate(`/album/${track.album_id}`);
+                          } else {
+                            console.log('Go to album:', track.album); 
+                          }
+                        }}>
+                          {track.album}
+                        </a>
+                      </>
+                    )}
+                  </p>
+                </div>
+                {track.duration && (
+                  <div className="track-duration">{track.duration}</div>
+                )}
               </div>
-            )}
-          </>
-        )}
-      </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* No results */}
+      {results.artists?.length === 0 && 
+       results.albums?.length === 0 && 
+       results.tracks?.length === 0 && 
+       results.playlists?.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <p style={{ color: '#6b7280' }}>No results found for "{query}"</p>
+        </div>
+      )}
     </div>
   );
 };
