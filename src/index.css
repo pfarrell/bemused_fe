@@ -3,7 +3,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles for the artist grid */
+/* =================================
+   LAYOUT STYLES
+   ================================= */
+
+/* Header styles */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background-color: #1a252f; 
+  border-bottom: 1px solid #2c3e50;
+  height: 4.5em;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.app-logo {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: white;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.header-search {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background-color: white;
+  color: #374151;
+  outline: none;
+}
+
+.search-input:focus {
+  ring: 2px solid #3b82f6;
+}
+
+.user-menu {
+  color: white;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Footer styles */
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background-color: #1a252f;
+  border-top: 1px solid #2c3e50;
+  height: 4.5em; 
+  display: flex;
+  align-items: center;
+}
+
+/* Main content styles */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 4.5em;
+  padding-bottom: 4.5em;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* =================================
+   ARTIST GRID STYLES
+   ================================= */
+
 .artist-grid {
   background-color: #f5f5f5;
   padding: 1.5rem;
@@ -64,91 +156,10 @@
   color: #2563eb;
 }
 
-/* Header styles - 5% smaller and darker */
-.app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  background-color: #1a252f; /* Darker than before */
-  border-bottom: 1px solid #2c3e50;
-  height: 5.7em; /* 5% smaller than 6em */
-  display: flex;
-  align-items: center;
-  padding: 0 1.5rem;
-}
+/* =================================
+   SEARCH RESULTS STYLES
+   ================================= */
 
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.app-logo {
-  font-size: 1.25rem; /* Smaller than before (was 1.5rem) */
-  font-weight: bold;
-  color: white;
-  flex-shrink: 0;
-}
-
-.header-search {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  padding: 0 2rem;
-}
-
-.search-input {
-  width: 100%;
-  max-width: 400px;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: none;
-  background-color: white;
-  color: #374151;
-  outline: none;
-}
-
-.search-input:focus {
-  ring: 2px solid #3b82f6;
-}
-
-.user-menu {
-  color: white;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* Footer styles - 5% smaller and darker */
-.app-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  background-color: #1a252f; /* Darker than before */
-  border-top: 1px solid #2c3e50;
-  height: 5.7em; /* 5% smaller than 6em */
-  display: flex;
-  align-items: center;
-}
-
-/* Main content styles - updated for new header/footer height */
-.main-content {
-  flex: 1;
-  overflow-y: auto;
-  padding-top: 5.7em; /* Match header height */
-  padding-bottom: 5.7em; /* Match footer height */
-  background-color: #f5f5f5;
-  min-height: 100vh;
-}
-
-/* Search results sections */
 .search-section {
   margin-bottom: 2rem;
 }
@@ -161,7 +172,10 @@
   padding: 0 1rem;
 }
 
-/* Track list styles */
+/* =================================
+   TRACK LIST STYLES
+   ================================= */
+
 .track-list {
   background: white;
   border-radius: 8px;
@@ -239,7 +253,10 @@
   margin-left: 1rem;
 }
 
-/* Loading and error states */
+/* =================================
+   LOADING STATES
+   ================================= */
+
 .loading-container {
   display: flex;
   align-items: center;
@@ -268,7 +285,194 @@
   color: white;
 }
 
-/* Responsive grid adjustments */
+/* =================================
+   MUSIC PLAYER STYLES
+   ================================= */
+
+/* Player wrapper */
+.music-player-wrapper {
+  height: 100%;
+  width: 100%;
+}
+
+.player-controls-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+/* Controls layout */
+.player-controls-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+/* Player buttons */
+.player-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.player-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Specific button styles */
+.hamburger-btn {
+  margin-right: 1rem;
+}
+
+.hamburger-btn.active {
+  background: rgba(59, 130, 246, 0.8);
+  border-color: rgba(59, 130, 246, 1);
+}
+
+.play-btn {
+  background: rgba(59, 130, 246, 0.8);
+  border-color: rgba(59, 130, 246, 1);
+}
+
+.play-btn:hover {
+  background: rgba(59, 130, 246, 1);
+}
+
+.shuffle-btn.active {
+  background: rgba(59, 130, 246, 0.8);
+  border-color: rgba(59, 130, 246, 1);
+}
+
+/* Time displays */
+.time-display {
+  color: white;
+  font-size: 0.875rem;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Progress bar */
+.progress-bar-wrapper {
+  flex: 1;
+  max-width: 300px;
+  margin: 0 1rem;
+  position: relative;
+}
+
+.progress-bar {
+  width: 100%;
+}
+
+/* =================================
+   PLAYLIST STYLES
+   ================================= */
+
+/* Playlist container */
+.music-player-playlist-container {
+  position: fixed;
+  top: 4.5em;
+  left: 0;
+  width: 400px;
+  height: calc(100vh - 9em);
+  background-color: #2c3e50;
+  border-right: 1px solid #34495e;
+  overflow: auto;
+  z-index: 1000;
+  padding: 1rem;
+  color: white;
+}
+
+/* Playlist list */
+.music-player-playlist-container .playlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: white;
+}
+
+/* Playlist items */
+.music-player-playlist-container .track-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #34495e;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: white;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.music-player-playlist-container .track-item:hover {
+  background-color: #34495e;
+}
+
+.music-player-playlist-container .track-item.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Drag and drop styles */
+.music-player-playlist-container .track-item[draggable="true"] {
+  cursor: grab;
+}
+
+.music-player-playlist-container .track-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.music-player-playlist-container .track-item.dragging {
+  opacity: 0.2;
+}
+
+.music-player-playlist-container .track-text {
+  flex: 1;
+  color: white;
+}
+
+.music-player-playlist-container .track-prefix {
+  margin-right: 8px;
+  color: white;
+}
+
+.music-player-playlist-container .drag-handle {
+  cursor: grab;
+  opacity: 0.7;
+  font-size: 16px;
+  color: white;
+}
+
+/* Backdrop for closing playlist */
+.playlist-backdrop {
+  position: fixed;
+  top: 4.5em;
+  left: 400px;
+  right: 0;
+  bottom: 4.5em;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+/* =================================
+   RESPONSIVE STYLES
+   ================================= */
+
 @media (max-width: 1200px) {
   .artist-grid-container {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -288,277 +492,51 @@
   .app-header {
     padding: 0 1rem;
   }
+  
+  .music-player-playlist-container {
+    width: 100%;
+    left: 0;
+  }
+  
+  .playlist-backdrop {
+    left: 0;
+  }
+  
+  .player-controls-wrapper {
+    gap: 0.5rem;
+  }
+  
+  .hamburger-btn {
+    margin-right: 0.5rem;
+  }
+  
+  .progress-bar-wrapper {
+    max-width: 200px;
+    margin: 0 0.5rem;
+  }
 }
 
 @media (max-width: 480px) {
   .artist-grid-container {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
+  
+  .player-controls-wrapper {
+    gap: 0.25rem;
+  }
+  
+  .time-display {
+    min-width: 35px;
+    font-size: 0.75rem;
+  }
+  
+  .player-btn {
+    min-width: 35px;
+    height: 35px;
+    font-size: 0.875rem;
+  }
+  
+  .progress-bar-wrapper {
+    max-width: 150px;
+  }
 }
-/* Add to your index.css */
-
-/* Music Player Styles */
-.music-player-wrapper .controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0 1rem;
-  gap: 1rem;
-}
-
-.music-player-wrapper .player-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  min-width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.music-player-wrapper .player-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.music-player-wrapper .play-btn {
-  background: rgba(59, 130, 246, 0.8);
-  border-color: rgba(59, 130, 246, 1);
-}
-
-.music-player-wrapper .play-btn:hover {
-  background: rgba(59, 130, 246, 1);
-}
-
-.music-player-wrapper .time-display {
-  color: white;
-  font-size: 0.875rem;
-  min-width: 40px;
-  text-align: center;
-}
-
-.music-player-wrapper input[type="range"] {
-  flex: 1;
-  max-width: 300px;
-  margin: 0 1rem;
-}
-
-/* Ensure playlist is hidden when used in footer */
-.app-footer .playlist {
-  display: none !important;
-}
-
-/* Make sure controls fit in footer */
-.app-footer .music-player-wrapper {
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Add to your index.css */
-
-/* Music Player Styles */
-.music-player-wrapper .controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0 1rem;
-  gap: 1rem;
-}
-
-.music-player-wrapper .player-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  min-width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.music-player-wrapper .player-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.music-player-wrapper .play-btn {
-  background: rgba(59, 130, 246, 0.8);
-  border-color: rgba(59, 130, 246, 1);
-}
-
-.music-player-wrapper .play-btn:hover {
-  background: rgba(59, 130, 246, 1);
-}
-
-.music-player-wrapper .time-display {
-  color: white;
-  font-size: 0.875rem;
-  min-width: 40px;
-  text-align: center;
-}
-
-.music-player-wrapper input[type="range"] {
-  flex: 1;
-  max-width: 300px;
-  margin: 0 1rem;
-}
-
-/* Playlist toggle button */
-.playlist-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* Playlist container styles */
-.playlist-container .playlist {
-  max-height: 280px;
-  overflow-y: auto;
-  padding: 0;
-  margin: 0;
-}
-
-.playlist-container .track-item {
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
-
-.playlist-container .track-item:hover {
-  background-color: #f3f4f6;
-}
-
-.playlist-container .track-item.active {
-  background-color: #dbeafe;
-  color: #1d4ed8;
-}
-
-/* Ensure playlist is positioned correctly */
-.app-footer .music-player-wrapper {
-  height: 100%;
-  overflow: visible; /* Allow playlist to show outside footer */
-}
-
-/* Make sure controls fit in footer */
-.music-player-wrapper .player-controls-container {
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Add to your index.css */
-
-/* Music Player Styles */
-.music-player-wrapper .controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0 1rem;
-  gap: 1rem;
-}
-
-.music-player-wrapper .player-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  min-width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.music-player-wrapper .player-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.music-player-wrapper .play-btn {
-  background: rgba(59, 130, 246, 0.8);
-  border-color: rgba(59, 130, 246, 1);
-}
-
-.music-player-wrapper .play-btn:hover {
-  background: rgba(59, 130, 246, 1);
-}
-
-.music-player-wrapper .time-display {
-  color: white;
-  font-size: 0.875rem;
-  min-width: 40px;
-  text-align: center;
-}
-
-.music-player-wrapper input[type="range"] {
-  flex: 1;
-  max-width: 300px;
-  margin: 0 1rem;
-}
-
-/* Playlist toggle button */
-.playlist-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* Force playlist elements to be visible */
-.music-player-playlist-container .playlist,
-.music-player-playlist-container ul.playlist {
-  display: block !important;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: white;
-}
-
-.music-player-playlist-container .track-item,
-.music-player-playlist-container li {
-  display: flex !important;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid #34495e;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: white;
-  background: transparent;
-}
-
-.music-player-playlist-container .track-item:hover,
-.music-player-playlist-container li:hover {
-  background-color: #34495e;
-}
-
-.music-player-playlist-container .track-item.active,
-.music-player-playlist-container li.active {
-  background-color: #3b82f6;
-  color: white;
-}
-
-/* Ensure all text is visible */
-.music-player-playlist-container * {
-  color: white !important;
-}
-
-/* Make sure controls fit in footer */
-.music-player-wrapper .player-controls-container {
-  height: 100%;
-  overflow: hidden;
-}
