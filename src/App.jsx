@@ -9,8 +9,9 @@ import Library from './pages/Library';
 import Login from './pages/Login';
 
 function App() {
+  const basename = import.meta.env.DEV ? '/' : '/bemused/app';
   return (
-    <Router>
+    <Router basename={basename}>
       <div className="app h-screen overflow-hidden">
         <Routes>
           {/* Login page without layout */}
