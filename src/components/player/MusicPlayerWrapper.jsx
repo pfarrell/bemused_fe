@@ -1,6 +1,7 @@
 // src/components/player/MusicPlayerWrapper.jsx
 import { useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '../../stores/playerStore';
+import { apiService } from '../../services/api';
 
 const MusicPlayerWrapper = ({ className = "" }) => {
   const audioRef = useRef();
@@ -69,6 +70,7 @@ const MusicPlayerWrapper = ({ className = "" }) => {
             setIsPlaying(true);
           },
           onFiveSecondMark: (track) => {
+            apiService.log(track.id);
             console.log('5 seconds into:', track.title);
           },
           getTrackPrefix: (track, index) => {

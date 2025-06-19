@@ -9,7 +9,7 @@ import Track from '../components/Track';
 const Album = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playerInstance } = usePlayerStore();
+  const { playerInstance, currentTrack } = usePlayerStore();
   const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,6 +49,12 @@ const Album = () => {
     if (albumData?.tracks && playerInstance) {
       console.log('Added album to play next:', albumData.album.title);
       playerInstance.addTracks(albumData.tracks, true); // true = play next
+      
+      // If nothing is playing, start playing immediately
+      if (!playerInstance.currentTrack || !playerInstance.isPlaying) {
+        const currentIndex = playerInstance.currentTrackIndex;
+        playerInstance.loadAndPlayTrack(currentIndex + 1);
+      }
     }
   };
 
@@ -56,17 +62,19 @@ const Album = () => {
     if (albumData?.tracks && playerInstance) {
       console.log('Added album to queue:', albumData.album.title);
       playerInstance.addTracks(albumData.tracks, false); // false = add to end
+      
+      // If nothing is playing, start playing immediately
+      if (!playerInstance.currentTrack || !playerInstance.isPlaying) {
+        const playlist = playerInstance.getPlaylist();
+        const startIndex = playlist.length - albumData.tracks.length; // First track of the added album
+        playerInstance.loadAndPlayTrack(startIndex);
+      }
     }
   };
 
-  const handleTrackClick = (track, index) => {
-    if (playerInstance && albumData?.tracks) {
-      console.log('Playing track:', track.title, 'at index:', index);
-      // Load the whole album but start at the clicked track
-      playerInstance.clearPlaylist();
-      playerInstance.addTracks(albumData.tracks);
-      playerInstance.loadAndPlayTrack(index);
-    }
+  // Helper function to check if a track is currently playing
+  const isTrackPlaying = (track) => {
+    return currentTrack && currentTrack.id === track.id;
   };
 
   if (loading) {
@@ -154,10 +162,12 @@ const Album = () => {
             {album.title}
           </h1>
           
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 1.5rem 0', color: '#7c3aed' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 1.5rem 0', color: '#7c3aed' }}
+            onClick={() => navigate(`/artist/${artist.id}`)}
+          >
             {artist.name}
           </h2>
-          {summary & (
+          {summary && Object.keys(summary).length > 0 && (
             <Wikipedia summary={summary} />
           )}
           
@@ -176,7 +186,8 @@ const Album = () => {
                 fontWeight: '500'
               }}
             >
-              ▶ Play Now </button>
+              ▶ Play Now
+            </button>
             <button
               onClick={handlePlayNext}
               style={{
@@ -217,9 +228,22 @@ const Album = () => {
       </div>
 
       {/* Track List */}
-      {tracks.map((track, index) => (
-        <Track track={track} index={index} onClick={handleTrackClick} trackCount={tracks.length} />
-      ))}
+      <div style={{ 
+        backgroundColor: 'white', 
+        borderRadius: '8px', 
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden'
+      }}>
+        {tracks.map((track, index) => (
+          <Track 
+            key={track.id || index}
+            track={track} 
+            index={index} 
+            trackCount={tracks.length}
+            isPlaying={isTrackPlaying(track)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
