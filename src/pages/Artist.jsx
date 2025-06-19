@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import AlbumCard from '../components/AlbumCard';
+import Wikipedia from '../components/Wikipedia';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 
@@ -106,23 +107,7 @@ const Artist = () => {
           </h1>
           
           {/* Wikipedia summary */}
-          {summary && (
-            <div>
-              <p style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}>
-                {summary.summary || summary}
-              </p>
-              <a 
-                href="#" 
-                style={{ color: '#2563eb', textDecoration: 'none' }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  console.log('Show more Wikipedia info');
-                }}
-              >
-                ...more at wikipedia
-              </a>
-            </div>
-          )}
+          <Wikipedia summary={summary} />
           
           {/* Artist link */}
           <div style={{ marginTop: '1rem' }}>

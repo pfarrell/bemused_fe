@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
+import Wikipedia from '../components/Wikipedia';
+import Track from '../components/Track';
 
 const Album = () => {
   const { id } = useParams();
@@ -114,7 +116,7 @@ const Album = () => {
     );
   }
 
-  const { artist, album, tracks } = albumData;
+  const { artist, album, tracks, summary } = albumData;
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -153,8 +155,11 @@ const Album = () => {
           </h1>
           
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 1.5rem 0', color: '#7c3aed' }}>
-            {artist}
+            {artist.name}
           </h2>
+          {summary & (
+            <Wikipedia summary={summary} />
+          )}
           
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
@@ -171,8 +176,7 @@ const Album = () => {
                 fontWeight: '500'
               }}
             >
-              ▶ Play Now
-            </button>
+              ▶ Play Now </button>
             <button
               onClick={handlePlayNext}
               style={{
@@ -213,42 +217,9 @@ const Album = () => {
       </div>
 
       {/* Track List */}
-      {tracks && tracks.length > 0 && (
-        <div style={{ 
-          backgroundColor: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', 
-          overflow: 'hidden' 
-        }}>
-          {tracks.map((track, index) => (
-            <div 
-              key={track.id || index}
-              className="track-item"
-              onClick={() => handleTrackClick(track, index)}
-              style={{ 
-                padding: '1rem',
-                borderBottom: index < tracks.length - 1 ? '1px solid #e5e7eb' : 'none',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#f9fafb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-            >
-              <div className="track-play-button">
-                <span style={{ fontSize: '0.75rem' }}>▶</span>
-              </div>
-              <div className="track-info">
-                <h4 className="track-title">
-                  {String(index + 1).padStart(2, '0')}. {track.title}
-                </h4>
-              </div>
-              {track.duration && (
-                <div className="track-duration">({track.duration})</div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {tracks.map((track, index) => (
+        <Track track={track} index={index} onClick={handleTrackClick} trackCount={tracks.length} />
+      ))}
     </div>
   );
 };
