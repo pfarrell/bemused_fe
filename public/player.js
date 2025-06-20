@@ -259,7 +259,7 @@ AudioPlayer.prototype.loadPlaylistUI = function() {
 
     const trackText = document.createElement('span');
     trackText.className = 'track-text';
-    trackText.textContent = `${index + 1}. ${track.title} - ${track.artist} (${track.duration})`;
+    trackText.textContent = `${index + 1}. ${track.title} - ${track.artist.name} (${track.duration})`;
 
     listItem.appendChild(trackText);
     listItem.appendChild(dragHandle);

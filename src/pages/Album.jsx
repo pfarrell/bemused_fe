@@ -147,7 +147,7 @@ const Album = () => {
         <div style={{ flexShrink: 0 }}>
           <img
             src={apiService.getImageUrl(album.image_path, 'album_page')}
-            alt={`${album.title} by ${artist}`}
+            alt={`${album.title} by ${artist.name}`}
             style={{
               width: '300px',
               height: '300px',
