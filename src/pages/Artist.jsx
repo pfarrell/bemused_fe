@@ -94,7 +94,6 @@ const Artist = () => {
             src={apiService.getImageUrl(artist.image_path, 'artist_page')}
             alt={artist.name}
             style={{
-              width: '300px',
               height: '300px',
               objectFit: 'cover',
               borderRadius: '8px',
