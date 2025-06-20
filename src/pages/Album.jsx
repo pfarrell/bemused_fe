@@ -13,6 +13,7 @@ const Album = () => {
   const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -32,7 +33,11 @@ const Album = () => {
     if (id) {
       fetchAlbumData();
     }
-  }, [id]);
+  }, [id, refreshKey]);
+
+  const reload = () => {
+    setRefreshKey(refreshKey + 1)
+  }
 
   const handlePlayNow = () => {
     if (albumData?.tracks && playerInstance) {
@@ -158,7 +163,9 @@ const Album = () => {
         
         {/* Album Info */}
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#7c3aed' }}
+            onClick = {reload}
+          >
             {album.title}
           </h1>
           

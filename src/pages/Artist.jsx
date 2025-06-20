@@ -13,6 +13,7 @@ const Artist = () => {
   const [artistData, setArtistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchArtistData = async () => {
@@ -32,11 +33,16 @@ const Artist = () => {
     if (id) {
       fetchArtistData();
     }
-  }, [id]);
+  }, [id, refreshKey]);
 
   const handleAlbumClick = (album) => {
     navigate(`/album/${album.id}`);
   };
+
+  const reload = () => {
+    setRefreshKey(refreshKey => refreshKey + 1)
+  }
+
 
   if (loading) {
     return (
@@ -102,7 +108,9 @@ const Artist = () => {
         
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 1rem 0', color: '#1f2937' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 1rem 0', color: '#1f2937' }}
+            onClick={ reload }
+          >
             {artist.name}
           </h1>
           
