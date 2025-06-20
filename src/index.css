@@ -280,12 +280,15 @@
   color: #6b7280;
   font-size: 0.75rem;
   margin: 0;
+  margin-left: 0.5rem;
   margin-top: 0.25rem;
+  display: inline;
 }
 
 .track-artist-album a {
   color: #2563eb;
   text-decoration: none;
+  margin-left: .5rem;
 }
 
 .track-artist-album a:hover {

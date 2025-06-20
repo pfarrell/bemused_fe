@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
+import Track from '../components/Track';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -170,48 +171,7 @@ const Search = () => {
           <h2 className="search-section-title">Tracks ({results.tracks.length})</h2>
           <div className="track-list">
             {results.tracks.map((track, index) => (
-              <div 
-                key={track.id || index}
-                className="track-item"
-                onClick={() => handleTrackClick(track)}
-              >
-                <div className="track-play-button">
-                  <span style={{ fontSize: '0.75rem' }}>▶</span>
-                </div>
-                <div className="track-info">
-                  <h4 className="track-title">{track.title}</h4>
-                  <p className="track-artist-album">
-                    <a href="#" onClick={(e) => { 
-                      e.stopPropagation(); 
-                      if (track.artist_id) {
-                        navigate(`/artist/${track.artist_id}`);
-                      } else {
-                        console.log('Go to artist:', track.artist); 
-                      }
-                    }}>
-                      {track.artist}
-                    </a>
-                    {track.album && (
-                      <>
-                        {' '} 
-                        <a href="#" onClick={(e) => { 
-                          e.stopPropagation(); 
-                          if (track.album_id) {
-                            navigate(`/album/${track.album_id}`);
-                          } else {
-                            console.log('Go to album:', track.album); 
-                          }
-                        }}>
-                          {track.album}
-                        </a>
-                      </>
-                    )}
-                  </p>
-                </div>
-                {track.duration && (
-                  <div className="track-duration">{track.duration}</div>
-                )}
-              </div>
+              <Track track={track} index={index} trackCount={results.tracks.length} includeMeta={true}/>
             ))}
           </div>
         </div>

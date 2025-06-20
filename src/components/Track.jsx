@@ -2,10 +2,12 @@
 import { useState } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
 import { formatDuration } from '../utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
-const Track = ({ track, index, trackCount, isPlaying = false }) => {
+const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const { playerInstance } = usePlayerStore();
+  const navigate = useNavigate();
 
   const handleTrackClick = () => {
     if (playerInstance) {
@@ -102,6 +104,36 @@ const Track = ({ track, index, trackCount, isPlaying = false }) => {
               ({formatDuration(track.duration)})
             </span>
           )}
+          <p className="track-artist-album">
+            {includeMeta && track.album && (
+              <>
+              {' '} 
+              from
+              <a key={track.album.id} href="#" onClick={(e) => { 
+                e.stopPropagation(); 
+                if (track.album.id) {
+                  navigate(`/album/${track.album.id}`);
+                } else {
+                  console.log('Go to album:', track.album); 
+                }
+              }}>
+                {track.album.title}
+              </a>
+              {' by'} 
+              <a key={track.artist.id} href="#" onClick={(e) => { 
+                e.stopPropagation(); 
+                if (track.artist.id) {
+                  navigate(`/artist/${track.artist.id}`);
+                } else {
+                  console.log('Go to artist:', track.artist.id); 
+                }
+              }}>
+                {track.artist.name}
+              </a>
+              </>
+            )}
+          </p>
+
         </h4>
       </div>
 
