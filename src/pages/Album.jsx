@@ -148,12 +148,7 @@ const Album = () => {
           <img
             src={apiService.getImageUrl(album.image_path, 'album_page')}
             alt={`${album.title} by ${artist.name}`}
-            style={{
-              height: '300px',
-              objectFit: 'cover',
-              borderRadius: '8px',
-              backgroundColor: '#ddd'
-            }}
+            className='full-image'
             onError={(e) => {
               console.log(`Failed to load album image: ${e.target.src}`);
             }}

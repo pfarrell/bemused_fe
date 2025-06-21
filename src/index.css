@@ -870,6 +870,13 @@
   .progress-bar-wrapper {
     max-width: 100px;
   }
+  
+  .full-image {
+    width: 320px;
+    objectFit: cover;
+    borderRadius: 8px;
+    backgroundColor: #ddd;
+  }
 }
 
 @media (min-width: 768px) {
@@ -881,5 +888,12 @@
   .time-display {
     display: inline-block;
     padding: 0 .5em 0 .5em;
+  }
+
+  .full-image {
+    height: 300px;
+    objectFit: cover;
+    borderRadius: 8px;
+    backgroundColor: #ddd;
   }
 }
