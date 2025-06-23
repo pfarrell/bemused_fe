@@ -120,7 +120,7 @@ const Search = () => {
                   <div className="artist-card-image">
                     <img
                       src={apiService.getImageUrl(album.image_path, 'album_small')}
-                      alt={`${album.title} by ${album.artist}`}
+                      alt={`${album.title} by ${album.artist.name}`}
                       onError={(e) => {
                         console.log(`Failed to load album image: ${e.target.src}`);
                       }}
@@ -129,7 +129,7 @@ const Search = () => {
                   <div className="artist-card-title">
                     <h3>{album.title}</h3>
                     <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
-                      {album.artist}
+                      {album.artist.name}
                     </p>
                   </div>
                 </div>
