@@ -137,7 +137,7 @@ const Artist = () => {
                 <AlbumCard 
                   key={album.id} 
                   album={album} 
-                  artist={artist} 
+                  artist={album.artist} 
                   imageUrl={imageUrl}
                   onClick={handleAlbumClick} 
                 />
