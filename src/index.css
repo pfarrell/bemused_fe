@@ -96,16 +96,6 @@
    ARTIST GRID STYLES
    ================================= */
 
-.media-page-header { 
-  display: flex; 
-  gap: 2rem; 
-  margin-bottom: 1rem; 
-  background-color: white; 
-  padding: .5rem; 
-  border-radius: 8px; 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .artist-grid {
   background-color: #f5f5f5;
   padding: 1.5rem;
@@ -166,6 +156,8 @@
 .artist-card:hover .artist-card-title h3 {
   color: #2563eb;
 }
+
+
 
 /* =================================
    SEARCH RESULTS STYLES
@@ -888,6 +880,16 @@
     border-radius: 8px;
     background-color: #ddd;
   }
+
+  .media-page-header { 
+    display: flex; 
+    gap: 2rem; 
+    margin-bottom: 1rem; 
+    background-color: white; 
+    padding: .5rem; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
 }
 
 @media (min-width: 768px) {
@@ -907,4 +909,14 @@
     border-radius: 8px;
     background-color: #ddd;
   }
+.media-page-header { 
+  display: flex; 
+  gap: 2rem; 
+  margin-bottom: 1rem; 
+  background-color: white; 
+  padding: .5rem; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 }

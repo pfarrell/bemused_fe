@@ -1,6 +1,6 @@
 const Wikipedia = ({ summary }) => {
   
-  if(Object.keys(summary) === 0){
+  if(Object.keys(summary).length === 0){
     console.log("empty wikipedia data");
     return null;
   } else {
