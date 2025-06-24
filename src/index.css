@@ -13,7 +13,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 10;
+  z-index: 1100;
   background-color: #1a252f; 
   border-bottom: 1px solid #2c3e50;
   height: 4.5em;
@@ -74,7 +74,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 10;
+  z-index: 1100;
   background-color: #1a252f;
   border-top: 1px solid #2c3e50;
   height: 4.5em; 
@@ -87,7 +87,7 @@
   flex: 1;
   overflow-y: auto;
   padding-top: 4.5em;
-  padding-bottom: 4.5em;
+  padding-bottom: 6rem; /* Increased bottom padding for footer clearance */
   background-color: #f5f5f5;
   min-height: 100vh;
 }
@@ -157,8 +157,6 @@
   color: #2563eb;
 }
 
-
-
 /* =================================
    SEARCH RESULTS STYLES
    ================================= */
@@ -183,7 +181,7 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin: 0 1rem;
+  margin: 0 1rem 2rem 1rem; /* Added bottom margin */
   overflow: hidden;
 }
 
@@ -203,6 +201,7 @@
 
 .track-item:last-child {
   border-bottom: none;
+  margin-bottom: 1rem; /* Extra space for the last track */
 }
 
 .track-item:hover:not(.currently-playing) {
@@ -213,7 +212,6 @@
   font-weight: bold;
 }
 
-/* Currently playing track styles */
 .track-item.currently-playing {
   background-color: #dbeafe !important;
   border-left: 4px solid #3b82f6;
@@ -234,12 +232,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .track-play-button {
@@ -305,7 +299,6 @@
   margin-left: 1rem;
 }
 
-/* Dropdown menu styles */
 .track-dropdown {
   position: absolute;
   right: 0;
@@ -341,7 +334,6 @@
   background-color: #e5e7eb;
 }
 
-/* Ellipsis button styles */
 .track-ellipsis {
   background: none;
   border: none;
@@ -352,7 +344,7 @@
   font-size: 1rem;
   line-height: 1;
   transition: all 0.15s ease;
-  opacity: 1; /* Always visible on mobile */
+  opacity: 1;
   flex-shrink: 0;
   min-width: 32px;
   min-height: 32px;
@@ -522,18 +514,23 @@
   left: 0;
   width: 400px;
   height: calc(100vh - 9em);
+  max-height: calc(100vh - 9em);
   background-color: #2c3e50;
-  border-right: 1px solid #34495e;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 1000;
   padding: 1rem;
   color: white;
-  /* Enable smooth scrolling */
   -webkit-overflow-scrolling: touch;
-  /* Prevent text selection during drag */
   -webkit-user-select: none;
   user-select: none;
+  
+  /* Base left alignment for all devices */
+  text-align: left;
+  
+  /* CRITICAL: Hide playlist by default */
+  display: none;
 }
 
 .music-player-playlist-container .playlist {
@@ -541,6 +538,9 @@
   padding: 0;
   margin: 0;
   color: white;
+  text-align: left;
+  max-height: 100%;
+  overflow: visible;
 }
 
 .music-player-playlist-container .track-item {
@@ -553,11 +553,17 @@
   color: white;
   background: transparent;
   transition: all 0.2s ease;
-  /* Mobile touch optimization */
   touch-action: manipulation;
   -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
-  min-height: 48px; /* Ensure good touch targets */
+  min-height: 48px;
   position: relative;
+  pointer-events: auto;
+  z-index: 1002;
+  
+  /* Ensure left alignment */
+  text-align: left;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .music-player-playlist-container .track-item:hover {
@@ -567,12 +573,11 @@
 .music-player-playlist-container .track-item.active {
   background-color: #3b82f6;
   color: white;
+  border-left: 4px solid #60a5fa;
 }
 
-/* Drag and drop styles with mobile support */
 .music-player-playlist-container .track-item[draggable="true"] {
   cursor: grab;
-  /* Allow both drag and scroll on mobile */
   touch-action: pan-y;
 }
 
@@ -588,10 +593,12 @@
 .music-player-playlist-container .track-text {
   flex: 1;
   color: white;
-  /* Prevent text selection during drag */
-  -webkit-user-select: none;
-  user-select: none;
-  /* pointer-events: none; /* Prevent interference with drag events */*/
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0.25rem 0;
+  -webkit-user-select: text;
+  user-select: text;
+  text-align: left;
 }
 
 .music-player-playlist-container .track-prefix {
@@ -599,6 +606,8 @@
   color: white;
   -webkit-user-select: none;
   user-select: none;
+  flex-shrink: 0;
+  text-align: left;
 }
 
 .music-player-playlist-container .drag-handle {
@@ -608,7 +617,6 @@
   color: white;
   padding: 4px;
   margin-left: 8px;
-  /* Better touch target */
   min-width: 24px;
   min-height: 24px;
   display: flex;
@@ -616,6 +624,7 @@
   justify-content: center;
   -webkit-user-select: none;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .music-player-playlist-container .drag-handle:hover {
@@ -632,6 +641,7 @@
   bottom: 4.5em;
   background-color: rgba(0, 0, 0, 0.3);
   z-index: 999;
+  pointer-events: auto;
 }
 
 .now-playing {
@@ -648,96 +658,75 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 1rem;
+  z-index: 1101;
+  position: relative;
 }
 
 /* =================================
-   ARTIST PAGE STYLES
+   MEDIA PAGE HEADER STYLES
    ================================= */
 
-/* Mobile-first artist page overrides */
-@media (max-width: 768px) {
-  /* Override the inline styles from the Artist component */
-  [style*="display: flex"][style*="gap: 2rem"] {
-    flex-direction: column !important;
-    gap: 1rem !important;
-    padding: 1rem !important;
-  }
-  
-  /* Artist image container - force center alignment */
-  [style*="flexShrink: 0"] {
-    flex-shrink: 1 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    width: 100% !important;
-    text-align: center !important;
-  }
-  
-  /* Artist image - center it properly */
-  [style*="width: 300px"][style*="height: 300px"] {
-    width: 280px !important;
-    height: 280px !important;
-    max-width: 90vw !important;
-    object-fit: cover !important;
-    margin: 0 auto !important;
-    display: block !important;
-  }
-  
-  /* Artist info section */
-  [style*="flex: 1"] {
-    flex: none !important;
-    width: 100% !important;
-    text-align: center !important;
-  }
-  
-  /* Artist title */
-  [style*="fontSize: 2.5rem"] {
-    font-size: 1.75rem !important;
-    text-align: center !important;
-    line-height: 1.2 !important;
-    margin-bottom: 1rem !important;
-  }
-  
-  /* Wikipedia content */
-  .wikipedia-content {
-    font-size: 0.875rem !important;
-    line-height: 1.6 !important;
-    text-align: left !important;
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-    hyphens: auto !important;
-    max-width: 100% !important;
-  }
-  
-  /* Main artist container */
-  [style*="padding: 2rem"] {
-    padding: 1rem !important;
-  }
+.media-page-header { 
+  display: flex; 
+  gap: 2rem; 
+  margin-bottom: 1rem; 
+  background-color: white; 
+  padding: .5rem; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 480px) {
-  /* Even smaller screens */
-  [style*="width: 300px"][style*="height: 300px"] {
-    width: 240px !important;
-    height: 240px !important;
-  }
-  
-  [style*="fontSize: 2.5rem"] {
-    font-size: 1.5rem !important;
-  }
-  
-  .wikipedia-content {
-    font-size: 0.8rem !important;
-  }
-  
-  [style*="padding: 2rem"] {
-    padding: 0.75rem !important;
-  }
+.full-image {
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #ddd;
+}
+
+/* Album and artist page content spacing */
+.media-page-content {
+  padding-bottom: 3rem; /* Extra space for footer clearance */
+}
+
+/* Ensure track listings have proper bottom spacing */
+.track-list-container {
+  padding-bottom: 3rem;
+}
+
+/* General page content bottom spacing */
+[data-page="album"],
+[data-page="artist"] {
+  padding-bottom: 3rem;
+}
+
+/* Ensure last elements in main content have proper spacing */
+.main-content > *:last-child {
+  margin-bottom: 3rem;
 }
 
 /* =================================
-   RESPONSIVE STYLES
+   RESPONSIVE STYLES - DESKTOP
    ================================= */
+
+@media (min-width: 769px) {
+  .now-playing {
+    display: flex;
+    align-items: center;
+  }
+
+  .time-display {
+    display: inline-block;
+    padding: 0 .5em 0 .5em;
+  }
+
+  .music-player-playlist-container {
+    transition: box-shadow 0.2s ease;
+  }
+
+  .music-player-playlist-container:hover {
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+  }
+}
 
 @media (max-width: 1200px) {
   .artist-grid-container {
@@ -745,30 +734,53 @@
   }
 }
 
+/* =================================
+   RESPONSIVE STYLES - TABLET/MOBILE
+   ================================= */
+
 @media (max-width: 768px) {
-  .artist-grid-container {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-  
+  /* Header adjustments */
   .header-search {
     padding: 0 1rem;
   }
   
   .app-header {
     padding: 0 1rem;
+    padding-top: env(safe-area-inset-top, 0);
+    padding-left: env(safe-area-inset-left, 1.5rem);
+    padding-right: env(safe-area-inset-right, 1.5rem);
+    height: calc(4.5em + env(safe-area-inset-top, 0));
+  }
+
+  /* Footer adjustments */
+  .app-footer {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+    height: calc(4.5em + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Main content */
+  .main-content {
+    padding-bottom: 8rem !important; /* Extra padding on mobile for footer clearance */
+    min-height: calc(100vh - 4.5em) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: calc(100vh - 9rem) !important;
+    height: calc(-webkit-fill-available - 9rem) !important;
+  }
+
+  /* Artist grid */
+  .artist-grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
   }
   
-  .music-player-playlist-container {
-    width: 100%;
-    left: 0;
+  .artist-grid {
+    padding-bottom: 2rem !important;
   }
-  
-  .playlist-backdrop {
-    left: 0;
-  }
-  
-  /* Mobile player controls - hide time displays and optimize spacing */
+
+  /* Player controls optimizations */
   .player-controls-wrapper {
     gap: 0.75rem;
     justify-content: center;
@@ -785,12 +797,10 @@
     margin: 0 0.5rem;
   }
   
-  /* Hide time displays on mobile */
   .time-display {
     display: none !important;
   }
   
-  /* Ensure all player buttons are visible and properly sized */
   .player-btn {
     min-width: 36px !important;
     min-height: 36px !important;
@@ -803,7 +813,8 @@
     font-size: 20px !important;
     min-width: 40px !important;
   }
-  
+
+  /* Track items */
   .track-item {
     padding: 0.75rem 0.5rem;
     min-height: 48px;
@@ -824,7 +835,7 @@
     font-size: 1.2rem;
     min-width: 36px;
     min-height: 36px;
-    opacity: 1; /* Always visible on mobile */
+    opacity: 1;
   }
   
   .track-dropdown {
@@ -834,31 +845,114 @@
   .track-dropdown button {
     padding: 8px 12px;
     font-size: 0.9rem;
-    min-height: 40px; /* Better touch targets */
+    min-height: 40px;
   }
   
   .now-playing {
     display: none;
   }
-}
 
-/* =================================
-   MEDIA PAGE HEADER MOBILE FIXES
-   ================================= */
+  /* MOBILE PLAYLIST FIXES - LEFT ALIGNMENT */
+  .music-player-playlist-container {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 4.5em !important;
+    bottom: 4.5em !important;
+    height: auto !important;
+    max-height: calc(100vh - 9em) !important;
+    box-shadow: none !important;
+    pointer-events: auto !important;
+    z-index: 1001 !important;
+    
+    /* Force left alignment */
+    text-align: left !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  /* Only apply flex display when playlist is visible */
+  .music-player-playlist-container[style*="display: block"] {
+    display: flex !important;
+  }
+  
+  .music-player-playlist-container .playlist {
+    text-align: left !important;
+    width: 100% !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .music-player-playlist-container .track-item {
+    draggable: false !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3) !important;
+    cursor: pointer !important;
+    padding: 1rem !important;
+    min-height: 60px !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    
+    /* Force left alignment */
+    text-align: left !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+  
+  .music-player-playlist-container .drag-handle {
+    display: none !important;
+  }
+  
+  .music-player-playlist-container .track-text {
+    flex: 1 !important;
+    padding: 0.5rem 0 !important;
+    cursor: pointer !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    pointer-events: auto !important;
+    
+    /* Force left alignment */
+    text-align: left !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding-left: 0 !important;
+  }
+  
+  .music-player-playlist-container .track-prefix {
+    text-align: left !important;
+    margin-right: 8px !important;
+    margin-left: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .music-player-playlist-container .track-item:active {
+    background-color: #3b82f6 !important;
+    transform: scale(0.98) !important;
+  }
+  
+  .music-player-playlist-container .track-item.active {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-left: 4px solid #60a5fa !important;
+  }
+  
+  .playlist-backdrop {
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1000 !important;
+    pointer-events: none !important;
+  }
 
-/* Base media page header styles - works for desktop */
-.media-page-header { 
-  display: flex; 
-  gap: 2rem; 
-  margin-bottom: 1rem; 
-  background-color: white; 
-  padding: .5rem; 
-  border-radius: 8px; 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Mobile fixes for media page header - tablet and mobile */
-@media (max-width: 768px) {
+  /* Media page header mobile fixes */
   .media-page-header {
     flex-direction: column !important;
     gap: 1rem !important;
@@ -867,7 +961,6 @@
     padding: 1rem !important;
   }
   
-  /* Center the image container */
   .media-page-header > div:first-child {
     display: flex !important;
     justify-content: center !important;
@@ -875,13 +968,11 @@
     width: 100% !important;
   }
   
-  /* Make the info section take full width and center content */
   .media-page-header > div:last-child {
     width: 100% !important;
     flex: none !important;
   }
   
-  /* Center the album/artist image */
   .media-page-header .full-image {
     width: 280px !important;
     height: 280px !important;
@@ -891,7 +982,6 @@
     display: block !important;
   }
   
-  /* Center and size the titles properly */
   .media-page-header h1 {
     font-size: 1.75rem !important;
     text-align: center !important;
@@ -905,7 +995,6 @@
     margin-bottom: 1rem !important;
   }
   
-  /* Style the Wikipedia content to display below the image */
   .media-page-header .wikipedia-content {
     font-size: 0.875rem !important;
     line-height: 1.6 !important;
@@ -917,31 +1006,145 @@
     margin-top: 1rem !important;
   }
   
-  /* Center action buttons if they exist */
   .media-page-header div[style*="display: flex"][style*="gap: 0.5rem"] {
     justify-content: center !important;
     flex-wrap: wrap !important;
   }
+
+  /* Artist page overrides */
+  [style*="display: flex"][style*="gap: 2rem"] {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+  
+  [style*="flexShrink: 0"] {
+    flex-shrink: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  [style*="width: 300px"][style*="height: 300px"] {
+    width: 280px !important;
+    height: 280px !important;
+    max-width: 90vw !important;
+    object-fit: cover !important;
+    margin: 0 auto !important;
+    display: block !important;
+  }
+  
+  [style*="flex: 1"] {
+    flex: none !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  [style*="fontSize: 2.5rem"] {
+    font-size: 1.75rem !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .wikipedia-content {
+    font-size: 0.875rem !important;
+    line-height: 1.6 !important;
+    text-align: left !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+    max-width: 100% !important;
+  }
+  
+  [style*="padding: 2rem"] {
+    padding: 1rem !important;
+  }
+
+  /* Mobile app container */
+  html {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+
+  body {
+    height: 100vh;
+    height: -webkit-fill-available;
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+
+  .app {
+    height: 100vh !important;
+    height: -webkit-fill-available !important;
+    overflow: hidden;
+  }
+
+  /* Prevent text selection and context menus */
+  * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Allow text selection for inputs and content areas */
+  input, textarea, .wikipedia-content, .track-title, .track-artist-album {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Track list containers */
+  .track-list-container,
+  .track-list {
+    padding-bottom: 3rem !important;
+    margin-bottom: 2rem !important;
+  }
+
+  .artist-grid-container,
+  .media-page-header ~ * {
+    margin-bottom: 3rem !important;
+  }
+
+  /* Playlist scrollbar */
+  .music-player-playlist-container::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .music-player-playlist-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .music-player-playlist-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+  }
+  
+  .music-player-playlist-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
 }
 
-
+/* =================================
+   RESPONSIVE STYLES - SMALL MOBILE
+   ================================= */
 
 @media (max-width: 480px) {
   .artist-grid-container {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
   
-  /* Tighter spacing for very small screens */
   .player-controls-wrapper {
     gap: 0.5rem;
   }
   
-  /* Keep time displays hidden */
   .time-display {
     display: none !important;
   }
   
-  /* Maintain button sizes for touch targets but smaller */
   .player-btn {
     min-width: 32px !important;
     height: 32px !important;
@@ -957,12 +1160,22 @@
   .progress-bar-wrapper {
     max-width: 100px;
   }
+
+  [style*="width: 300px"][style*="height: 300px"] {
+    width: 240px !important;
+    height: 240px !important;
+  }
   
-  .full-image {
-    width: 320px;
-    object-fit: cover;
-    border-radius: 8px;
-    background-color: #ddd;
+  [style*="fontSize: 2.5rem"] {
+    font-size: 1.5rem !important;
+  }
+  
+  .wikipedia-content {
+    font-size: 0.8rem !important;
+  }
+  
+  [style*="padding: 2rem"] {
+    padding: 0.75rem !important;
   }
 
   .media-page-header .full-image {
@@ -987,128 +1200,19 @@
   }
 }
 
-@media (min-width: 768px) {
-  .now-playing {
-    display: flex;
-    align-items: center;
-  }
-
-  .time-display {
-    display: inline-block;
-    padding: 0 .5em 0 .5em;
-  }
-
-  .full-image {
-    height: 300px;
-    object-fit: cover;
-    border-radius: 8px;
-    background-color: #ddd;
-  }
-.media-page-header { 
-  display: flex; 
-  gap: 2rem; 
-  margin-bottom: 1rem; 
-  background-color: white; 
-  padding: .5rem; 
-  border-radius: 8px; 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-}
-
 /* =================================
-   MOBILE FULLSCREEN & PWA STYLES
+   PWA SPECIFIC STYLES
    ================================= */
 
-/* Fullscreen mobile experience */
-@media (max-width: 768px) {
-  /* Hide browser chrome and make truly fullscreen */
-  html {
-    height: 100%;
-    height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari fix */
-  }
-
-  body {
-    height: 100%;
-    height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari fix */
-    overflow: hidden;
-    -webkit-overflow-scrolling: touch;
-    /* Prevent bounce scrolling on iOS */
-    overscroll-behavior: none;
-    /* Prevent zoom on double tap */
-    touch-action: manipulation;
-  }
-
-  /* Main app container */
-  .app {
-    height: 100vh !important;
-    height: -webkit-fill-available !important; /* iOS Safari fix */
-    overflow: hidden;
-  }
-
-  /* Main content area should use all available height */
-  .main-content {
-    height: calc(100vh - 9rem) !important; /* Subtract header + footer */
-    height: calc(-webkit-fill-available - 9rem) !important; /* iOS Safari fix */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-
-  /* Header adjustments for fullscreen */
-  .app-header {
-    /* Use safe area insets for notched devices */
-    padding-top: env(safe-area-inset-top, 0);
-    padding-left: env(safe-area-inset-left, 1.5rem);
-    padding-right: env(safe-area-inset-right, 1.5rem);
-    /* Adjust height to account for safe area */
-    height: calc(4.5em + env(safe-area-inset-top, 0));
-  }
-
-  /* Footer adjustments for fullscreen */
-  .app-footer {
-    /* Use safe area insets for home indicator */
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
-    /* Adjust height to account for safe area */
-    height: calc(4.5em + env(safe-area-inset-bottom, 0));
-  }
-
-  /* Prevent text selection and context menus on mobile */
-  * {
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-  }
-
-  /* Allow text selection for inputs and content areas */
-  input, textarea, .wikipedia-content, .track-title, .track-artist-album {
-    -webkit-user-select: text;
-    user-select: text;
-  }
-
-  /* Prevent pinch zoom */
-  html {
-    -ms-touch-action: manipulation;
-    touch-action: manipulation;
-  }
-}
-
-/* PWA specific styles when in standalone mode */
 @media (display-mode: standalone) {
-  /* Remove any browser-specific padding when in PWA mode */
   body {
     margin: 0;
     padding: 0;
   }
 
-  /* Ensure full height usage in PWA mode */
   .app {
     height: 100vh !important;
-    height: 100dvh !important; /* Dynamic viewport height for newer browsers */
+    height: 100dvh !important;
   }
 
   .main-content {
@@ -1119,344 +1223,8 @@
 
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
-  /* This targets iOS Safari specifically */
   .main-content {
     height: calc(100vh - 9rem - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)) !important;
     height: calc(-webkit-fill-available - 9rem) !important;
   }
-}
-
-/* Prevent viewport bounce on iOS */
-@media (max-width: 768px) {
-  body {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-  }
-
-  .app {
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-  }
-}
-
-/* =================================
-   MOBILE FIXES FOR SCROLLING AND PLAYLIST
-   ================================= */
-
-/* Fix 1: Main content scrolling to bottom on mobile */
-@media (max-width: 768px) {
-  /* Ensure main content can scroll to bottom with proper padding */
-  .main-content {
-    padding-bottom: 6rem !important; /* Add extra padding to scroll past footer */
-    min-height: calc(100vh - 4.5em) !important; /* Account for header only */
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  
-  /* Artist grid and other content should have bottom margin */
-  .artist-grid {
-    padding-bottom: 2rem !important;
-  }
-  
-  /* Album and artist pages need bottom padding too */
-  [style*="padding: .5rem"] {
-    padding-bottom: 2rem !important;
-  }
-}
-
-/* Fix 2: Mobile playlist scrolling and touch optimization */
-@media (max-width: 768px) {
-  /* Mobile playlist container fixes */
-  .music-player-playlist-container {
-    width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: 4.5em !important;
-    bottom: 4.5em !important; /* Don't overlap footer */
-    height: auto !important; /* Let it calculate height automatically */
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    /* Ensure scrolling works on mobile */
-    touch-action: pan-y !important;
-    /* Remove user-select to allow scrolling */
-    -webkit-user-select: auto !important;
-    user-select: auto !important;
-  }
-  
-  /* Fix 3: Mobile playlist items - remove drag, enable touch to play */
-  .music-player-playlist-container .track-item {
-    /* Remove drag and drop on mobile */
-    draggable: false !important;
-    /* Optimize for touch */
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3) !important;
-    cursor: pointer !important;
-    padding: 1rem !important;
-    min-height: 60px !important; /* Better touch targets */
-    /* Enable text selection for better accessibility */
-    -webkit-user-select: text !important;
-    user-select: text !important;
-  }
-  
-  /* Remove drag handle on mobile */
-  .music-player-playlist-container .drag-handle {
-    display: none !important;
-  }
-  
-  /* Make track text area larger and more touchable */
-  .music-player-playlist-container .track-text {
-    flex: 1 !important;
-    padding: 0.5rem 0 !important;
-    /* Make entire text area clickable */
-    cursor: pointer !important;
-    /* Allow text selection */
-    -webkit-user-select: text !important;
-    user-select: text !important;
-    /* Ensure touch events work */
-    pointer-events: auto !important;
-  }
-  
-  /* Improve visual feedback for mobile playlist items */
-  .music-player-playlist-container .track-item:active {
-    background-color: #3b82f6 !important;
-    transform: scale(0.98) !important;
-  }
-  
-  /* Better active state for currently playing track */
-  .music-player-playlist-container .track-item.active {
-    background-color: #3b82f6 !important;
-    color: white !important;
-    border-left: 4px solid #60a5fa !important;
-  }
-  
-  /* Playlist backdrop should cover full screen on mobile */
-  .playlist-backdrop {
-    left: 0 !important;
-    right: 0 !important;
-    top: 4.5em !important;
-    bottom: 4.5em !important;
-  }
-}
-
-/* Additional mobile scrolling improvements */
-@media (max-width: 768px) {
-  /* Ensure all page content can be scrolled to */
-  body {
-    /* Prevent bounce scrolling but allow normal scrolling */
-    overscroll-behavior: contain !important;
-  }
-  
-  /* Fix any potential height issues */
-  .app {
-    height: 100vh !important;
-    overflow: hidden !important;
-  }
-  
-  /* Artist and album page content should be scrollable */
-  .artist-grid-container,
-  .media-page-header ~ * {
-    margin-bottom: 2rem !important;
-  }
-  
-  /* Track listings should have proper spacing */
-  .track-list-container {
-    padding-bottom: 2rem !important;
-  }
-}
-
-/* Fix scrollbar appearance on mobile playlist */
-@media (max-width: 768px) {
-  .music-player-playlist-container::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  .music-player-playlist-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-  }
-  
-  .music-player-playlist-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-  }
-  
-  .music-player-playlist-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-  }
-}
-
-
-/* =================================
-   PLAYLIST FIXES - STYLING AND POSITIONING
-   ================================= */
-
-/* Fix playlist container positioning and sizing */
-.music-player-playlist-container {
-  position: fixed;
-  top: 4.5em;
-  left: 0;
-  width: 400px;
-  /* Fix height to not extend over footer */
-  height: calc(100vh - 9em) !important;
-  max-height: calc(100vh - 9em) !important;
-  background-color: #2c3e50;
-  /* Remove problematic right border */
-  border-right: none !important;
-  /* Add subtle shadow instead of border */
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 1000;
-  padding: 1rem;
-  color: white;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Fix playlist backdrop positioning */
-.playlist-backdrop {
-  position: fixed;
-  top: 4.5em;
-  /* Fix desktop backdrop positioning */
-  left: 400px !important;
-  right: 0;
-  bottom: 4.5em !important; /* Don't extend over footer */
-  background-color: rgba(0, 0, 0, 0.3);
-  z-index: 999; /* Lower than playlist container */
-  /* Prevent backdrop from intercepting clicks on playlist items */
-  pointer-events: auto;
-}
-
-/* Mobile playlist fixes */
-@media (max-width: 768px) {
-  .music-player-playlist-container {
-    width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: 4.5em !important;
-    bottom: 4.5em !important;
-    height: auto !important;
-    max-height: calc(100vh - 9em) !important;
-    /* Remove box shadow on mobile for full-screen feel */
-    box-shadow: none !important;
-    /* Ensure playlist items can be clicked */
-    pointer-events: auto !important;
-    z-index: 1001 !important; /* Higher than backdrop */
-  }
-
-  /* Mobile backdrop should cover entire screen behind playlist */
-  .playlist-backdrop {
-    left: 0 !important;
-    right: 0 !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
-    z-index: 1000 !important; /* Lower than playlist */
-    /* Prevent backdrop clicks from interfering with playlist */
-    pointer-events: none !important;
-  }
-}
-
-/* Fix track item click behavior */
-.music-player-playlist-container .track-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #34495e;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: white;
-  background: transparent;
-  transition: all 0.2s ease;
-  /* Ensure clicks work properly */
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 1002; /* Higher than backdrop */
-  /* Mobile optimization */
-  min-height: 48px;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
-}
-
-.music-player-playlist-container .track-item:hover {
-  background-color: #34495e;
-}
-
-.music-player-playlist-container .track-item.active {
-  background-color: #3b82f6;
-  color: white;
-  border-left: 4px solid #60a5fa;
-}
-
-/* Fix track text to be fully clickable */
-.music-player-playlist-container .track-text {
-  flex: 1;
-  color: white;
-  cursor: pointer;
-  /* Ensure text area is clickable */
-  pointer-events: auto !important;
-  padding: 0.25rem 0;
-  /* Allow text selection on mobile */
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-/* Mobile specific track item improvements */
-@media (max-width: 768px) {
-  .music-player-playlist-container .track-item {
-    padding: 1rem !important;
-    min-height: 60px !important;
-    border-bottom: 1px solid #34495e;
-    /* Ensure touch events work */
-    touch-action: manipulation !important;
-  }
-
-  .music-player-playlist-container .track-item:active {
-    background-color: #3b82f6 !important;
-    transform: scale(0.98);
-  }
-
-  /* Hide drag handles on mobile */
-  .music-player-playlist-container .drag-handle {
-    display: none !important;
-  }
-}
-
-/* Fix playlist scrolling */
-.music-player-playlist-container .playlist {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: white;
-  /* Ensure playlist content doesn't extend beyond container */
-  max-height: 100%;
-  overflow: visible;
-}
-
-/* Desktop playlist hover improvements */
-@media (min-width: 769px) {
-  .music-player-playlist-container {
-    /* Subtle hover effect for desktop */
-    transition: box-shadow 0.2s ease;
-  }
-
-  .music-player-playlist-container:hover {
-    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
-  }
-}
-
-/* Fix any z-index conflicts */
-.app-header {
-  z-index: 1100 !important;
-}
-
-.app-footer {
-  z-index: 1100 !important;
-}
-
-/* Ensure playlist button doesn't conflict */
-.playlist-button {
-  z-index: 1101 !important;
-  position: relative;
 }

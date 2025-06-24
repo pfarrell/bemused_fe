@@ -621,11 +621,9 @@ AudioPlayer.prototype.loadAndPlayTrack = function(index) {
   // Update active track styling immediately after changing currentTrackIndex
   this.updateActiveTrackStyling();
   
-  if (wasPlaying || this.playlistFinished) {
     this.audioPlayer.play().catch(error => {
       console.error('Playback failed:', error);
     });
-  }
   
   // Force another styling update after a short delay for mobile
   if (window.innerWidth <= 768) {
