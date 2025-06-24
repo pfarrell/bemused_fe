@@ -842,6 +842,90 @@
   }
 }
 
+/* =================================
+   MEDIA PAGE HEADER MOBILE FIXES
+   ================================= */
+
+/* Base media page header styles - works for desktop */
+.media-page-header { 
+  display: flex; 
+  gap: 2rem; 
+  margin-bottom: 1rem; 
+  background-color: white; 
+  padding: .5rem; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile fixes for media page header - tablet and mobile */
+@media (max-width: 768px) {
+  .media-page-header {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 1rem !important;
+  }
+  
+  /* Center the image container */
+  .media-page-header > div:first-child {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  
+  /* Make the info section take full width and center content */
+  .media-page-header > div:last-child {
+    width: 100% !important;
+    flex: none !important;
+  }
+  
+  /* Center the album/artist image */
+  .media-page-header .full-image {
+    width: 280px !important;
+    height: 280px !important;
+    max-width: 90vw !important;
+    object-fit: cover !important;
+    margin: 0 auto !important;
+    display: block !important;
+  }
+  
+  /* Center and size the titles properly */
+  .media-page-header h1 {
+    font-size: 1.75rem !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .media-page-header h2 {
+    font-size: 1.25rem !important;
+    text-align: center !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Style the Wikipedia content to display below the image */
+  .media-page-header .wikipedia-content {
+    font-size: 0.875rem !important;
+    line-height: 1.6 !important;
+    text-align: left !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+    max-width: 100% !important;
+    margin-top: 1rem !important;
+  }
+  
+  /* Center action buttons if they exist */
+  .media-page-header div[style*="display: flex"][style*="gap: 0.5rem"] {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+
+
 @media (max-width: 480px) {
   .artist-grid-container {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -881,14 +965,25 @@
     background-color: #ddd;
   }
 
-  .media-page-header { 
-    display: flex; 
-    gap: 2rem; 
-    margin-bottom: 1rem; 
-    background-color: white; 
-    padding: .5rem; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  .media-page-header .full-image {
+    width: 240px !important;
+    height: 240px !important;
+  }
+
+  .media-page-header h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .media-page-header h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .media-page-header .wikipedia-content {
+    font-size: 0.8rem !important;
+  }
+
+  .media-page-header {
+    padding: 0.75rem !important;
   }
 }
 
@@ -919,4 +1014,129 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+}
+
+/* =================================
+   MOBILE FULLSCREEN & PWA STYLES
+   ================================= */
+
+/* Fullscreen mobile experience */
+@media (max-width: 768px) {
+  /* Hide browser chrome and make truly fullscreen */
+  html {
+    height: 100%;
+    height: 100vh;
+    height: -webkit-fill-available; /* iOS Safari fix */
+  }
+
+  body {
+    height: 100%;
+    height: 100vh;
+    height: -webkit-fill-available; /* iOS Safari fix */
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* Prevent bounce scrolling on iOS */
+    overscroll-behavior: none;
+    /* Prevent zoom on double tap */
+    touch-action: manipulation;
+  }
+
+  /* Main app container */
+  .app {
+    height: 100vh !important;
+    height: -webkit-fill-available !important; /* iOS Safari fix */
+    overflow: hidden;
+  }
+
+  /* Main content area should use all available height */
+  .main-content {
+    height: calc(100vh - 9rem) !important; /* Subtract header + footer */
+    height: calc(-webkit-fill-available - 9rem) !important; /* iOS Safari fix */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Header adjustments for fullscreen */
+  .app-header {
+    /* Use safe area insets for notched devices */
+    padding-top: env(safe-area-inset-top, 0);
+    padding-left: env(safe-area-inset-left, 1.5rem);
+    padding-right: env(safe-area-inset-right, 1.5rem);
+    /* Adjust height to account for safe area */
+    height: calc(4.5em + env(safe-area-inset-top, 0));
+  }
+
+  /* Footer adjustments for fullscreen */
+  .app-footer {
+    /* Use safe area insets for home indicator */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+    /* Adjust height to account for safe area */
+    height: calc(4.5em + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Prevent text selection and context menus on mobile */
+  * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Allow text selection for inputs and content areas */
+  input, textarea, .wikipedia-content, .track-title, .track-artist-album {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Prevent pinch zoom */
+  html {
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+  }
+}
+
+/* PWA specific styles when in standalone mode */
+@media (display-mode: standalone) {
+  /* Remove any browser-specific padding when in PWA mode */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Ensure full height usage in PWA mode */
+  .app {
+    height: 100vh !important;
+    height: 100dvh !important; /* Dynamic viewport height for newer browsers */
+  }
+
+  .main-content {
+    height: calc(100vh - 9rem) !important;
+    height: calc(100dvh - 9rem) !important;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* This targets iOS Safari specifically */
+  .main-content {
+    height: calc(100vh - 9rem - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)) !important;
+    height: calc(-webkit-fill-available - 9rem) !important;
+  }
+}
+
+/* Prevent viewport bounce on iOS */
+@media (max-width: 768px) {
+  body {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+
+  .app {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+  }
 }
