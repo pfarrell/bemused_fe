@@ -8,7 +8,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl }) => {
       <div className="artist-card-image">
         <img
           src={imageUrl}
-          alt={`${album.title} by ${artist.name}`}
+          alt={`${album.title}, ${artist.name}`}
           onError={(e) => {
             console.log(`Failed to load album image: ${e.target.src}`);
           }}

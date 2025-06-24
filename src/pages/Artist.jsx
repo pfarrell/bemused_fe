@@ -77,17 +77,9 @@ const Artist = () => {
   const { artist, summary, albums } = artistData;
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Artist Header */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '2rem', 
-        marginBottom: '3rem', 
-        backgroundColor: 'white', 
-        padding: '2rem', 
-        borderRadius: '8px', 
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' 
-      }}>
+      <div className='media-page-header'>
         {/* Artist Image */}
         <div style={{ flexShrink: 0 }}>
           <img
@@ -111,19 +103,6 @@ const Artist = () => {
           {/* Wikipedia summary */}
           <Wikipedia summary={summary} />
           
-          {/* Artist link */}
-          <div style={{ marginTop: '1rem' }}>
-            <a 
-              href="#" 
-              style={{ color: '#2563eb', textDecoration: 'none', fontSize: '0.875rem' }}
-              onClick={(e) => {
-                e.preventDefault();
-                console.log('Artist link clicked');
-              }}
-            >
-              {artist.name}
-            </a>
-          </div>
         </div>
       </div>
 

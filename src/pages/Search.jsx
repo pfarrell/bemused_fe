@@ -15,6 +15,7 @@ const Search = () => {
   const query = searchParams.get('q') || '';
 
   const performSearch = async (searchQuery) => {
+
     if (!searchQuery.trim()) return;
 
     setLoading(true);
@@ -28,8 +29,13 @@ const Search = () => {
         setSearchParams({ q: searchQuery });
       }
     } catch (error) {
-      console.error('Search error:', error);
-      setError('Search failed. Please try again.');
+      const err = error
+      console.error('Search error:', err);
+      if(err.response && err.response.data) {
+        setError(`${err.response.data}`)
+      } else {
+        setError('Search failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
