@@ -1140,3 +1140,323 @@
     overflow: hidden;
   }
 }
+
+/* =================================
+   MOBILE FIXES FOR SCROLLING AND PLAYLIST
+   ================================= */
+
+/* Fix 1: Main content scrolling to bottom on mobile */
+@media (max-width: 768px) {
+  /* Ensure main content can scroll to bottom with proper padding */
+  .main-content {
+    padding-bottom: 6rem !important; /* Add extra padding to scroll past footer */
+    min-height: calc(100vh - 4.5em) !important; /* Account for header only */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Artist grid and other content should have bottom margin */
+  .artist-grid {
+    padding-bottom: 2rem !important;
+  }
+  
+  /* Album and artist pages need bottom padding too */
+  [style*="padding: .5rem"] {
+    padding-bottom: 2rem !important;
+  }
+}
+
+/* Fix 2: Mobile playlist scrolling and touch optimization */
+@media (max-width: 768px) {
+  /* Mobile playlist container fixes */
+  .music-player-playlist-container {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 4.5em !important;
+    bottom: 4.5em !important; /* Don't overlap footer */
+    height: auto !important; /* Let it calculate height automatically */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    /* Ensure scrolling works on mobile */
+    touch-action: pan-y !important;
+    /* Remove user-select to allow scrolling */
+    -webkit-user-select: auto !important;
+    user-select: auto !important;
+  }
+  
+  /* Fix 3: Mobile playlist items - remove drag, enable touch to play */
+  .music-player-playlist-container .track-item {
+    /* Remove drag and drop on mobile */
+    draggable: false !important;
+    /* Optimize for touch */
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3) !important;
+    cursor: pointer !important;
+    padding: 1rem !important;
+    min-height: 60px !important; /* Better touch targets */
+    /* Enable text selection for better accessibility */
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+  
+  /* Remove drag handle on mobile */
+  .music-player-playlist-container .drag-handle {
+    display: none !important;
+  }
+  
+  /* Make track text area larger and more touchable */
+  .music-player-playlist-container .track-text {
+    flex: 1 !important;
+    padding: 0.5rem 0 !important;
+    /* Make entire text area clickable */
+    cursor: pointer !important;
+    /* Allow text selection */
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    /* Ensure touch events work */
+    pointer-events: auto !important;
+  }
+  
+  /* Improve visual feedback for mobile playlist items */
+  .music-player-playlist-container .track-item:active {
+    background-color: #3b82f6 !important;
+    transform: scale(0.98) !important;
+  }
+  
+  /* Better active state for currently playing track */
+  .music-player-playlist-container .track-item.active {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-left: 4px solid #60a5fa !important;
+  }
+  
+  /* Playlist backdrop should cover full screen on mobile */
+  .playlist-backdrop {
+    left: 0 !important;
+    right: 0 !important;
+    top: 4.5em !important;
+    bottom: 4.5em !important;
+  }
+}
+
+/* Additional mobile scrolling improvements */
+@media (max-width: 768px) {
+  /* Ensure all page content can be scrolled to */
+  body {
+    /* Prevent bounce scrolling but allow normal scrolling */
+    overscroll-behavior: contain !important;
+  }
+  
+  /* Fix any potential height issues */
+  .app {
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+  
+  /* Artist and album page content should be scrollable */
+  .artist-grid-container,
+  .media-page-header ~ * {
+    margin-bottom: 2rem !important;
+  }
+  
+  /* Track listings should have proper spacing */
+  .track-list-container {
+    padding-bottom: 2rem !important;
+  }
+}
+
+/* Fix scrollbar appearance on mobile playlist */
+@media (max-width: 768px) {
+  .music-player-playlist-container::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .music-player-playlist-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .music-player-playlist-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+  }
+  
+  .music-player-playlist-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+
+/* =================================
+   PLAYLIST FIXES - STYLING AND POSITIONING
+   ================================= */
+
+/* Fix playlist container positioning and sizing */
+.music-player-playlist-container {
+  position: fixed;
+  top: 4.5em;
+  left: 0;
+  width: 400px;
+  /* Fix height to not extend over footer */
+  height: calc(100vh - 9em) !important;
+  max-height: calc(100vh - 9em) !important;
+  background-color: #2c3e50;
+  /* Remove problematic right border */
+  border-right: none !important;
+  /* Add subtle shadow instead of border */
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 1000;
+  padding: 1rem;
+  color: white;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix playlist backdrop positioning */
+.playlist-backdrop {
+  position: fixed;
+  top: 4.5em;
+  /* Fix desktop backdrop positioning */
+  left: 400px !important;
+  right: 0;
+  bottom: 4.5em !important; /* Don't extend over footer */
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 999; /* Lower than playlist container */
+  /* Prevent backdrop from intercepting clicks on playlist items */
+  pointer-events: auto;
+}
+
+/* Mobile playlist fixes */
+@media (max-width: 768px) {
+  .music-player-playlist-container {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 4.5em !important;
+    bottom: 4.5em !important;
+    height: auto !important;
+    max-height: calc(100vh - 9em) !important;
+    /* Remove box shadow on mobile for full-screen feel */
+    box-shadow: none !important;
+    /* Ensure playlist items can be clicked */
+    pointer-events: auto !important;
+    z-index: 1001 !important; /* Higher than backdrop */
+  }
+
+  /* Mobile backdrop should cover entire screen behind playlist */
+  .playlist-backdrop {
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1000 !important; /* Lower than playlist */
+    /* Prevent backdrop clicks from interfering with playlist */
+    pointer-events: none !important;
+  }
+}
+
+/* Fix track item click behavior */
+.music-player-playlist-container .track-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #34495e;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: white;
+  background: transparent;
+  transition: all 0.2s ease;
+  /* Ensure clicks work properly */
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 1002; /* Higher than backdrop */
+  /* Mobile optimization */
+  min-height: 48px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
+}
+
+.music-player-playlist-container .track-item:hover {
+  background-color: #34495e;
+}
+
+.music-player-playlist-container .track-item.active {
+  background-color: #3b82f6;
+  color: white;
+  border-left: 4px solid #60a5fa;
+}
+
+/* Fix track text to be fully clickable */
+.music-player-playlist-container .track-text {
+  flex: 1;
+  color: white;
+  cursor: pointer;
+  /* Ensure text area is clickable */
+  pointer-events: auto !important;
+  padding: 0.25rem 0;
+  /* Allow text selection on mobile */
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Mobile specific track item improvements */
+@media (max-width: 768px) {
+  .music-player-playlist-container .track-item {
+    padding: 1rem !important;
+    min-height: 60px !important;
+    border-bottom: 1px solid #34495e;
+    /* Ensure touch events work */
+    touch-action: manipulation !important;
+  }
+
+  .music-player-playlist-container .track-item:active {
+    background-color: #3b82f6 !important;
+    transform: scale(0.98);
+  }
+
+  /* Hide drag handles on mobile */
+  .music-player-playlist-container .drag-handle {
+    display: none !important;
+  }
+}
+
+/* Fix playlist scrolling */
+.music-player-playlist-container .playlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: white;
+  /* Ensure playlist content doesn't extend beyond container */
+  max-height: 100%;
+  overflow: visible;
+}
+
+/* Desktop playlist hover improvements */
+@media (min-width: 769px) {
+  .music-player-playlist-container {
+    /* Subtle hover effect for desktop */
+    transition: box-shadow 0.2s ease;
+  }
+
+  .music-player-playlist-container:hover {
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Fix any z-index conflicts */
+.app-header {
+  z-index: 1100 !important;
+}
+
+.app-footer {
+  z-index: 1100 !important;
+}
+
+/* Ensure playlist button doesn't conflict */
+.playlist-button {
+  z-index: 1101 !important;
+  position: relative;
+}

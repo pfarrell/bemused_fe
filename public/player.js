@@ -18,6 +18,7 @@ const SHUFFLE_SYMBOL = window.SHUFFLE_SYMBOL;
 const DRAG_HANDLE = window.DRAG_HANDLE;
 const HAMBURGER_SYMBOL = window.HAMBURGER_SYMBOL;
 
+
 function AudioPlayer(playlist, audioElement, containerElement, playlistElement, config = {}) {
   this.playlist = playlist || [];
   this.currentTrackIndex = -1;
@@ -234,117 +235,109 @@ AudioPlayer.prototype.createProgressBar = function() {
   return progressBarWrapper;
 };
 
-// Continue with existing methods but update them to use CSS classes instead of inline styles
+// Fix the backdrop creation to prevent click conflicts
+AudioPlayer.prototype.createBackdrop = function() {
+  if (this.backdropElement) {
+    return; // Already exists
+  }
+  
+  this.backdropElement = document.createElement('div');
+  this.backdropElement.className = 'playlist-backdrop';
+  
+  // Fix backdrop click handler to prevent conflicts
+  this.backdropElement.addEventListener('click', (e) => {
+    // Only hide playlist if clicking the backdrop itself, not child elements
+    if (e.target === this.backdropElement) {
+      this.hidePlaylist();
+    }
+  });
+  
+  // Prevent backdrop from interfering with playlist scrolling on mobile
+  this.backdropElement.addEventListener('touchstart', (e) => {
+    // Don't prevent touch events that might be scrolling
+    if (window.innerWidth <= 768) {
+      e.stopPropagation();
+    }
+  });
+  
+  document.body.appendChild(this.backdropElement);
+};
 
+// Enhanced mobile detection
+function isMobileDevice() {
+  return window.innerWidth <= 768 || 
+         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Enhanced mobile touch handling with proper cleanup
 AudioPlayer.prototype.loadPlaylistUI = function() {
   this.trackListElement.innerHTML = '';
+  const isMobile = isMobileDevice();
 
   this.playlist.forEach((track, index) => {
     const listItem = document.createElement('li');
     const prefix = this.getTrackPrefix(track, index);
 
     listItem.className = 'track-item';
-    listItem.draggable = true;
+    listItem.draggable = !isMobile;
+    
+    listItem.style.listStyle = 'none';
+    listItem.style.padding = isMobile ? '1rem' : '0.75rem 1rem';
+    listItem.style.cursor = 'pointer';
+    listItem.style.display = 'flex';
+    listItem.style.alignItems = 'center';
+    listItem.style.borderBottom = '1px solid #34495e';
+    listItem.style.textAlign = 'left';
+    listItem.style.minHeight = isMobile ? '60px' : '48px';
+    listItem.style.position = 'relative';
+    listItem.style.zIndex = '1002';
     
     if (prefix) {
       const prefixElement = document.createElement('span');
       prefixElement.className = 'track-prefix';
+      prefixElement.style.marginRight = '8px';
+      prefixElement.style.color = 'white';
       prefixElement.innerHTML = prefix;
       listItem.appendChild(prefixElement);
     }
 
-    const dragHandle = document.createElement('span');
-    dragHandle.innerHTML = DRAG_HANDLE;
-    dragHandle.className = 'drag-handle';
-
     const trackText = document.createElement('span');
     trackText.className = 'track-text';
-    trackText.textContent = `${index + 1}. ${track.title} - ${track.artist.name} (${track.duration})`;
+    trackText.style.flex = '1';
+    trackText.style.color = 'white';
+    trackText.style.cursor = 'pointer';
+    trackText.style.padding = isMobile ? '0.5rem 0' : '0.25rem 0';
+    trackText.style.pointerEvents = 'auto';
+    trackText.textContent = `${index + 1}. ${track.title} - ${track.artist.name} (${this.formatTime(track.duration)})`;
 
     listItem.appendChild(trackText);
-    listItem.appendChild(dragHandle);
 
-    // Drag and drop event listeners
-    listItem.addEventListener('dragstart', (e) => {
-      this.draggedItem = listItem;
-      this.draggedItemIndex = index;
-      listItem.style.opacity = '0.2';
-      e.dataTransfer.effectAllowed = 'move';
-    });
+    if (!isMobile) {
+      const dragHandle = document.createElement('span');
+      dragHandle.className = 'drag-handle';
+      dragHandle.innerHTML = '⋮⋮';
+      dragHandle.style.cursor = 'grab';
+      dragHandle.style.opacity = '0.7';
+      dragHandle.style.fontSize = '16px';
+      dragHandle.style.color = 'white';
+      dragHandle.style.padding = '4px';
+      dragHandle.style.marginLeft = '8px';
+      dragHandle.style.minWidth = '24px';
+      dragHandle.style.minHeight = '24px';
+      dragHandle.style.display = 'flex';
+      dragHandle.style.alignItems = 'center';
+      dragHandle.style.justifyContent = 'center';
+      
+      listItem.appendChild(dragHandle);
+      this.addDragAndDropListeners(listItem, index);
+    }
 
-    listItem.addEventListener('dragend', () => {
-      if (this.draggedItem) {
-        this.draggedItem.style.opacity = '1';
-        this.draggedItem = null;
-        this.draggedItemIndex = null;
-      }
-
-      // Remove all drag-over effects
-      const items = this.trackListElement.querySelectorAll('.track-item');
-      items.forEach(item => {
-        item.style.borderTop = '';
-        item.style.borderBottom = '1px solid #34495e';
-      });
-    });
-
-    listItem.addEventListener('dragover', (e) => {
+    const handleTrackClick = (e) => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-
-      const boundingRect = listItem.getBoundingClientRect();
-      const midpoint = boundingRect.top + boundingRect.height / 2;
-
-      if (e.clientY < midpoint) {
-        listItem.style.borderTop = '2px solid #3b82f6';
-        listItem.style.borderBottom = '1px solid #34495e';
-      } else {
-        listItem.style.borderTop = '';
-        listItem.style.borderBottom = '2px solid #3b82f6';
-      }
-    });
-
-    listItem.addEventListener('dragleave', () => {
-      listItem.style.borderTop = '';
-      listItem.style.borderBottom = '1px solid #34495e';
-    });
-
-    listItem.addEventListener('drop', (e) => {
-      e.preventDefault();
-      if (this.draggedItem === listItem) return;
-
-      const boundingRect = listItem.getBoundingClientRect();
-      const midpoint = boundingRect.top + boundingRect.height / 2;
-      let newIndex = index;
-
-      if (e.clientY > midpoint) {
-        newIndex++;
-      }
-
-      // Update playlist array
-      const [movedTrack] = this.playlist.splice(this.draggedItemIndex, 1);
-      this.playlist.splice(newIndex, 0, movedTrack);
-
-      // Update currentTrackIndex if needed
-      if (this.currentTrackIndex === this.draggedItemIndex) {
-        this.currentTrackIndex = newIndex;
-      } else if (this.draggedItemIndex < this.currentTrackIndex && newIndex >= this.currentTrackIndex) {
-        this.currentTrackIndex--;
-      } else if (this.draggedItemIndex > this.currentTrackIndex && newIndex <= this.currentTrackIndex) {
-        this.currentTrackIndex++;
-      }
-
-      // Reload playlist UI
-      this.loadPlaylistUI();
-
-      // Update active track styling
-      Array.from(this.trackListElement.children).forEach((item, idx) => {
-        item.classList.toggle('active', idx === this.currentTrackIndex);
-      });
-    });
-
-    // Click to play track
-    trackText.addEventListener('click', () => {
+      e.stopPropagation();
+      
       this.playlistFinished = false;
+      
       if (index === this.currentTrackIndex) {
         if (this.audioPlayer.paused) {
           this.audioPlayer.play();
@@ -354,20 +347,211 @@ AudioPlayer.prototype.loadPlaylistUI = function() {
       } else {
         this.loadAndPlayTrack(index);
       }
-    });
+    };
+
+    listItem.addEventListener('click', handleTrackClick);
+    trackText.addEventListener('click', handleTrackClick);
+    
+    if (isMobile) {
+      let touchStartTime = 0;
+      let touchFeedbackTimeout = null;
+      
+      listItem.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+        
+        // Clear any existing timeout
+        if (touchFeedbackTimeout) {
+          clearTimeout(touchFeedbackTimeout);
+        }
+        
+        // Only apply touch feedback if this isn't the active track
+        if (index !== this.currentTrackIndex) {
+          listItem.style.setProperty('background-color', '#4f46e5', 'important');
+          listItem.style.setProperty('transform', 'scale(0.98)', 'important');
+        }
+      }, { passive: true });
+      
+      listItem.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        
+        // Clear touch feedback
+        if (touchFeedbackTimeout) {
+          clearTimeout(touchFeedbackTimeout);
+        }
+        
+        // Reset visual feedback after delay, but only if it's not the active track
+        touchFeedbackTimeout = setTimeout(() => {
+          if (index !== this.currentTrackIndex) {
+            listItem.style.setProperty('background-color', 'transparent', 'important');
+            listItem.style.setProperty('transform', 'scale(1)', 'important');
+          }
+          // Force active track styling update
+          this.updateActiveTrackStyling();
+        }, 200);
+        
+        // Only trigger if it was a tap (not a scroll)
+        if (touchDuration < 300) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleTrackClick(e);
+          
+          // Force immediate styling update after track change
+          setTimeout(() => {
+            this.updateActiveTrackStyling();
+          }, 50);
+        }
+      }, { passive: false });
+      
+      listItem.addEventListener('touchcancel', () => {
+        if (touchFeedbackTimeout) {
+          clearTimeout(touchFeedbackTimeout);
+        }
+        
+        // Reset styling
+        if (index !== this.currentTrackIndex) {
+          listItem.style.setProperty('background-color', 'transparent', 'important');
+          listItem.style.setProperty('transform', 'scale(1)', 'important');
+        }
+      });
+    }
 
     this.trackListElement.appendChild(listItem);
   });
   
+  // Update active track styling after creating all items
+  this.updateActiveTrackStyling();
+};
+
+// Enhanced updateActiveTrackStyling function with mobile fixes
+AudioPlayer.prototype.updateActiveTrackStyling = function() {
+  const isMobile = window.innerWidth <= 768;
+
   Array.from(this.trackListElement.children).forEach((item, idx) => {
-    item.classList.toggle('active', idx === this.currentTrackIndex);
+    const isActive = idx === this.currentTrackIndex;
+
+    // Remove all styling classes first
+    item.classList.remove('active');
+
+    if (isActive) {
+      // Set active track styling
+      item.classList.add('active');
+      item.style.backgroundColor = '#3b82f6 !important';
+      item.style.color = 'white !important';
+      item.style.borderLeft = '4px solid #60a5fa';
+
+      // Force style update on mobile
+      if (isMobile) {
+        item.style.setProperty('background-color', '#3b82f6', 'important');
+        item.style.setProperty('color', 'white', 'important');
+      }
+    } else {
+      // Reset inactive track styling
+      item.style.backgroundColor = 'transparent';
+      item.style.color = 'white';
+      item.style.borderLeft = 'none';
+      item.style.transform = 'scale(1)'; // Reset any touch scaling
+
+      // Force style reset on mobile
+      if (isMobile) {
+        item.style.setProperty('background-color', 'transparent', 'important');
+        item.style.setProperty('color', 'white', 'important');
+        item.style.setProperty('transform', 'scale(1)', 'important');
+      }
+    }
   });
 };
+
+// Fixed drag and drop listeners (desktop only)
+AudioPlayer.prototype.addDragAndDropListeners = function(listItem, index) {
+  listItem.addEventListener('dragstart', (e) => {
+    this.draggedItem = listItem;
+    this.draggedItemIndex = index;
+    listItem.style.opacity = '0.2';
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  listItem.addEventListener('dragend', () => {
+    if (this.draggedItem) {
+      this.draggedItem.style.opacity = '1';
+      this.draggedItem = null;
+      this.draggedItemIndex = null;
+    }
+
+    // Remove all drag-over effects
+    const items = this.trackListElement.querySelectorAll('.track-item');
+    items.forEach(item => {
+      item.style.borderTop = '';
+      item.style.borderBottom = '1px solid #34495e';
+    });
+  });
+
+  listItem.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    const boundingRect = listItem.getBoundingClientRect();
+    const midpoint = boundingRect.top + boundingRect.height / 2;
+
+    if (e.clientY < midpoint) {
+      listItem.style.borderTop = '2px solid #3b82f6';
+      listItem.style.borderBottom = '1px solid #34495e';
+    } else {
+      listItem.style.borderTop = '';
+      listItem.style.borderBottom = '2px solid #3b82f6';
+    }
+  });
+
+  listItem.addEventListener('dragleave', () => {
+    listItem.style.borderTop = '';
+    listItem.style.borderBottom = '1px solid #34495e';
+  });
+
+  listItem.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (this.draggedItem === listItem) return;
+
+    const boundingRect = listItem.getBoundingClientRect();
+    const midpoint = boundingRect.top + boundingRect.height / 2;
+    let newIndex = index;
+
+    if (e.clientY > midpoint) {
+      newIndex++;
+    }
+
+    // Update playlist array
+    const [movedTrack] = this.playlist.splice(this.draggedItemIndex, 1);
+    this.playlist.splice(newIndex, 0, movedTrack);
+
+    // Update currentTrackIndex if needed
+    if (this.currentTrackIndex === this.draggedItemIndex) {
+      this.currentTrackIndex = newIndex;
+    } else if (this.draggedItemIndex < this.currentTrackIndex && newIndex >= this.currentTrackIndex) {
+      this.currentTrackIndex--;
+    } else if (this.draggedItemIndex > this.currentTrackIndex && newIndex <= this.currentTrackIndex) {
+      this.currentTrackIndex++;
+    }
+
+    // Reload playlist UI
+    this.loadPlaylistUI();
+  });
+};
+
+
 
 // Keep all your existing methods: attachAudioPlayerListeners, formatTime, updatePlayButton,
 // highlightFirstTrack, loadAndPlayTrack, playNextTrack, playPrevTrack, addTrack, addTracks, clearPlaylist
 
 AudioPlayer.prototype.attachAudioPlayerListeners = function() {
+  this.audioPlayer.addEventListener('loadstart', () => {
+    // Update styling when a new track starts loading
+    this.updateActiveTrackStyling();
+  });
+
+  this.audioPlayer.addEventListener('canplay', () => {
+    // Ensure styling is correct when track is ready
+    this.updateActiveTrackStyling();
+  });
+
   this.audioPlayer.addEventListener('ended', () => {
     if (!this.shuffle && this.currentTrackIndex === this.playlist.length - 1) {
       this.playlistFinished = true;
@@ -421,35 +605,36 @@ AudioPlayer.prototype.highlightFirstTrack = function() {
   }
 };
 
+// Modified loadAndPlayTrack function to ensure styling updates
 AudioPlayer.prototype.loadAndPlayTrack = function(index) {
-  try {
-    if (this.playlist.length == 0) {
-      return;
-    }
-    if (index < 0 || index >= this.playlist.length) {
-      throw new Error('Invalid track index');
-    }
+  if (index < 0 || index >= this.playlist.length) return;
+  
+  const track = this.playlist[index];
+  if (!track) return;
 
-    if (this.currentTrackIndex !== index || this.audioPlayer.paused) {
-      this.audioPlayer.src = this.playlist[index].url;
-      this.currentTrackIndex = index;
-      this.onTrackStart(this.playlist[index]);
-      if (this.shuffle && !this.shuffleHistory.includes(index)) {
-        this.shuffleHistory.push(index);
-      }
-    }
-
-    this.audioPlayer.play();
-    this.playlistFinished = false;
-
-    Array.from(this.trackListElement.children).forEach((item, idx) => {
-      item.classList.toggle('active', idx === index);
+  const wasPlaying = !this.audioPlayer.paused;
+  
+  this.currentTrackIndex = index;
+  this.audioPlayer.src = track.url;
+  this.audioPlayer.load();
+  
+  // Update active track styling immediately after changing currentTrackIndex
+  this.updateActiveTrackStyling();
+  
+  if (wasPlaying || this.playlistFinished) {
+    this.audioPlayer.play().catch(error => {
+      console.error('Playback failed:', error);
     });
-
-    this.updatePlayButton();
-  } catch (error) {
-    console.error('Error loading track:', error);
   }
+  
+  // Force another styling update after a short delay for mobile
+  if (window.innerWidth <= 768) {
+    setTimeout(() => {
+      this.updateActiveTrackStyling();
+    }, 100);
+  }
+  
+  this.onTrackStart(track, index);
 };
 
 AudioPlayer.prototype.playNextTrack = function() {

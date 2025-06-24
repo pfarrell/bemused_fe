@@ -1,4 +1,5 @@
 // src/components/Layout.jsx
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import MusicPlayerWrapper from './player/MusicPlayerWrapper';
