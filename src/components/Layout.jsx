@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import MusicPlayerWrapper from './player/MusicPlayerWrapper';
+import NowPlaying from './NowPlaying';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ const Layout = ({ children }) => {
 
       {/* Fixed Footer */}
       <div className="app-footer">
+        <NowPlaying />
         <MusicPlayerWrapper />
       </div>
     </div>
