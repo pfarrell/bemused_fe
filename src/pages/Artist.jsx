@@ -94,7 +94,7 @@ const Artist = () => {
         
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 1rem 0', color: '#1f2937' }}
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 1rem 0', color: '#1f2937', cursor: 'pointer' }}
             onClick={ reload }
           >
             {artist.name}
