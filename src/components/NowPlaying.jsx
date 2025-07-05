@@ -1,8 +1,18 @@
 // src/components/player/NowPlaying.jsx
+import { useNavigate } from 'react-router-dom';
 import { usePlayerStore } from '../stores/playerStore';
 
 const NowPlaying = () => {
+  const navigate = useNavigate();
   const { currentTrack } = usePlayerStore();
+  const handleArtistClick = (track) => {
+    navigate(`/artist/${track.artist.id}`);
+  };
+
+  const handleTrackClick = (track) => {
+    navigate(`/album/${track.album.id}`);
+  };
+
 
   // Don't show on mobile or when no track is playing
   if (!currentTrack) {
@@ -27,10 +37,10 @@ const NowPlaying = () => {
         />
       </svg>
       <div className="track-info show">
-        <div className="track-artist">
+        <div className="track-artist" onClick={() => handleArtistClick(currentTrack)} title="go to artist">
           {currentTrack.artist?.name || currentTrack.artist || 'Unknown Artist'}
         </div>
-        <div className="track-title">
+        <div className="track-title" onClick={() => handleTrackClick(currentTrack)} title="go to album">
           {currentTrack.title}
         </div>
       </div>
