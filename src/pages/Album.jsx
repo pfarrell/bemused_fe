@@ -56,7 +56,7 @@ const Album = () => {
       playerInstance.addTracks(albumData.tracks, true); // true = play next
       
       // If nothing is playing, start playing immediately
-      if (!playerInstance.currentTrack || !playerInstance.isPlaying) {
+      if (playerInstance.audioPlayer.paused) {
         const currentIndex = playerInstance.currentTrackIndex;
         playerInstance.loadAndPlayTrack(currentIndex + 1);
       }
@@ -69,7 +69,7 @@ const Album = () => {
       playerInstance.addTracks(albumData.tracks, false); // false = add to end
       
       // If nothing is playing, start playing immediately
-      if (!playerInstance.currentTrack || !playerInstance.isPlaying) {
+      if (playerInstance.audioPlayer.paused) {
         const playlist = playerInstance.getPlaylist();
         const startIndex = playlist.length - albumData.tracks.length; // First track of the added album
         playerInstance.loadAndPlayTrack(startIndex);
