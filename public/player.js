@@ -312,23 +312,19 @@ AudioPlayer.prototype.loadPlaylistUI = function() {
 
     listItem.appendChild(trackText);
 
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'track-delete-button';
+    deleteButton.innerHTML = '❌';
+    deleteButton.title = 'Remove from playlist';
+    deleteButton.setAttribute('aria-label', 'Remove track from playlist');
+    listItem.appendChild(deleteButton);
+
+    deleteButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent track click event
+      this.removeTrackFromPlaylist(index);
+    });
+
     if (!isMobile) {
-      const dragHandle = document.createElement('span');
-      dragHandle.className = 'drag-handle';
-      dragHandle.innerHTML = '⋮⋮';
-      dragHandle.style.cursor = 'grab';
-      dragHandle.style.opacity = '0.7';
-      dragHandle.style.fontSize = '16px';
-      dragHandle.style.color = 'white';
-      dragHandle.style.padding = '4px';
-      dragHandle.style.marginLeft = '8px';
-      dragHandle.style.minWidth = '24px';
-      dragHandle.style.minHeight = '24px';
-      dragHandle.style.display = 'flex';
-      dragHandle.style.alignItems = 'center';
-      dragHandle.style.justifyContent = 'center';
-      
-      listItem.appendChild(dragHandle);
       this.addDragAndDropListeners(listItem, index);
     }
 
@@ -720,6 +716,58 @@ AudioPlayer.prototype.clearPlaylist = function() {
   this.trackLengthDisplay.textContent = '0:00';
   this.audioPlayer.src = '';
 };
+
+AudioPlayer.prototype.removeTrackFromPlaylist = function(index) {
+  if (index < 0 || index >= this.playlist.length) {
+    console.error('Invalid track index for removal');
+    return;
+  }
+
+  // Don't allow removing currently playing track
+  if (index === this.currentTrackIndex) {
+    console.warn('Cannot remove currently playing track');
+    return;
+  }
+
+  // Remove track from playlist
+  const removedTrack = this.playlist.splice(index, 1)[0];
+  console.log('Removed track:', removedTrack.title);
+
+  // Adjust currentTrackIndex if necessary
+  if (index < this.currentTrackIndex) {
+    this.currentTrackIndex--;
+  }
+
+  // Remove from shuffle history if present
+  if (this.shuffle && this.shuffleHistory.includes(index)) {
+    const historyIndex = this.shuffleHistory.indexOf(index);
+    this.shuffleHistory.splice(historyIndex, 1);
+    
+    // Adjust remaining shuffle history indices
+    this.shuffleHistory = this.shuffleHistory.map(historyIndex => 
+      historyIndex > index ? historyIndex - 1 : historyIndex
+    );
+  }
+
+  // Reload playlist UI
+  this.loadPlaylistUI();
+
+  // If playlist is now empty, pause and reset
+  if (this.playlist.length === 0) {
+    this.audioPlayer.pause();
+    this.currentTrackIndex = 0;
+    this.audioPlayer.src = '';
+    this.timeElapsedDisplay.textContent = '0:00';
+    this.trackLengthDisplay.textContent = '0:00';
+    this.updatePlayButton();
+  }
+  
+  // Update any external state management (like React stores)
+  if (typeof this.onPlaylistChange === 'function') {
+    this.onPlaylistChange(this.playlist);
+  }
+};
+
 
 // For browser environments
 if (typeof window !== 'undefined') {

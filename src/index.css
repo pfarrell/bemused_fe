@@ -404,18 +404,17 @@
 }
 
 .player-controls-container {
-  width: 100%;
-  height: 100%;
   display: flex;
+  height: 100%;
   align-items: center;
-  justify-content: center;
+  width: 100%;
+  margin-left:1rem;
 }
 
 .player-controls-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
   gap: 1rem;
 }
 
@@ -504,6 +503,100 @@
 }
 
 /* =================================
+   PLAYER BAR STYLES - FIXED LAYOUT
+   ================================= */
+
+.player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--player-height, 4.5rem);
+  background-color: #111827;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: 300px 1fr auto; /* Fixed left, flexible center, auto right */
+  align-items: center;
+  gap: 1rem;
+  z-index: 10;
+  color: white;
+  border-top: 1px solid #374151;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Now playing with fixed width */
+.now-playing {
+  display: none; /* Hidden on mobile by default */
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  width: 100%;
+  max-width: 300px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.now-playing svg {
+  flex-shrink: 0;
+  color: #ffffff;
+  width: 24px;
+  height: 24px;
+}
+
+.now-playing .track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.now-playing .track-title {
+  font-weight: 600;
+  color: #CF7C29;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.now-playing .track-artist {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.25;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* Playlist button with fixed positioning */
+.playlist-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.playlist-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* =================================
    PLAYLIST STYLES
    ================================= */
 
@@ -524,12 +617,8 @@
   -webkit-overflow-scrolling: touch;
   -webkit-user-select: none;
   user-select: none;
-  
-  /* Base left alignment for all devices */
   text-align: left;
-  
-  /* CRITICAL: Hide playlist by default */
-  display: none;
+  display: none; /* Hide playlist by default */
 }
 
 .music-player-playlist-container .playlist {
@@ -558,8 +647,6 @@
   position: relative;
   pointer-events: auto;
   z-index: 1002;
-  
-  /* Ensure left alignment */
   text-align: left;
   justify-content: flex-start;
   width: 100%;
@@ -609,27 +696,80 @@
   text-align: left;
 }
 
-.music-player-playlist-container .drag-handle {
-  cursor: grab;
+.music-player-playlist-container .track-delete-button {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  cursor: pointer;
   opacity: 0.7;
-  font-size: 16px;
-  color: white;
+  font-size: 14px;
   padding: 4px;
   margin-left: 8px;
   min-width: 24px;
   min-height: 24px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   -webkit-user-select: none;
   user-select: none;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-.music-player-playlist-container .drag-handle:hover {
+.music-player-playlist-container .track-delete-button:hover {
   opacity: 1;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: scale(1.1);
+}
+
+.music-player-playlist-container .track-delete-button:active {
+  transform: scale(0.95);
+  background: rgba(239, 68, 68, 0.3);
+}
+
+/* Hide delete button for currently playing track */
+.music-player-playlist-container .track-item.active .track-delete-button {
+  display: none;
+}
+
+/* Mobile optimizations for delete button */
+@media (max-width: 768px) {
+  .music-player-playlist-container .track-delete-button {
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 16px;
+    padding: 6px;
+    margin-left: 12px;
+    opacity: 1; /* Always visible on mobile for easier touch */
+  }
+
+  .music-player-playlist-container .track-delete-button:hover {
+    transform: none; /* Disable hover transforms on mobile */
+  }
+
+  .music-player-playlist-container .track-delete-button:active {
+    transform: scale(0.95);
+    background: rgba(239, 68, 68, 0.4);
+  }
+}
+
+/* Update existing drag handle styles to hide them */
+.music-player-playlist-container .drag-handle {
+  display: none !important;
+}
+
+/* Ensure track items still work without drag handle */
+.music-player-playlist-container .track-item {
+  draggable: false !important;
+}
+
+@media (max-width: 768px) {
+  .music-player-playlist-container .track-item {
+    draggable: false !important;
+  }
 }
 
 .playlist-backdrop {
@@ -641,24 +781,6 @@
   background-color: rgba(0, 0, 0, 0.3);
   z-index: 999;
   pointer-events: auto;
-}
-
-.now-playing {
-  display: none;
-  flex: 1 0 10em;
-}
-
-.playlist-button {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  z-index: 1101;
-  position: relative;
 }
 
 /* =================================
@@ -684,21 +806,18 @@
 
 /* Album and artist page content spacing */
 .media-page-content {
-  padding-bottom: 3rem; /* Extra space for footer clearance */
+  padding-bottom: 3rem;
 }
 
-/* Ensure track listings have proper bottom spacing */
 .track-list-container {
   padding-bottom: 3rem;
 }
 
-/* General page content bottom spacing */
 [data-page="album"],
 [data-page="artist"] {
   padding-bottom: 3rem;
 }
 
-/* Ensure last elements in main content have proper spacing */
 .main-content > *:last-child {
   margin-bottom: 3rem;
 }
@@ -710,7 +829,6 @@
 @media (min-width: 769px) {
   .now-playing {
     display: flex;
-    align-items: center;
   }
 
   .time-display {
@@ -724,6 +842,17 @@
 
   .music-player-playlist-container:hover {
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Tablet - Reduce now-playing width */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .player-bar {
+    grid-template-columns: 250px 1fr auto;
+  }
+  
+  .now-playing {
+    max-width: 250px;
   }
 }
 
@@ -761,7 +890,7 @@
 
   /* Main content */
   .main-content {
-    padding-bottom: 8rem !important; /* Extra padding on mobile for footer clearance */
+    padding-bottom: 8rem !important;
     min-height: calc(100vh - 4.5em) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -779,11 +908,27 @@
     padding-bottom: 2rem !important;
   }
 
+  /* Player bar mobile layout */
+  .player-bar {
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    padding: 0 1rem;
+  }
+  
+  /* Hide now-playing on mobile */
+  .now-playing {
+    display: none !important;
+  }
+  
+  .playlist-button {
+    padding: 0.25rem;
+    font-size: 0.875rem;
+  }
+
   /* Player controls optimizations */
   .player-controls-wrapper {
     gap: 0.75rem;
     justify-content: center;
-    width: 100%;
   }
   
   .hamburger-btn {
@@ -846,12 +991,8 @@
     font-size: 0.9rem;
     min-height: 40px;
   }
-  
-  .now-playing {
-    display: none;
-  }
 
-  /* MOBILE PLAYLIST FIXES - LEFT ALIGNMENT */
+  /* Mobile playlist adjustments */
   .music-player-playlist-container {
     width: 100% !important;
     left: 0 !important;
@@ -861,16 +1002,12 @@
     height: auto !important;
     max-height: calc(100vh - 9em) !important;
     box-shadow: none !important;
-    pointer-events: auto !important;
     z-index: 1001 !important;
-    
-    /* Force left alignment */
     text-align: left !important;
     flex-direction: column !important;
     align-items: stretch !important;
   }
   
-  /* Only apply flex display when playlist is visible */
   .music-player-playlist-container[style*="display: block"] {
     display: flex !important;
   }
@@ -892,8 +1029,6 @@
     min-height: 60px !important;
     -webkit-user-select: text !important;
     user-select: text !important;
-    
-    /* Force left alignment */
     text-align: left !important;
     display: flex !important;
     align-items: center !important;
@@ -903,10 +1038,6 @@
     box-sizing: border-box !important;
   }
   
-  .music-player-playlist-container .drag-handle {
-    display: none !important;
-  }
-  
   .music-player-playlist-container .track-text {
     flex: 1 !important;
     padding: 0.5rem 0 !important;
@@ -914,8 +1045,6 @@
     -webkit-user-select: text !important;
     user-select: text !important;
     pointer-events: auto !important;
-    
-    /* Force left alignment */
     text-align: left !important;
     display: block !important;
     width: 100% !important;
@@ -1225,126 +1354,5 @@
   .main-content {
     height: calc(100vh - 9rem - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)) !important;
     height: calc(-webkit-fill-available - 9rem) !important;
-  }
-}
-
-/* =================================
-   NOW PLAYING STYLES (NO CONFLICTS)
-   ================================= */
-
-.now-playing {
-  display: none; /* Hidden on mobile by default */
-  flex: 1 0 10em;
-  align-items: center;
-  gap: 0.75rem;
-  color: white;
-  padding-left: 2rem;
-}
-
-.now-playing svg {
-  flex-shrink: 0;
-  color: #ffffff;
-}
-
-.now-playing .track-info {
-  display: none;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0; /* Allow text to truncate */
-}
-
-.now-playing .track-info.show {
-  display: flex;
-}
-
-.now-playing .track-title {
-  font-weight: 600;
-  color: #CF7C29;
-  font-size: 0.875rem;
-  line-height: 1.25;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.now-playing .track-artist {
-  font-size: 0.75rem;
-  color: #6b7280;
-  line-height: 1.25;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-/* =================================
-   PLAYER BAR STYLES
-   ================================= */
-
-.player-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--player-height, 4.5rem);
-  background-color: #111827;
-  padding: 0 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 10;
-  color: white;
-  border-top: 1px solid #374151;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.playlist-button {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.2s ease;
-}
-
-.playlist-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* =================================
-   RESPONSIVE STYLES
-   ================================= */
-
-/* Show now-playing section on desktop */
-@media (min-width: 768px) {
-  .now-playing {
-    display: flex;
-  }
-}
-
-/* Mobile optimizations */
-@media (max-width: 767px) {
-  .player-bar {
-    padding: 0 1rem;
-    justify-content: center;
-  }
-  
-  /* Hide now-playing on mobile to save space */
-  .now-playing {
-    display: none !important;
-  }
-  
-  .playlist-button {
-    position: absolute;
-    right: 1rem;
-    padding: 0.25rem;
   }
 }
