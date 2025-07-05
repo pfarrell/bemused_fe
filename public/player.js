@@ -319,10 +319,6 @@ AudioPlayer.prototype.loadPlaylistUI = function() {
     deleteButton.setAttribute('aria-label', 'Remove track from playlist');
     listItem.appendChild(deleteButton);
 
-    deleteButton.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent track click event
-      this.removeTrackFromPlaylist(index);
-    });
 
     if (!isMobile) {
       this.addDragAndDropListeners(listItem, index);
@@ -340,13 +336,18 @@ AudioPlayer.prototype.loadPlaylistUI = function() {
         } else {
           this.audioPlayer.pause();
         }
-      } else {
+      } else if (e.target.className != 'track-delete-button'){
         this.loadAndPlayTrack(index);
+      } else {
+        this.removeTrackFromPlaylist(index);
       }
     };
 
-    listItem.addEventListener('click', handleTrackClick);
     trackText.addEventListener('click', handleTrackClick);
+    deleteButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent track click event
+      this.removeTrackFromPlaylist(index);
+    });
     
     if (isMobile) {
       let touchStartTime = 0;
