@@ -35,7 +35,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       playerInstance.addTracks([track], true); // true = play next
       
       // If nothing is playing, start playing immediately
-      if (!playerInstance.currentTrack || !playerInstance.isPlaying) {
+      if (playerInstance.audioPlayer.paused) {
         const currentIndex = playerInstance.currentTrackIndex || 0;
         playerInstance.loadAndPlayTrack(currentIndex);
       }
@@ -49,7 +49,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       playerInstance.addTrack(track);
       
       // If nothing is playing, start playing immediately
-      if (!playerInstance.currentTrack || !playerInstance.isPlaying) {
+      if (playerInstance.audiopPlayer.paused) {
         // Get the current playlist length from the store instead
         const { playlist } = usePlayerStore.getState();
         const trackIndex = playlist.length; // The track we just added
