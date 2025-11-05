@@ -5,7 +5,7 @@ const getBaseURL = () => {
   if (import.meta.env.DEV) {
     return '/api';
   } else {
-    return 'https://patf.com/bemused';
+    return 'https://patf.net/bemused';
   }
 };
 
@@ -51,7 +51,7 @@ export const apiService = {
   getImageUrl: (imagePath, context = 'base') => {
     if (!imagePath) return null;
     
-    const baseUrl = 'https://patf.com/images';
+    const baseUrl = 'https://patf.net/images';
     
     switch (context) {
       case 'artist_search':
