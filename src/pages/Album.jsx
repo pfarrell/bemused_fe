@@ -221,11 +221,11 @@ const Album = () => {
       </div>
 
       {/* Track List */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        borderRadius: '8px', 
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden'
+        overflow: 'visible'
       }}>
         {tracks.map((track, index) => (
           <Track 
