@@ -94,7 +94,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           fontWeight: isPlaying ? '600' : '500',
           color: isPlaying ? '#1d4ed8' : '#1f2937'
         }}>
-          {String(index + 1).padStart(2, '0')}. {track.title}
+          {String(index + 1).padStart(2, '0')}. {track.title} - {track.artist.name}
           {track.duration && (
             <span style={{ 
               color: '#6b7280', 
