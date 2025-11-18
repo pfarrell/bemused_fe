@@ -121,12 +121,12 @@ const Search = () => {
                 <div
                   key={album.id}
                   className="artist-card"
-                  onClick={() => navigate(`/album/${album.id}`)}
                 >
                   <div className="artist-card-image">
                     <img
                       src={apiService.getImageUrl(album.image_path, 'album_small')}
                       alt={`${album.title} by ${album.artist.name}`}
+                      onClick={() => navigate(`/album/${album.id}`)}
                       onError={(e) => {
                         console.log(`Failed to load album image: ${e.target.src}`);
                       }}
