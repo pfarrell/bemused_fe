@@ -134,7 +134,8 @@ const Search = () => {
                   </div>
                   <div className="artist-card-title">
                     <h3>{album.title}</h3>
-                    <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }} 
+                      onClick={() => navigate(`/artist/${album.artist.id}`)}>
                       {album.artist.name}
                     </p>
                   </div>
