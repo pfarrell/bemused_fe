@@ -177,7 +177,7 @@ const Search = () => {
           <h2 className="search-section-title">Tracks ({results.tracks.length})</h2>
           <div className="track-list">
             {results.tracks.map((track, index) => (
-              <Track track={track} index={index} trackCount={results.tracks.length} includeMeta={true}/>
+              <Track key={track.id} track={track} index={index} trackCount={results.tracks.length} includeMeta={true}/>
             ))}
           </div>
         </div>

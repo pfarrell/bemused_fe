@@ -61,7 +61,6 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
 
   return (
     <div 
-      key={track.id || index}
       className={`track-item ${isPlaying ? 'currently-playing' : ''}`}
       style={{ 
         padding: '1rem',
@@ -94,7 +93,9 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           fontWeight: isPlaying ? '600' : '500',
           color: isPlaying ? '#1d4ed8' : '#1f2937'
         }}>
-          {String(index + 1).padStart(2, '0')}. {track.title} - {track.artist.name}
+          {String(index + 1).padStart(2, '0')}. {track.title} 
+          {track.artist.name != track.album.artist.name && (' - ' + track.artist.name)}
+           
           {track.duration && (
             <span style={{ 
               color: '#6b7280', 
@@ -109,7 +110,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
               <>
               {' '} 
               from
-              <a key={track.album.id} href="#" onClick={(e) => { 
+              <a onClick={(e) => { 
                 e.stopPropagation(); 
                 if (track.album.id) {
                   navigate(`/album/${track.album.id}`);
@@ -120,15 +121,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
                 {track.album.title}
               </a>
               {' by'} 
-              <a key={track.artist.id} href="#" onClick={(e) => { 
+              <a onClick={(e) => { 
                 e.stopPropagation(); 
-                if (track.artist.id) {
-                  navigate(`/artist/${track.artist.id}`);
+                if (track.album.artist.id) {
+                  navigate(`/artist/${track.album.artist.id}`);
                 } else {
-                  console.log('Go to artist:', track.artist.id); 
+                  console.log('Go to artist:', track.album.artist.id); 
                 }
               }}>
-                {track.artist.name}
+              {track.album.artist.name}
               </a>
               </>
             )}
