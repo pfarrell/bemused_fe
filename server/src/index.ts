@@ -8,6 +8,7 @@ import search from './routes/search.js'
 import streams from './routes/streams.js'
 import logs from './routes/logs.js'
 import playlists from './routes/playlists.js'
+import admin from './routes/admin.js'
 
 const app = new Hono()
 
@@ -33,6 +34,7 @@ app.route('/playlists', playlists)
 app.route('/top', playlists)
 app.route('/newborns', playlists)
 app.route('/surprise', playlists)
+app.route('/admin', admin)
 
 const port = parseInt(process.env.PORT ?? '3000')
 

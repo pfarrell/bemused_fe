@@ -11,6 +11,8 @@ import Artist from './pages/Artist';
 import Album from './pages/Album';
 import Library from './pages/Library';
 import Login from './pages/Login';
+import AdminArtist from './pages/AdminArtist';
+import AdminAlbum from './pages/AdminAlbum';
 
 // Add this component to handle scroll to top on route changes
 function ScrollToTop() {
@@ -108,6 +110,8 @@ function App() {
                 <Route path="/artist/:id" element={<Artist />} />
                 <Route path="/album/:id" element={<Album />} />
                 <Route path="/library" element={<Library />} />
+                <Route path="/admin/artist/:id" element={<AdminArtist />} />
+                <Route path="/admin/album/:id" element={<AdminAlbum />} />
               </Routes>
             </Layout>
           } />

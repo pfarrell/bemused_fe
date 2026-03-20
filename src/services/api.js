@@ -46,7 +46,18 @@ export const apiService = {
 
   // log
   log: (id) => api.get(`/log/${id}`),
-  
+
+  // Admin
+  updateArtist: (id, data) => api.put(`/admin/artist/${id}`, data),
+  deleteArtist: (id) => api.delete(`/admin/artist/${id}`),
+  updateAlbum: (id, data) => api.put(`/admin/album/${id}`, data),
+  deleteAlbum: (id) => api.delete(`/admin/album/${id}`),
+  downloadArtistImage: (id, image_url, image_name) => api.post(`/admin/artist/${id}/image`, { image_url, image_name }),
+  downloadAlbumImage: (id, image_url, image_name) => api.post(`/admin/album/${id}/image`, { image_url, image_name }),
+  updateTrack: (id, data) => api.put(`/admin/track/${id}`, data),
+  deleteTrack: (id) => api.delete(`/admin/track/${id}`),
+  bulkUpdateTracks: (album_id, data) => api.patch(`/admin/album/${album_id}/tracks`, data),
+
   // Image URL helpers
   getImageUrl: (imagePath, context = 'base') => {
     if (!imagePath) return null;

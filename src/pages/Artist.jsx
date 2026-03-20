@@ -94,15 +94,31 @@ const Artist = () => {
         
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 1rem 0', color: '#1f2937', cursor: 'pointer' }}
-            onClick={ reload }
-          >
-            {artist.name}
-          </h1>
-          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937', cursor: 'pointer' }}
+              onClick={ reload }
+            >
+              {artist.name}
+            </h1>
+            <button
+              onClick={() => navigate(`/admin/artist/${id}`)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
+              Edit
+            </button>
+          </div>
+
           {/* Wikipedia summary */}
           <Wikipedia summary={summary} />
-          
+
         </div>
       </div>
 
