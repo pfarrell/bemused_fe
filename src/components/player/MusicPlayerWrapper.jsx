@@ -28,7 +28,7 @@ const MusicPlayerWrapper = ({ className = "" }) => {
       // Determine script path based on environment
       const scriptPath = import.meta.env.DEV
         ? '/player.js'  // Dev server will serve from public/
-        : '/bemused/frontend/player.js';  // Production path
+        : '/bemused/app/player.js';  // Production path
 
       const existingScript = document.querySelector(`script[src="${scriptPath}"]`);
       if (existingScript) {

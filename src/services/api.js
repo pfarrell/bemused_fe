@@ -5,7 +5,7 @@ const getBaseURL = () => {
   if (import.meta.env.DEV) {
     return '/api';
   } else {
-    return 'https://patf.net/bemused';
+    return '/bemused/api';
   }
 };
 
