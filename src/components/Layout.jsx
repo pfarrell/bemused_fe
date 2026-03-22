@@ -8,7 +8,7 @@ import NowPlaying from './NowPlaying';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, isAdmin, logout } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -89,6 +89,28 @@ const Layout = ({ children }) => {
                   </div>
 
                   <div style={{ padding: '0.5rem 0' }}>
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          setShowDropdown(false);
+                          navigate('/admin/upload');
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '0.5rem 1rem',
+                          background: 'none',
+                          border: 'none',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                        Upload
+                      </button>
+                    )}
                     <button
                       onClick={handleLogout}
                       style={{
