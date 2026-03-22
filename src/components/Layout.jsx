@@ -64,8 +64,14 @@ const Layout = ({ children }) => {
                   fontSize: '0.9rem'
                 }}
               >
-                <span>{user.username}</span>
-                <svg style={{ width: '1rem', height: '1rem' }} fill="currentColor" viewBox="0 0 20 20">
+                {/* Username on desktop */}
+                <span className="username-desktop">{user.username}</span>
+                {/* Hamburger icon on mobile */}
+                <svg className="hamburger-mobile" style={{ width: '1.5rem', height: '1.5rem', display: 'none' }} fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+                {/* Chevron on desktop */}
+                <svg className="chevron-desktop" style={{ width: '1rem', height: '1rem' }} fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>

@@ -869,7 +869,29 @@
 @media (max-width: 768px) {
   /* Header adjustments */
   .header-search {
-    padding: 0 1rem;
+    padding: 0 0.5rem;
+    flex: 0 1 auto;
+    max-width: 60%;
+  }
+
+  .search-input {
+    max-width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    min-width: 120px;
+  }
+
+  /* Show hamburger, hide username and chevron on mobile */
+  .username-desktop {
+    display: none !important;
+  }
+
+  .chevron-desktop {
+    display: none !important;
+  }
+
+  .hamburger-mobile {
+    display: block !important;
   }
   
   .app-header {
