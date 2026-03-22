@@ -2,8 +2,9 @@ import { Hono } from 'hono'
 import { db } from '../db/database.js'
 import { streamBase } from '../db/streamUrl.js'
 import { sql } from 'kysely'
+import type { Variables } from '../types.js'
 
-const playlists = new Hono()
+const playlists = new Hono<{ Variables: Variables }>()
 
 function buildTrack(t: any) {
   return {
@@ -117,6 +118,78 @@ playlists.get('/surprise', async (c) => {
     playlist: { name: 'Surprise!', image_path: null },
     tracks,
   })
+})
+
+// POST /playlist/:id/tracks - Add a track to playlist
+playlists.post('/:id/tracks', async (c) => {
+  const playlistId = parseInt(c.req.param('id'))
+  const { track_id } = await c.req.json()
+
+  // Get the max order for this playlist
+  const maxOrderResult = await db
+    .selectFrom('playlist_tracks')
+    .select(db.fn.max('order').as('max_order'))
+    .where('playlist_id', '=', playlistId)
+    .executeTakeFirst()
+
+  const nextOrder = (maxOrderResult?.max_order ?? 0) + 1
+
+  await db
+    .insertInto('playlist_tracks')
+    .values({
+      playlist_id: playlistId,
+      track_id,
+      order: nextOrder,
+    })
+    .execute()
+
+  return c.json({ success: true })
+})
+
+// DELETE /playlist/:playlistId/tracks/:trackId - Remove a track from playlist
+playlists.delete('/:playlistId/tracks/:trackId', async (c) => {
+  const playlistId = parseInt(c.req.param('playlistId'))
+  const trackId = parseInt(c.req.param('trackId'))
+
+  await db
+    .deleteFrom('playlist_tracks')
+    .where('playlist_id', '=', playlistId)
+    .where('track_id', '=', trackId)
+    .execute()
+
+  return c.json({ success: true })
+})
+
+// PATCH /playlist/:id/tracks/reorder - Update track order
+playlists.patch('/:id/tracks/reorder', async (c) => {
+  const playlistId = parseInt(c.req.param('id'))
+  const { track_orders } = await c.req.json() // Array of { track_id, order }
+
+  // Update each track's order
+  for (const { track_id, order } of track_orders) {
+    await db
+      .updateTable('playlist_tracks')
+      .set({ order })
+      .where('playlist_id', '=', playlistId)
+      .where('track_id', '=', track_id)
+      .execute()
+  }
+
+  return c.json({ success: true })
+})
+
+// PUT /playlist/:id - Update playlist metadata
+playlists.put('/:id', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const { name, image_path } = await c.req.json()
+
+  await db
+    .updateTable('playlists')
+    .set({ name, image_path })
+    .where('id', '=', id)
+    .execute()
+
+  return c.json({ success: true })
 })
 
 export default playlists

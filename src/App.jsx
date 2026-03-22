@@ -11,11 +11,14 @@ import Search from './pages/Search';
 import Artist from './pages/Artist';
 import Album from './pages/Album';
 import Library from './pages/Library';
+import Playlists from './pages/Playlists';
+import Playlist from './pages/Playlist';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminArtist from './pages/AdminArtist';
 import AdminAlbum from './pages/AdminAlbum';
 import AdminUpload from './pages/AdminUpload';
+import AdminPlaylist from './pages/AdminPlaylist';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Add this component to handle scroll to top on route changes
@@ -147,6 +150,8 @@ function App() {
                 <Route path="/artist/:id" element={<Artist />} />
                 <Route path="/album/:id" element={<Album />} />
                 <Route path="/library" element={<Library />} />
+                <Route path="/playlists" element={<Playlists />} />
+                <Route path="/playlist/:id" element={<Playlist />} />
                 <Route path="/admin/artist/:id" element={
                   <ProtectedRoute requireAdmin>
                     <AdminArtist />
@@ -160,6 +165,11 @@ function App() {
                 <Route path="/admin/upload" element={
                   <ProtectedRoute requireAdmin>
                     <AdminUpload />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/playlist/:id" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminPlaylist />
                   </ProtectedRoute>
                 } />
               </Routes>

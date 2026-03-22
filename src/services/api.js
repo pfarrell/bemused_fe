@@ -59,6 +59,14 @@ export const apiService = {
   getUploadStatus: () => api.get('/admin/upload/status'),
   getRecentUploads: (limit = 50) => api.get(`/admin/upload/recent?limit=${limit}`),
 
+  // Playlists
+  getPlaylists: () => api.get('/playlists'),
+  getPlaylist: (id) => api.get(`/playlist/${id}`),
+  addTrackToPlaylist: (playlistId, trackId) => api.post(`/playlist/${playlistId}/tracks`, { track_id: trackId }),
+  removeTrackFromPlaylist: (playlistId, trackId) => api.delete(`/playlist/${playlistId}/tracks/${trackId}`),
+  reorderPlaylistTracks: (playlistId, track_orders) => api.patch(`/playlist/${playlistId}/tracks/reorder`, { track_orders }),
+  updatePlaylist: (id, data) => api.put(`/playlist/${id}`, data),
+
   // Image URL helpers
   getImageUrl: (imagePath, context = 'base') => {
     if (!imagePath) return null;
