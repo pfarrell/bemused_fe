@@ -57,6 +57,15 @@ export const apiService = {
   updateTrack: (id, data) => api.put(`/admin/track/${id}`, data),
   deleteTrack: (id) => api.delete(`/admin/track/${id}`),
   bulkUpdateTracks: (album_id, data) => api.patch(`/admin/album/${album_id}/tracks`, data),
+  moveArtistArtifacts: (id, target_artist_id) => api.post(`/admin/artist/${id}/move-artifacts`, { target_artist_id }),
+  moveAlbumToArtist: (id, target_artist_id) => api.post(`/admin/album/${id}/move-to-artist`, { target_artist_id }),
+
+  // Upload
+  uploadTracks: (formData) => api.post('/admin/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getUploadStatus: () => api.get('/admin/upload/status'),
+  getRecentUploads: (limit = 50) => api.get(`/admin/upload/recent?limit=${limit}`),
 
   // Image URL helpers
   getImageUrl: (imagePath, context = 'base') => {

@@ -13,6 +13,7 @@ import Library from './pages/Library';
 import Login from './pages/Login';
 import AdminArtist from './pages/AdminArtist';
 import AdminAlbum from './pages/AdminAlbum';
+import AdminUpload from './pages/AdminUpload';
 
 // Add this component to handle scroll to top on route changes
 function ScrollToTop() {
@@ -112,6 +113,7 @@ function App() {
                 <Route path="/library" element={<Library />} />
                 <Route path="/admin/artist/:id" element={<AdminArtist />} />
                 <Route path="/admin/album/:id" element={<AdminAlbum />} />
+                <Route path="/admin/upload" element={<AdminUpload />} />
               </Routes>
             </Layout>
           } />

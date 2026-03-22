@@ -6,10 +6,25 @@ import { fileURLToPath } from 'url'
 
 const admin = new Hono()
 
+// Test route to verify admin routing works
+admin.get('/test', (c) => {
+  return c.json({ message: 'Admin GET routing works!' })
+})
+
+// Test POST route
+admin.post('/test-post', (c) => {
+  return c.json({ message: 'Admin POST routing works!' })
+})
+
 // Helper to get the project root directory
+// Use environment variable or fall back to calculating from __dirname
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const projectRoot = path.resolve(__dirname, '../../..')
+// In production, we're deployed to /var/www/bemused-node/current, use that
+// In development, calculate from __dirname
+const projectRoot = process.env.NODE_ENV === 'production'
+  ? '/var/www/bemused-node/current'
+  : path.resolve(__dirname, '../../..')
 
 // PUT /admin/artist/:id — update an artist
 admin.put('/artist/:id', async (c) => {
@@ -143,6 +158,7 @@ admin.post('/artist/:id/image', async (c) => {
 
   try {
     // Download the image
+    console.log(`Downloading artist image from: ${image_url}`)
     const response = await fetch(image_url)
     if (!response.ok) {
       return c.json({ error: 'Failed to download image from URL' }, 400)
@@ -152,15 +168,19 @@ admin.post('/artist/:id/image', async (c) => {
 
     // Determine the image directory
     const imageDir = path.join(projectRoot, 'public', 'images', 'artists')
+    console.log(`Saving artist image to directory: ${imageDir}`)
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(imageDir)) {
+      console.log(`Creating directory: ${imageDir}`)
       fs.mkdirSync(imageDir, { recursive: true })
     }
 
     // Save the image
     const imagePath = path.join(imageDir, image_name)
+    console.log(`Writing artist image to: ${imagePath}`)
     fs.writeFileSync(imagePath, buffer)
+    console.log(`Artist image saved successfully: ${imagePath}`)
 
     // Update the artist record
     const updated = await db
@@ -196,6 +216,7 @@ admin.post('/album/:id/image', async (c) => {
 
   try {
     // Download the image
+    console.log(`Downloading album image from: ${image_url}`)
     const response = await fetch(image_url)
     if (!response.ok) {
       return c.json({ error: 'Failed to download image from URL' }, 400)
@@ -205,15 +226,19 @@ admin.post('/album/:id/image', async (c) => {
 
     // Determine the image directory
     const imageDir = path.join(projectRoot, 'public', 'images', 'albums')
+    console.log(`Saving album image to directory: ${imageDir}`)
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(imageDir)) {
+      console.log(`Creating directory: ${imageDir}`)
       fs.mkdirSync(imageDir, { recursive: true })
     }
 
     // Save the image
     const imagePath = path.join(imageDir, image_name)
+    console.log(`Writing album image to: ${imagePath}`)
     fs.writeFileSync(imagePath, buffer)
+    console.log(`Album image saved successfully: ${imagePath}`)
 
     // Update the album record
     const updated = await db
@@ -337,6 +362,128 @@ admin.patch('/album/:id/tracks', async (c) => {
   } catch (error) {
     console.error('Error bulk updating tracks:', error)
     return c.json({ error: 'Failed to bulk update tracks' }, 500)
+  }
+})
+
+// POST /admin/artist/:id/move-artifacts — move all albums and tracks to a new artist
+admin.post('/artist/:id/move-artifacts', async (c) => {
+  const sourceArtistId = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { target_artist_id } = body
+
+  if (!target_artist_id) {
+    return c.json({ error: 'target_artist_id is required' }, 400)
+  }
+
+  const targetArtistId = parseInt(target_artist_id)
+
+  if (sourceArtistId === targetArtistId) {
+    return c.json({ error: 'Source and target artists cannot be the same' }, 400)
+  }
+
+  try {
+    // Verify both artists exist
+    const sourceArtist = await db
+      .selectFrom('artists')
+      .select('id')
+      .where('id', '=', sourceArtistId)
+      .executeTakeFirst()
+
+    if (!sourceArtist) {
+      return c.json({ error: 'Source artist not found' }, 404)
+    }
+
+    const targetArtist = await db
+      .selectFrom('artists')
+      .select('id')
+      .where('id', '=', targetArtistId)
+      .executeTakeFirst()
+
+    if (!targetArtist) {
+      return c.json({ error: 'Target artist not found' }, 404)
+    }
+
+    // Update all albums
+    const albumsResult = await db
+      .updateTable('albums')
+      .set({ artist_id: targetArtistId, updated_at: new Date() })
+      .where('artist_id', '=', sourceArtistId)
+      .execute()
+
+    // Update all tracks
+    const tracksResult = await db
+      .updateTable('tracks')
+      .set({ artist_id: targetArtistId, updated_at: new Date() })
+      .where('artist_id', '=', sourceArtistId)
+      .execute()
+
+    return c.json({
+      success: true,
+      albums_moved: Number(albumsResult[0]?.numUpdatedRows || 0),
+      tracks_moved: Number(tracksResult[0]?.numUpdatedRows || 0),
+    })
+  } catch (error) {
+    console.error('Error moving artist artifacts:', error)
+    return c.json({ error: 'Failed to move artifacts' }, 500)
+  }
+})
+
+// POST /admin/album/:id/move-to-artist — move album and all its tracks to a new artist
+admin.post('/album/:id/move-to-artist', async (c) => {
+  const albumId = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { target_artist_id } = body
+
+  if (!target_artist_id) {
+    return c.json({ error: 'target_artist_id is required' }, 400)
+  }
+
+  const targetArtistId = parseInt(target_artist_id)
+
+  try {
+    // Verify album exists
+    const album = await db
+      .selectFrom('albums')
+      .select(['id', 'artist_id'])
+      .where('id', '=', albumId)
+      .executeTakeFirst()
+
+    if (!album) {
+      return c.json({ error: 'Album not found' }, 404)
+    }
+
+    // Verify target artist exists
+    const targetArtist = await db
+      .selectFrom('artists')
+      .select('id')
+      .where('id', '=', targetArtistId)
+      .executeTakeFirst()
+
+    if (!targetArtist) {
+      return c.json({ error: 'Target artist not found' }, 404)
+    }
+
+    // Update the album
+    await db
+      .updateTable('albums')
+      .set({ artist_id: targetArtistId, updated_at: new Date() })
+      .where('id', '=', albumId)
+      .execute()
+
+    // Update all tracks for this album
+    const tracksResult = await db
+      .updateTable('tracks')
+      .set({ artist_id: targetArtistId, updated_at: new Date() })
+      .where('album_id', '=', albumId)
+      .execute()
+
+    return c.json({
+      success: true,
+      tracks_moved: Number(tracksResult[0]?.numUpdatedRows || 0),
+    })
+  } catch (error) {
+    console.error('Error moving album to new artist:', error)
+    return c.json({ error: 'Failed to move album' }, 500)
   }
 })
 

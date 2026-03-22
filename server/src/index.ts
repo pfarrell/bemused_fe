@@ -9,10 +9,18 @@ import streams from './routes/streams.js'
 import logs from './routes/logs.js'
 import playlists from './routes/playlists.js'
 import admin from './routes/admin.js'
+import upload from './routes/upload.js'
 
 const app = new Hono()
 
-app.use('*', cors())
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  exposeHeaders: ['Content-Length', 'Content-Type'],
+  maxAge: 600,
+  credentials: true,
+}))
 
 app.onError((err, c) => {
   console.error(err)
@@ -35,6 +43,7 @@ app.route('/top', playlists)
 app.route('/newborns', playlists)
 app.route('/surprise', playlists)
 app.route('/admin', admin)
+app.route('/admin/upload', upload)
 
 const port = parseInt(process.env.PORT ?? '3000')
 

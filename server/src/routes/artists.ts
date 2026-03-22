@@ -9,20 +9,28 @@ const artists = new Hono()
 artists.get('/random', async (c) => {
   const size = Math.min(parseInt(c.req.query('size') ?? '10'), 200)
 
-  // Artists that have at least one album and have an image, in random order.
-  // Uses a window function to deduplicate (mirrors the Ruby query).
+  // Optimized random selection for large datasets (tens of thousands of artists)
+  // First get all eligible IDs, then select random subset
+  // This is faster than sorting full artist records
   const rows = await sql<any>`
-    SELECT DISTINCT ON (a.id) a.*
+    WITH eligible_artist_ids AS (
+      SELECT DISTINCT a.id
+      FROM artists a
+      INNER JOIN albums al ON al.artist_id = a.id
+      WHERE a.image_path IS NOT NULL
+    ),
+    random_ids AS (
+      SELECT id
+      FROM eligible_artist_ids
+      ORDER BY random()
+      LIMIT ${size}
+    )
+    SELECT a.*
     FROM artists a
-    INNER JOIN albums al ON al.artist_id = a.id
-    WHERE a.image_path IS NOT NULL
-    ORDER BY a.id, random()
-    LIMIT ${size}
+    INNER JOIN random_ids r ON a.id = r.id
   `.execute(db)
 
-  // Shuffle at app level since DISTINCT ON forces ORDER BY id first
-  const shuffled = rows.rows.sort(() => Math.random() - 0.5)
-  return c.json(shuffled)
+  return c.json(rows.rows)
 })
 
 // GET /artist/:id

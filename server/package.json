@@ -10,12 +10,14 @@
     "deploy": "npm run build && ./scripts/deploy.sh"
   },
   "dependencies": {
-    "hono": "^4.6.0",
     "@hono/node-server": "^1.13.0",
+    "dotenv": "^16.4.0",
+    "hono": "^4.6.0",
     "kysely": "^0.27.0",
-    "pg": "^8.13.0",
+    "music-metadata": "^11.12.3",
     "node-fetch": "^3.3.2",
-    "dotenv": "^16.4.0"
+    "node-id3": "^0.2.9",
+    "pg": "^8.13.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

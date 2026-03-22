@@ -73,12 +73,20 @@ curl -I http://localhost:3000/stream/12345
 ```
 /var/www/bemused-node/
 ├── current/              # Symlink to latest release
+│   └── public/
+│       └── images/      # Symlink to shared/public/images
 ├── releases/
 │   ├── 20260320120000/  # Timestamped releases
 │   └── 20260320130000/
 └── shared/
-    └── .env             # Production environment variables (not in git)
+    ├── .env             # Production environment variables (not in git)
+    └── public/
+        └── images/      # Symlink to /var/www/bemused/shared/public/images (nginx-served)
+            ├── artists/
+            └── albums/
 ```
+
+**Note**: The `shared/public/images` directory is symlinked to the same location used by the Ruby app (`/var/www/bemused/shared/public/images`), which is served by nginx at `https://patf.net/images`. This allows both apps to share the same image storage.
 
 ## First-Time Setup
 
@@ -141,7 +149,22 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 4. Verify database access
+### 4. Link shared images to nginx-served location
+
+Run the one-time setup script to create the symlink from `shared/public/images` to the nginx-served images directory:
+
+```bash
+cd server
+./scripts/setup-shared-images.sh
+```
+
+This creates a symlink from `/var/www/bemused-node/shared/public/images` to `/var/www/bemused/shared/public/images`, which is the same location used by the Ruby app and served by nginx at `https://patf.net/images`.
+
+After this is set up once, the deploy script will automatically:
+- Create `releases/<timestamp>/public/images` as a symlink to `shared/public/images`
+- Downloaded images will be saved to the shared location and persist across deployments
+
+### 5. Verify database access
 
 Ensure the Node app can connect to the PostgreSQL database:
 

@@ -8,8 +8,8 @@ interface ArtistTable {
   name: string
   image_path: string | null
   wikipedia: string | null
-  created_at: ColumnType<Date, never, never>
-  updated_at: ColumnType<Date, never, never>
+  created_at: ColumnType<Date, string | undefined, never>
+  updated_at: ColumnType<Date, string | undefined, string | Date>
 }
 
 interface AlbumTable {
@@ -17,28 +17,41 @@ interface AlbumTable {
   title: string
   artist_id: number
   release_year: string | null
+  disc_number: number | null
+  genre_id: number | null
   image_path: string | null
   wikipedia: string | null
-  created_at: ColumnType<Date, never, never>
-  updated_at: ColumnType<Date, never, never>
+  created_at: ColumnType<Date, string | undefined, never>
+  updated_at: ColumnType<Date, string | undefined, string | Date>
 }
 
 interface TrackTable {
   id: Generated<number>
   title: string
   track_number: string | null
+  release_year: string | null
   album_id: number
   artist_id: number | null
   media_file_id: number | null
+  wikipedia: string | null
   duration_sec: number | null
-  created_at: ColumnType<Date, never, never>
-  updated_at: ColumnType<Date, never, never>
+  created_at: ColumnType<Date, string | undefined, never>
+  updated_at: ColumnType<Date, string | undefined, string | Date>
 }
 
 interface MediaFileTable {
   id: Generated<number>
-  absolute_path: string
-  duration_sec: number | null
+  discriminator: string | null
+  imported_date: Date | null
+  last_modified: Date | null
+  absolute_path: string | null
+  name: string | null
+  file_type: string | null
+  track_id: number | null
+  file_missing: boolean | null
+  file_hash: string | null
+  created_at: Date | null
+  updated_at: Date | null
 }
 
 interface PlaylistTable {
@@ -76,6 +89,28 @@ interface FavoriteTable {
   updated_at: ColumnType<Date, never, never>
 }
 
+interface UploadQueueTable {
+  id: Generated<number>
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  artist_name: string | null
+  artist_id: number | null
+  album_name: string | null
+  album_id: number | null
+  genre: string | null
+  track_pad: number | null
+  file_path: string
+  original_filename: string
+  file_hash: string
+  file_size: number | null
+  album_art_path: string | null
+  album_art_url: string | null
+  track_id: number | null
+  error_message: string | null
+  created_at: ColumnType<Date, never, never>
+  started_at: Date | null
+  completed_at: Date | null
+}
+
 export interface Database {
   artists: ArtistTable
   albums: AlbumTable
@@ -85,6 +120,7 @@ export interface Database {
   playlist_tracks: PlaylistTrackTable
   logs: LogTable
   favorites: FavoriteTable
+  upload_queue: UploadQueueTable
 }
 
 // ---- DB instance ----

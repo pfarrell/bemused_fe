@@ -1,0 +1,26 @@
+[Unit]
+Description=Bemused Upload Queue Worker
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=pfarrell
+WorkingDirectory=/var/www/bemused-node/current
+ExecStart=/usr/bin/node /var/www/bemused-node/current/dist/workers/queue-handler.js
+Restart=always
+RestartSec=10
+
+# Load environment variables from shared .env file
+EnvironmentFile=/var/www/bemused-node/shared/.env
+
+# Environment
+Environment=NODE_ENV=production
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bemused-queue-worker
+
+[Install]
+WantedBy=multi-user.target

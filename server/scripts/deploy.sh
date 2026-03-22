@@ -15,11 +15,11 @@ echo "🚀 Deploying Bemused Node.js API..."
 
 # Build locally
 echo "📦 Building TypeScript..."
-npm run build
+./node_modules/.bin/tsc
 
 # Create directory structure on remote
 echo "📁 Creating remote directories..."
-ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "mkdir -p ${RELEASE_DIR} ${SHARED_DIR}"
+ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "mkdir -p ${RELEASE_DIR} ${SHARED_DIR}/public/images/artists ${SHARED_DIR}/public/images/albums"
 
 # Upload built code and dependencies
 echo "📤 Uploading server code..."
@@ -28,13 +28,20 @@ rsync -avz --delete \
   --exclude 'node_modules' \
   --exclude '.env' \
   --exclude 'src' \
-  --exclude 'scripts' \
-  dist package.json package-lock.json \
+  dist package.json package-lock.json migrations scripts \
   ${REMOTE_USER}@${REMOTE_HOST}:${RELEASE_DIR}/
 
 # Install production dependencies on remote
 echo "📚 Installing production dependencies on remote..."
 ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "cd ${RELEASE_DIR} && npm ci --omit=dev"
+
+# Run database migrations
+echo "🔄 Running database migrations..."
+ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "cd ${RELEASE_DIR} && export \$(cat ${SHARED_DIR}/.env | xargs) && node scripts/run-migrations.js"
+
+# Create symlink for public/images to shared directory
+echo "🔗 Linking public/images to shared directory..."
+ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "rm -rf ${RELEASE_DIR}/public && mkdir -p ${RELEASE_DIR}/public && ln -nfs ${SHARED_DIR}/public/images ${RELEASE_DIR}/public/images"
 
 # Check if shared .env exists, warn if not
 echo "⚙️  Checking for production .env..."

@@ -1,6 +1,6 @@
 // src/pages/AdminAlbum.jsx
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 
@@ -19,6 +19,9 @@ const AdminAlbum = () => {
   const [imagePath, setImagePath] = useState('');
   const [wikipedia, setWikipedia] = useState('');
 
+  // Track if form has unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   // Image download state
   const [imageUrl, setImageUrl] = useState('');
   const [imageName, setImageName] = useState('');
@@ -28,9 +31,14 @@ const AdminAlbum = () => {
   const [tracks, setTracks] = useState([]);
   const [trackChanges, setTrackChanges] = useState({});
 
-  // Bulk update state
-  const [bulkAlbumId, setBulkAlbumId] = useState('');
-  const [bulkArtistId, setBulkArtistId] = useState('');
+  // Move to new artist state
+  const [targetArtistId, setTargetArtistId] = useState('');
+  const [movingToArtist, setMovingToArtist] = useState(false);
+
+  // Artist search modal state
+  const [showArtistSearchModal, setShowArtistSearchModal] = useState(false);
+  const [artistSearchQuery, setArtistSearchQuery] = useState('');
+  const [artistSearchResults, setArtistSearchResults] = useState([]);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -45,8 +53,6 @@ const AdminAlbum = () => {
         setImagePath(album.image_path || '');
         setWikipedia(album.wikipedia || '');
         setTracks(tracks || []);
-        setBulkAlbumId(String(album.id) || '');
-        setBulkArtistId(String(album.artist_id) || '');
       } catch (error) {
         console.error('Error fetching album data:', error);
         setError('Failed to load album');
@@ -59,6 +65,83 @@ const AdminAlbum = () => {
       fetchAlbumData();
     }
   }, [id]);
+
+  // Track changes to form fields
+  useEffect(() => {
+    if (!albumData?.album) return;
+
+    const album = albumData.album;
+    const hasChanges =
+      title !== (album.title || '') ||
+      artistId !== String(album.artist_id || '') ||
+      releaseYear !== (album.release_year || '') ||
+      imagePath !== (album.image_path || '') ||
+      wikipedia !== (album.wikipedia || '');
+
+    setHasUnsavedChanges(hasChanges);
+  }, [title, artistId, releaseYear, imagePath, wikipedia, albumData]);
+
+  // Warn user before leaving page with unsaved changes (browser navigation)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Intercept all link clicks to check for unsaved changes
+  useEffect(() => {
+    const handleClick = async (e) => {
+      // Only intercept if we have unsaved changes
+      if (!hasUnsavedChanges) return;
+
+      // Check if the click is on a link (or inside a link)
+      const link = e.target.closest('a');
+      if (!link) return;
+
+      // Check if it's an internal navigation link (not the back link we control)
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+
+      // Don't intercept our own back link
+      if (link.classList.contains('admin-back-link')) return;
+
+      // Prevent the default navigation
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Ask user what to do
+      const choice = window.confirm('You have unsaved changes. Click OK to save and leave, or Cancel to stay on this page.');
+
+      if (choice) {
+        // User clicked OK - save and navigate
+        try {
+          await apiService.updateAlbum(id, {
+            title,
+            artist_id: parseInt(artistId),
+            release_year: releaseYear,
+            image_path: imagePath,
+            wikipedia,
+          });
+          setHasUnsavedChanges(false);
+          // Navigate to the link destination
+          setTimeout(() => navigate(href), 0);
+        } catch (error) {
+          console.error('Error saving album:', error);
+          setError(error.response?.data?.error || 'Failed to save album');
+        }
+      }
+    };
+
+    // Add click listener to the document
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [hasUnsavedChanges, id, title, artistId, releaseYear, imagePath, wikipedia, navigate]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -73,6 +156,9 @@ const AdminAlbum = () => {
         image_path: imagePath,
         wikipedia,
       });
+
+      // Clear unsaved changes flag before navigating
+      setHasUnsavedChanges(false);
 
       // Redirect to regular album page after successful save
       navigate(`/album/${id}`);
@@ -102,8 +188,41 @@ const AdminAlbum = () => {
     }
   };
 
+  const handleNavigateAway = async (destination) => {
+    if (hasUnsavedChanges) {
+      const choice = window.confirm('You have unsaved changes. Click OK to save and leave, or Cancel to stay on this page.');
+
+      if (choice) {
+        // User clicked OK - save and navigate
+        try {
+          await apiService.updateAlbum(id, {
+            title,
+            artist_id: parseInt(artistId),
+            release_year: releaseYear,
+            image_path: imagePath,
+            wikipedia,
+          });
+          setHasUnsavedChanges(false);
+          navigate(destination);
+        } catch (error) {
+          console.error('Error saving album:', error);
+          setError(error.response?.data?.error || 'Failed to save album');
+        }
+      }
+      // If Cancel, do nothing (stay on page)
+    } else {
+      // No unsaved changes, just navigate
+      navigate(destination);
+    }
+  };
+
   const handleCancel = () => {
-    navigate(`/album/${id}`);
+    handleNavigateAway(`/album/${id}`);
+  };
+
+  const handleNavigateBack = (e) => {
+    e.preventDefault();
+    handleNavigateAway(`/album/${id}`);
   };
 
   const handleDownloadImage = async (e) => {
@@ -117,12 +236,17 @@ const AdminAlbum = () => {
     setError(null);
 
     try {
-      const response = await apiService.downloadAlbumImage(id, imageUrl, imageName);
+      await apiService.downloadAlbumImage(id, imageUrl, imageName);
+
       // Update the image path in the form with the newly downloaded image
       setImagePath(imageName);
       setImageUrl('');
       setImageName('');
-      alert('Image downloaded and saved successfully!');
+
+      // Refresh album data to get updated image_path from server
+      const response = await apiService.getAlbum(id);
+      const { album } = response.data;
+      setAlbumData(prev => ({ ...prev, album }));
     } catch (error) {
       console.error('Error downloading image:', error);
       setError(error.response?.data?.error || 'Failed to download image');
@@ -190,34 +314,58 @@ const AdminAlbum = () => {
     }
   };
 
-  const handleBulkUpdate = async () => {
+  const handleArtistSearch = async (e) => {
+    e.preventDefault();
+    if (artistSearchQuery.length < 2) {
+      setError('Please enter at least 2 characters to search');
+      return;
+    }
+
     try {
-      const updateData = {};
-
-      if (bulkAlbumId) {
-        updateData.album_id = parseInt(bulkAlbumId);
-      }
-
-      if (bulkArtistId) {
-        updateData.artist_id = parseInt(bulkArtistId);
-      }
-
-      if (Object.keys(updateData).length === 0) {
-        alert('Please specify at least one field to update');
-        return;
-      }
-
-      await apiService.bulkUpdateTracks(id, updateData);
-
-      // Refresh the album data to show updated tracks
-      const response = await apiService.getAlbum(id);
-      const { tracks } = response.data;
-      setTracks(tracks || []);
-
-      alert('All tracks updated successfully!');
+      const response = await apiService.search(artistSearchQuery);
+      setArtistSearchResults(response.data.artists || []);
     } catch (error) {
-      console.error('Error bulk updating tracks:', error);
-      alert('Failed to bulk update tracks: ' + (error.response?.data?.error || error.message));
+      console.error('Error searching artists:', error);
+      setError('Failed to search artists');
+    }
+  };
+
+  const handleSelectArtist = (artist) => {
+    setTargetArtistId(String(artist.id));
+    setShowArtistSearchModal(false);
+    setArtistSearchQuery('');
+    setArtistSearchResults([]);
+  };
+
+  const handleMoveToArtist = async (e) => {
+    e.preventDefault();
+    if (!targetArtistId) {
+      setError('Target Artist ID is required');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to move this album "${albumData?.album?.title}" and ALL its tracks to artist ID ${targetArtistId}?\n\nThis will update the album and all tracks to belong to the new artist. This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setMovingToArtist(true);
+    setError(null);
+
+    try {
+      const response = await apiService.moveAlbumToArtist(id, targetArtistId);
+      const { tracks_moved } = response.data;
+
+      alert(`Successfully moved album and ${tracks_moved} track(s) to artist ID ${targetArtistId}.`);
+
+      // Navigate to the album page (which will now show under the new artist)
+      navigate(`/album/${id}`);
+    } catch (error) {
+      console.error('Error moving album:', error);
+      setError(error.response?.data?.error || 'Failed to move album');
+    } finally {
+      setMovingToArtist(false);
     }
   };
 
@@ -236,6 +384,20 @@ const AdminAlbum = () => {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '1rem' }}>
+        <a
+          href={`/album/${id}`}
+          onClick={handleNavigateBack}
+          className="admin-back-link"
+          style={{
+            color: '#3b82f6',
+            textDecoration: 'none',
+            fontSize: '0.875rem'
+          }}
+        >
+          ← Back to Album Page
+        </a>
+      </div>
       <h1 style={{ marginBottom: '2rem', fontSize: '2rem' }}>Edit Album</h1>
 
       {error && (
@@ -479,11 +641,81 @@ const AdminAlbum = () => {
         </div>
       </form>
 
-      {/* Bulk Update Section */}
-      {tracks && tracks.length > 0 && (
+      {/* Move Album to New Artist Section */}
+      <div style={{
+        marginTop: '3rem',
+        padding: '1.5rem',
+        backgroundColor: '#fff3cd',
+        borderRadius: '4px',
+        border: '1px solid #ffc107'
+      }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#856404' }}>
+          Move Album to Another Artist
+        </h3>
+        <p style={{ marginBottom: '1rem', color: '#856404', fontSize: '0.875rem' }}>
+          This will move this album and ALL its tracks to another artist. Use this when an album was imported with the wrong artist.
+        </p>
+        <form onSubmit={handleMoveToArtist}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#856404' }}>
+              Target Artist ID
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="number"
+                value={targetArtistId}
+                onChange={(e) => setTargetArtistId(e.target.value)}
+                placeholder="Enter artist ID to move album to"
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid #ffc107',
+                  borderRadius: '4px',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowArtistSearchModal(true)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Search
+              </button>
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={movingToArtist || !targetArtistId}
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#ff8c00',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '1rem',
+              cursor: (movingToArtist || !targetArtistId) ? 'not-allowed' : 'pointer',
+              opacity: (movingToArtist || !targetArtistId) ? 0.6 : 1,
+            }}
+          >
+            {movingToArtist ? 'Moving...' : 'Move Album to Artist'}
+          </button>
+        </form>
+      </div>
+
+      {/* Bulk Update Section - REMOVED, replaced with Move Album section above */}
+      {tracks && tracks.length > 0 && false && (
         <div style={{ marginTop: '3rem', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-            Update All Tracks
+            Update All Tracks (Deprecated)
           </h2>
           <div style={{
             padding: '1rem',
@@ -679,6 +911,126 @@ const AdminAlbum = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Artist Search Modal */}
+      {showArtistSearchModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowArtistSearchModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '2rem',
+              borderRadius: '8px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+              Search for Artist
+            </h3>
+            <form onSubmit={handleArtistSearch} style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  value={artistSearchQuery}
+                  onChange={(e) => setArtistSearchQuery(e.target.value)}
+                  placeholder="Enter artist name..."
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    padding: '0.5rem',
+                    fontSize: '1rem',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.5rem 1.5rem',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+
+            {artistSearchResults.length > 0 ? (
+              <div style={{ marginTop: '1rem' }}>
+                <p style={{ marginBottom: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                  Click an artist to select:
+                </p>
+                <div style={{ maxHeight: '400px', overflow: 'auto' }}>
+                  {artistSearchResults.map((artist) => (
+                    <div
+                      key={artist.id}
+                      onClick={() => handleSelectArtist(artist)}
+                      style={{
+                        padding: '0.75rem',
+                        borderBottom: '1px solid #e5e7eb',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                    >
+                      <span style={{ fontWeight: '500' }}>{artist.name}</span>
+                      <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                        ID: {artist.id}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : artistSearchQuery.length >= 2 ? (
+              <p style={{ marginTop: '1rem', color: '#6b7280', textAlign: 'center' }}>
+                No artists found. Try a different search term.
+              </p>
+            ) : null}
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowArtistSearchModal(false)}
+                style={{
+                  padding: '0.5rem 1.5rem',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
