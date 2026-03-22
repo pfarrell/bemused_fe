@@ -96,16 +96,46 @@ search.get('/', async (c) => {
     return ids.map((id) => byId.get(id)).filter(Boolean)
   }
 
+  async function fetchArtistsWithCounts(ids: number[]) {
+    if (!ids?.length) return []
+
+    // Get artists with album and track counts
+    const rows = await db
+      .selectFrom('artists')
+      .leftJoin('albums', 'albums.artist_id', 'artists.id')
+      .leftJoin('tracks', 'tracks.artist_id', 'artists.id')
+      .select((eb) => [
+        'artists.id',
+        'artists.name',
+        'artists.image_path',
+        'artists.wikipedia',
+        'artists.created_at',
+        'artists.updated_at',
+        eb.fn.countAll<number>().over(w => w.partitionBy('artists.id')).as('_row_count'),
+        eb.fn.count<number>('albums.id').distinct().as('album_count'),
+        eb.fn.count<number>('tracks.id').distinct().as('track_count'),
+      ])
+      .where('artists.id', 'in', ids)
+      .groupBy(['artists.id', 'artists.name', 'artists.image_path', 'artists.wikipedia', 'artists.created_at', 'artists.updated_at'])
+      .execute()
+
+    const byId = new Map(rows.map((r: any) => [r.id, r]))
+    return ids.map((id) => byId.get(id)).filter(Boolean)
+  }
+
   async function fetchAlbumsByIds(ids: number[]) {
     if (!ids?.length) return []
     const rows = await db
       .selectFrom('albums')
       .innerJoin('artists', 'artists.id', 'albums.artist_id')
-      .select([
+      .leftJoin('tracks', 'tracks.album_id', 'albums.id')
+      .select((eb) => [
         'albums.id', 'albums.title', 'albums.image_path', 'albums.release_year', 'albums.wikipedia',
         'artists.id as artist_id', 'artists.name as artist_name',
+        eb.fn.count<number>('tracks.id').distinct().as('track_count'),
       ])
       .where('albums.id', 'in', ids)
+      .groupBy(['albums.id', 'albums.title', 'albums.image_path', 'albums.release_year', 'albums.wikipedia', 'artists.id', 'artists.name'])
       .execute()
     const byId = new Map(rows.map((r) => [r.id, { ...r, artist: { id: r.artist_id, name: r.artist_name } }]))
     return ids.map((id) => byId.get(id)).filter(Boolean)
@@ -148,7 +178,7 @@ search.get('/', async (c) => {
 
   const [albums, artists, playlists, tracks] = await Promise.all([
     fetchAlbumsByIds(grouped['Album'] ?? []),
-    fetchByIds('artists', grouped['Artist'] ?? []),
+    fetchArtistsWithCounts(grouped['Artist'] ?? []),
     fetchByIds('playlists', grouped['Playlist'] ?? []),
     fetchTracksByIds(grouped['Track'] ?? []),
   ])

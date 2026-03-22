@@ -647,7 +647,12 @@ const AdminUpload = () => {
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
                     >
-                      <span style={{ fontWeight: '500' }}>{artist.name}</span>
+                      <div>
+                        <div style={{ fontWeight: '500' }}>{artist.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                          {artist.album_count} albums · {artist.track_count} tracks
+                        </div>
+                      </div>
                       <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                         ID: {artist.id}
                       </span>
@@ -769,7 +774,7 @@ const AdminUpload = () => {
                       <div>
                         <div style={{ fontWeight: '500' }}>{album.title}</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                          {album.artist.name}
+                          {album.artist.name} · {album.track_count} tracks
                         </div>
                       </div>
                       <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
