@@ -77,7 +77,10 @@ interface LogTable {
   album_id: number | null
   artist_id: number | null
   action: string | null
-  created_at: ColumnType<Date, never, never>
+  created_at: ColumnType<Date, Date | string | undefined, never>
+  updated_at: ColumnType<Date, Date | string | undefined, never> | null
+  ip_address: string | null
+  cookie: string | null
 }
 
 interface FavoriteTable {

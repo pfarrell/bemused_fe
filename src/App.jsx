@@ -19,6 +19,7 @@ import AdminArtist from './pages/AdminArtist';
 import AdminAlbum from './pages/AdminAlbum';
 import AdminUpload from './pages/AdminUpload';
 import AdminPlaylist from './pages/AdminPlaylist';
+import AdminLogs from './pages/AdminLogs';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Add this component to handle scroll to top on route changes
@@ -170,6 +171,11 @@ function App() {
                 <Route path="/admin/playlist/:id" element={
                   <ProtectedRoute requireAdmin>
                     <AdminPlaylist />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/logs" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminLogs />
                   </ProtectedRoute>
                 } />
               </Routes>

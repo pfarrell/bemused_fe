@@ -35,7 +35,16 @@ export default function Playlist() {
   };
 
   const handlePlayAll = () => {
-    if (!playerInstance || !playlistData?.tracks?.length) return;
+    console.log('handlePlayAll called', { playerInstance, playlistData, tracks: playlistData?.tracks });
+    if (!playerInstance) {
+      console.log('No playerInstance');
+      return;
+    }
+    if (!playlistData?.tracks?.length) {
+      console.log('No tracks in playlistData');
+      return;
+    }
+    console.log('Playing playlist now:', playlistData.playlist.name, 'with', playlistData.tracks.length, 'tracks');
     playerInstance.clearPlaylist();
     playerInstance.addTracks(playlistData.tracks);
     playerInstance.loadAndPlayTrack(0);

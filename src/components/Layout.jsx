@@ -65,7 +65,6 @@ const Layout = ({ children }) => {
                 }}
               >
                 <span>{user.username}</span>
-                {user.admin && <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>(admin)</span>}
                 <svg style={{ width: '1rem', height: '1rem' }} fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
@@ -85,7 +84,6 @@ const Layout = ({ children }) => {
                 }}>
                   <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #3a4853' }}>
                     <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{user.username}</div>
-                    {user.email && <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.25rem' }}>{user.email}</div>}
                   </div>
 
                   <div style={{ padding: '0.5rem 0' }}>
@@ -110,26 +108,48 @@ const Layout = ({ children }) => {
                       Playlists
                     </button>
                     {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setShowDropdown(false);
-                          navigate('/admin/upload');
-                        }}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '0.5rem 1rem',
-                          background: 'none',
-                          border: 'none',
-                          color: 'inherit',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                      >
-                        Upload
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            setShowDropdown(false);
+                            navigate('/admin/upload');
+                          }}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '0.5rem 1rem',
+                            background: 'none',
+                            border: 'none',
+                            color: 'inherit',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        >
+                          Upload
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowDropdown(false);
+                            navigate('/admin/logs');
+                          }}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '0.5rem 1rem',
+                            background: 'none',
+                            border: 'none',
+                            color: 'inherit',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        >
+                          Logs
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={handleLogout}

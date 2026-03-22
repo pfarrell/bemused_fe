@@ -38,6 +38,7 @@ export const apiService = {
 
   // log
   log: (id) => api.get(`/log/${id}`),
+  getLogs: (page = 1, limit = 25) => api.get(`/log/admin?page=${page}&limit=${limit}`),
 
   // Admin
   updateArtist: (id, data) => api.put(`/admin/artist/${id}`, data),
