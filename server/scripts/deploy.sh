@@ -64,11 +64,11 @@ fi
 echo "🔗 Updating current symlink..."
 ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "ln -nfs ${RELEASE_DIR} ${CURRENT_DIR}"
 
-# Note about restarting service
+# Restart the API service
 echo ""
-echo "⚠️  Manual step required:"
-echo "   SSH to the server and run: sudo systemctl restart bemused-api"
-echo "   Then check status with: sudo systemctl status bemused-api"
+echo "🔄 Restarting bemused-api service..."
+ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "sudo systemctl restart bemused-api"
+echo "✅ Service restarted"
 echo ""
 
 # Clean up old releases (keep last 5)
