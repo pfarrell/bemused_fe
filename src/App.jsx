@@ -2,8 +2,9 @@
 // Add this to your src/App.jsx file
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAuthStore } from './stores/authStore';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Search from './pages/Search';
@@ -11,9 +12,11 @@ import Artist from './pages/Artist';
 import Album from './pages/Album';
 import Library from './pages/Library';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import AdminArtist from './pages/AdminArtist';
 import AdminAlbum from './pages/AdminAlbum';
 import AdminUpload from './pages/AdminUpload';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Add this component to handle scroll to top on route changes
 function ScrollToTop() {
@@ -35,9 +38,24 @@ function ScrollToTop() {
 
 function App() {
   const basename = import.meta.env.DEV ? '/' : '/bemused/app';
-  
+  const [authInitialized, setAuthInitialized] = useState(false);
+
+  // Initialize auth on app startup
   useEffect(() => {
-    // 2. FULLSCREEN/PWA SETUP FOR MOBILE
+    const initAuth = async () => {
+      try {
+        await useAuthStore.getState().initialize();
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+      } finally {
+        setAuthInitialized(true);
+      }
+    };
+    initAuth();
+  }, []);
+
+  // 2. FULLSCREEN/PWA SETUP FOR MOBILE
+  useEffect(() => {
     const setupMobileFullscreen = () => {
       // Add PWA meta tags if not already present
       const addMetaTag = (name, content) => {
@@ -94,14 +112,32 @@ function App() {
     return cleanup;
   }, []);
 
+  // Wait for auth to initialize before rendering routes
+  if (!authInitialized) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#3a4853'
+      }}>
+        <div style={{ textAlign: 'center', color: 'white' }}>
+          <div style={{ fontSize: '1.5rem' }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Router basename={basename}>
       <ScrollToTop /> {/* Add the ScrollToTop component here */}
       <div className="app h-screen overflow-hidden">
         <Routes>
-          {/* Login page without layout */}
+          {/* Auth pages without layout */}
           <Route path="/login" element={<Login />} />
-          
+          <Route path="/signup" element={<Signup />} />
+
           {/* All other pages use the shared layout */}
           <Route path="/*" element={
             <Layout>
@@ -111,9 +147,21 @@ function App() {
                 <Route path="/artist/:id" element={<Artist />} />
                 <Route path="/album/:id" element={<Album />} />
                 <Route path="/library" element={<Library />} />
-                <Route path="/admin/artist/:id" element={<AdminArtist />} />
-                <Route path="/admin/album/:id" element={<AdminAlbum />} />
-                <Route path="/admin/upload" element={<AdminUpload />} />
+                <Route path="/admin/artist/:id" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminArtist />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/album/:id" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminAlbum />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/upload" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminUpload />
+                  </ProtectedRoute>
+                } />
               </Routes>
             </Layout>
           } />

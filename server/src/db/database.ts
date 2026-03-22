@@ -111,6 +111,16 @@ interface UploadQueueTable {
   completed_at: Date | null
 }
 
+interface UserTable {
+  id: Generated<number>
+  username: string
+  email: string | null
+  password: string
+  admin: boolean
+  created_at: ColumnType<Date, never, never>
+  updated_at: ColumnType<Date, never, string | Date>
+}
+
 export interface Database {
   artists: ArtistTable
   albums: AlbumTable
@@ -121,6 +131,7 @@ export interface Database {
   logs: LogTable
   favorites: FavoriteTable
   upload_queue: UploadQueueTable
+  users: UserTable
 }
 
 // ---- DB instance ----

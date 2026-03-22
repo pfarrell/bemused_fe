@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
+import { useAuthStore } from '../stores/authStore';
 import Wikipedia from '../components/Wikipedia';
 import Track from '../components/Track';
 
@@ -10,6 +11,7 @@ const Album = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { playerInstance, currentTrack } = usePlayerStore();
+  const { isAdmin } = useAuthStore();
   const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -181,20 +183,22 @@ const Album = () => {
             >
               ▶ Play Now
             </button>
-            <button
-              onClick={() => navigate(`/admin/album/${id}`)}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#6b7280',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-              }}
-            >
-              Edit
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => navigate(`/admin/album/${id}`)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                }}
+              >
+                Edit
+              </button>
+            )}
             <button
               onClick={handlePlayNext}
               style={{

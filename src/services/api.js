@@ -16,23 +16,15 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Enable credentials for httpOnly cookie
+api.defaults.withCredentials = true;
 
 export const apiService = {
   // Auth
-  login: (credentials) => api.post('/login', credentials),
-  logout: () => api.post('/logout'),
+  signup: (username, password, email = null) => api.post('/auth/signup', { username, password, email }),
+  login: (username, password) => api.post('/auth/login', { username, password }),
+  logout: () => api.post('/auth/logout'),
+  getMe: () => api.get('/auth/me'),
   
   // Artists
   getRandomArtists: (size = 60) => api.get(`/artists/random?size=${size}`),

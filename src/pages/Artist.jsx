@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 import AlbumCard from '../components/AlbumCard';
 import Wikipedia from '../components/Wikipedia';
 import Loading from '../components/Loading';
@@ -10,6 +11,7 @@ import Retry from '../components/Retry';
 const Artist = () => {
   const { id, name } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuthStore();
   const [artistData, setArtistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,20 +102,22 @@ const Artist = () => {
             >
               {artist.name}
             </h1>
-            <button
-              onClick={() => navigate(`/admin/artist/${id}`)}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#6b7280',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-              }}
-            >
-              Edit
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => navigate(`/admin/artist/${id}`)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                }}
+              >
+                Edit
+              </button>
+            )}
           </div>
 
           {/* Wikipedia summary */}
