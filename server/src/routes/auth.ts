@@ -39,11 +39,11 @@ auth.post('/signup', async (c) => {
       return c.json({ error: 'Password must be at least 6 characters' }, 400)
     }
 
-    // Check if username already exists
+    // Check if username already exists (case-insensitive)
     const existingUser = await db
       .selectFrom('users')
       .select('id')
-      .where('username', '=', username)
+      .where(db.fn('LOWER', ['username']), '=', username.toLowerCase())
       .executeTakeFirst()
 
     if (existingUser) {
@@ -53,7 +53,7 @@ auth.post('/signup', async (c) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
 
-    // Create user
+    // Create user (store username as entered)
     const user = await db
       .insertInto('users')
       .values({
@@ -109,11 +109,11 @@ auth.post('/login', async (c) => {
       return c.json({ error: 'Username and password are required' }, 400)
     }
 
-    // Find user
+    // Find user (case-insensitive username)
     const user = await db
       .selectFrom('users')
       .selectAll()
-      .where('username', '=', username)
+      .where(db.fn('LOWER', ['username']), '=', username.toLowerCase())
       .executeTakeFirst()
 
     if (!user) {

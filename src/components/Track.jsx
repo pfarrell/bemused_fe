@@ -1,13 +1,28 @@
 // src/components/Track.jsx
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
 import { formatDuration } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 
 const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false }) => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ x: 0, y: 0 });
   const { playerInstance } = usePlayerStore();
   const navigate = useNavigate();
+  const longPressTimer = useRef(null);
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const trackItemRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleTrackClick = () => {
     if (playerInstance) {
@@ -19,58 +34,170 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     }
   };
 
-  const handlePlayNow = () => {
+  const handlePlayNow = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (playerInstance) {
       console.log('Playing track now:', track.title);
       playerInstance.clearPlaylist();
       playerInstance.addTrack(track);
       playerInstance.loadAndPlayTrack(0);
     }
-    setShowDropdown(false);
+    // Use timeout to ensure state updates properly
+    setTimeout(() => setShowDropdown(false), 0);
   };
 
-  const handlePlayNext = () => {
+  const handlePlayNext = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (playerInstance) {
       console.log('Adding track to play next:', track.title);
       playerInstance.addTracks([track], true); // true = play next
-      
+
       // If nothing is playing, start playing immediately
       if (playerInstance.audioPlayer.paused) {
         const currentIndex = playerInstance.currentTrackIndex || 0;
         playerInstance.loadAndPlayTrack(currentIndex);
       }
     }
-    setShowDropdown(false);
+    setTimeout(() => setShowDropdown(false), 0);
   };
 
-  const handleAddToQueue = () => {
+  const handleAddToQueue = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (playerInstance) {
       console.log('Adding track to queue:', track.title);
       playerInstance.addTrack(track);
-      
+
       // If nothing is playing, start playing immediately
-      if (playerInstance.audiopPlayer.paused) {
+      if (playerInstance.audioPlayer && playerInstance.audioPlayer.paused) {
         // Get the current playlist length from the store instead
         const { playlist } = usePlayerStore.getState();
-        const trackIndex = playlist.length; // The track we just added
+        const trackIndex = playlist.length - 1; // The track we just added
         playerInstance.loadAndPlayTrack(trackIndex);
       }
     }
-    setShowDropdown(false);
+    setTimeout(() => setShowDropdown(false), 0);
   };
 
+  // Long-press handlers
+  const handleTouchStart = (e) => {
+    // Don't trigger long-press on links or if dropdown is already open
+    if (e.target.tagName === 'A' || showDropdown) {
+      return;
+    }
+
+    touchStartPos.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
+
+    longPressTimer.current = setTimeout(() => {
+      setShowDropdown(true);
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500); // 500ms long-press duration
+  };
+
+  const handleTouchMove = (e) => {
+    // Cancel long-press if finger moves too much
+    const moveThreshold = 10; // pixels
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+
+    if (deltaX > moveThreshold || deltaY > moveThreshold) {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
+    // If dropdown is showing, don't trigger normal click behavior
+    if (showDropdown) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  // Right-click handler for desktop
+  const handleContextMenu = (e) => {
+    // Don't show context menu on links
+    if (e.target.tagName === 'A') {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Calculate position - adjust to avoid going off screen
+    const menuHeight = 120; // Approximate height of 3-button menu
+    const menuWidth = 140;
+
+    // Get the actual click position relative to the viewport
+    let x = e.clientX;
+    let y = e.clientY;
+
+    // Adjust Y position to account for container offset (menu appears too low otherwise)
+    // Subtract approximately 75px to align menu at cursor
+    y = y - 75;
+
+    // Keep menu on screen
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10;
+    }
+
+    if (y + menuHeight > window.innerHeight || y < 0) {
+      y = Math.max(10, e.clientY - menuHeight - 75);
+    }
+
+    setDropdownPos({ x, y });
+    setShowDropdown(true);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+    };
+  }, []);
+
   return (
-    <div 
+    <div
+      ref={trackItemRef}
       className={`track-item ${isPlaying ? 'currently-playing' : ''}`}
-      style={{ 
+      style={{
         padding: '1rem',
         borderBottom: index < trackCount - 1 ? '1px solid #e5e7eb' : 'none',
         cursor: 'pointer',
         transition: 'background-color 0.2s ease',
         backgroundColor: isPlaying ? '#dbeafe' : 'transparent',
         borderLeft: isPlaying ? '4px solid #3b82f6' : '4px solid transparent',
-        position: 'relative'
+        position: 'relative',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none'
       }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onContextMenu={handleContextMenu}
       onMouseEnter={(e) => {
         if (!isPlaying) {
           e.currentTarget.style.backgroundColor = '#f9fafb';
@@ -138,50 +265,96 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
         </h4>
       </div>
 
-      {/* Ellipsis menu */}
-      <div style={{ position: 'relative', flexShrink: 0 }}>
-        <button
-          className="track-ellipsis"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowDropdown(!showDropdown);
-          }}
-        >
-          ⋯
-        </button>
+      {/* Dropdown menu - shown by right-click on desktop or long-press on mobile */}
+      {showDropdown && (
+        <>
+          {/* Backdrop to close dropdown */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 50
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowDropdown(false);
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowDropdown(false);
+            }}
+          />
 
-        {showDropdown && (
-          <>
-            {/* Backdrop to close dropdown */}
-            <div
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 10
+          {/* Dropdown menu */}
+          <div
+            className="track-dropdown"
+            style={
+              !isMobile
+                ? {
+                    position: 'fixed',
+                    left: `${dropdownPos.x}px`,
+                    top: `${dropdownPos.y}px`,
+                    transform: 'none',
+                    zIndex: 100
+                  }
+                : {
+                    zIndex: 100
+                  }
+            }
+          >
+            <button
+              onClick={handlePlayNow}
+              onTouchStart={(e) => {
+                e.stopPropagation();
               }}
-              onClick={() => setShowDropdown(false)}
-            />
-            
-            {/* Dropdown menu */}
-            <div className="track-dropdown">
-              <button onClick={handlePlayNow}>
-                ▶ Play Now
-              </button>
-              
-              <button onClick={handlePlayNext}>
-                ⏭ Play Next
-              </button>
-              
-              <button onClick={handleAddToQueue}>
-                ➕ Add to Queue
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handlePlayNow();
+              }}
+            >
+              ▶ Play Now
+            </button>
+
+            <button
+              onClick={handlePlayNext}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handlePlayNext();
+              }}
+            >
+              ⏭ Play Next
+            </button>
+
+            <button
+              onClick={handleAddToQueue}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAddToQueue();
+              }}
+            >
+              ➕ Add to Queue
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

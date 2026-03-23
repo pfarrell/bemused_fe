@@ -178,7 +178,8 @@ export default function Playlist() {
         backgroundColor: 'white',
         borderRadius: '0.5rem',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden'
+        overflowX: 'hidden',
+        overflowY: 'visible'
       }}>
         {tracks && tracks.length > 0 ? (
           tracks.map((track, index) => (
