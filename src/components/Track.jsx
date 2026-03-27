@@ -1,12 +1,15 @@
 // src/components/Track.jsx
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { usePlayerStore } from '../stores/playerStore';
 import { formatDuration } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
+import AddToPlaylistModal from './AddToPlaylistModal';
 
 const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ x: 0, y: 0 });
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const { playerInstance } = usePlayerStore();
   const navigate = useNavigate();
   const longPressTimer = useRef(null);
@@ -87,6 +90,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     setTimeout(() => setShowDropdown(false), 0);
   };
 
+  const handleAddToPlaylist = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setShowDropdown(false);
+    setShowPlaylistModal(true);
+  };
+
   // Long-press handlers
   const handleTouchStart = (e) => {
     // Don't trigger long-press on links or if dropdown is already open
@@ -100,6 +112,31 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     };
 
     longPressTimer.current = setTimeout(() => {
+      // Set dropdown position at touch location for mobile
+      if (isMobile) {
+        const menuWidth = 200;
+        const menuHeight = 150;
+
+        let x = touchStartPos.current.x;
+        let y = touchStartPos.current.y;
+
+        // Center the menu horizontally around touch point
+        x = x - menuWidth / 2;
+
+        // Keep menu on screen
+        if (x < 10) x = 10;
+        if (x + menuWidth > window.innerWidth) {
+          x = window.innerWidth - menuWidth - 10;
+        }
+
+        if (y + menuHeight > window.innerHeight) {
+          y = y - menuHeight - 10;
+        }
+
+        if (y < 10) y = 10;
+
+        setDropdownPos({ x, y });
+      }
       setShowDropdown(true);
       // Haptic feedback if available
       if (navigator.vibrate) {
@@ -149,21 +186,18 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     const menuHeight = 120; // Approximate height of 3-button menu
     const menuWidth = 140;
 
-    // Get the actual click position relative to the viewport
+    // Use raw viewport coordinates (clientX/clientY work with position: fixed)
     let x = e.clientX;
     let y = e.clientY;
 
-    // Adjust Y position to account for container offset (menu appears too low otherwise)
-    // Subtract approximately 75px to align menu at cursor
-    y = y - 75;
-
-    // Keep menu on screen
+    // Keep menu on screen horizontally
     if (x + menuWidth > window.innerWidth) {
       x = window.innerWidth - menuWidth - 10;
     }
 
-    if (y + menuHeight > window.innerHeight || y < 0) {
-      y = Math.max(10, e.clientY - menuHeight - 75);
+    // Keep menu on screen vertically
+    if (y + menuHeight > window.innerHeight) {
+      y = Math.max(10, e.clientY - menuHeight);
     }
 
     setDropdownPos({ x, y });
@@ -266,7 +300,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       </div>
 
       {/* Dropdown menu - shown by right-click on desktop or long-press on mobile */}
-      {showDropdown && (
+      {showDropdown && createPortal(
         <>
           {/* Backdrop to close dropdown */}
           <div
@@ -297,19 +331,13 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           {/* Dropdown menu */}
           <div
             className="track-dropdown"
-            style={
-              !isMobile
-                ? {
-                    position: 'fixed',
-                    left: `${dropdownPos.x}px`,
-                    top: `${dropdownPos.y}px`,
-                    transform: 'none',
-                    zIndex: 100
-                  }
-                : {
-                    zIndex: 100
-                  }
-            }
+            style={{
+              position: 'fixed',
+              left: `${dropdownPos.x}px`,
+              top: `${dropdownPos.y}px`,
+              transform: 'none',
+              zIndex: 100
+            }}
           >
             <button
               onClick={handlePlayNow}
@@ -352,8 +380,31 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
             >
               ➕ Add to Queue
             </button>
+
+            <button
+              onClick={handleAddToPlaylist}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAddToPlaylist();
+              }}
+            >
+              📋 Add to Playlist
+            </button>
           </div>
-        </>
+        </>,
+        document.body
+      )}
+
+      {/* Add to Playlist Modal */}
+      {showPlaylistModal && (
+        <AddToPlaylistModal
+          track={track}
+          onClose={() => setShowPlaylistModal(false)}
+        />
       )}
     </div>
   );

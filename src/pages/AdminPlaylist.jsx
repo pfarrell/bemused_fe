@@ -15,6 +15,11 @@ export default function AdminPlaylist() {
   const [showSearch, setShowSearch] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
+  // Image download state
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageName, setImageName] = useState('');
+  const [downloadingImage, setDownloadingImage] = useState(false);
+
   useEffect(() => {
     loadPlaylist();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,6 +127,33 @@ export default function AdminPlaylist() {
     }
   };
 
+  const handleDownloadImage = async (e) => {
+    e.preventDefault();
+    if (!imageUrl || !imageName) {
+      alert('Both Image URL and Image Name are required');
+      return;
+    }
+
+    setDownloadingImage(true);
+
+    try {
+      await apiService.downloadPlaylistImage(id, imageUrl, imageName);
+
+      // Update the image path in the form with the newly downloaded image
+      setPlaylistData(prev => ({ ...prev, image_path: imageName }));
+      setImageUrl('');
+      setImageName('');
+
+      // Refresh playlist data to get updated image_path from server
+      await loadPlaylist();
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      alert(error.response?.data?.error || 'Failed to download image');
+    } finally {
+      setDownloadingImage(false);
+    }
+  };
+
   if (loading) return <div style={{ padding: '2rem' }}>Loading...</div>;
 
   return (
@@ -186,6 +218,89 @@ export default function AdminPlaylist() {
               fontSize: '1rem'
             }}
           />
+        </div>
+
+        {/* Current Image */}
+        {playlistData?.image_path && (
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+              Current Image
+            </label>
+            <img
+              src={apiService.getImageUrl(playlistData.image_path, 'album_small')}
+              alt="Playlist cover"
+              style={{
+                maxWidth: '200px',
+                borderRadius: '4px',
+                border: '1px solid #d1d5db'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Image Download Section */}
+        <div style={{
+          marginBottom: '1.5rem',
+          padding: '1rem',
+          backgroundColor: '#f9fafb',
+          borderRadius: '4px',
+          border: '1px solid #e5e7eb'
+        }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Download Image from URL
+          </h3>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+              Image URL
+            </label>
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+              Save as Filename
+            </label>
+            <input
+              type="text"
+              value={imageName}
+              onChange={(e) => setImageName(e.target.value)}
+              placeholder="playlist_cover.jpg"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+              }}
+            />
+          </div>
+          <button
+            onClick={handleDownloadImage}
+            disabled={downloadingImage || !imageUrl || !imageName}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              cursor: (downloadingImage || !imageUrl || !imageName) ? 'not-allowed' : 'pointer',
+              opacity: (downloadingImage || !imageUrl || !imageName) ? 0.6 : 1,
+            }}
+          >
+            {downloadingImage ? 'Downloading...' : 'Download & Save Image'}
+          </button>
         </div>
       </div>
 
@@ -326,7 +441,7 @@ export default function AdminPlaylist() {
                   {index + 1}
                 </span>
                 <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>
-                  ��
+                  ☰
                 </span>
                 <div>
                   <div style={{ fontWeight: '500' }}>{track.title}</div>

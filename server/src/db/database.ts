@@ -60,8 +60,8 @@ interface PlaylistTable {
   user_id: number | null
   auto_generated: boolean | null
   image_path: string | null
-  created_at: ColumnType<Date, never, never>
-  updated_at: ColumnType<Date, never, never>
+  created_at: ColumnType<Date, string | Date | undefined, never>
+  updated_at: ColumnType<Date, string | Date | undefined, string | Date>
 }
 
 interface PlaylistTrackTable {
@@ -124,6 +124,23 @@ interface UserTable {
   updated_at: ColumnType<Date, never, string | Date>
 }
 
+interface UserPlaylistTable {
+  id: Generated<number>
+  user_id: number
+  playlist_id: number
+  role: string
+  created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
+interface ArtistAlbumTable {
+  id: Generated<number>
+  artist_id: number
+  album_id: number
+  role: 'primary' | 'compilation' | 'featured' | 'guest' | 'collaborator'
+  order: number
+  created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
 export interface Database {
   artists: ArtistTable
   albums: AlbumTable
@@ -135,6 +152,8 @@ export interface Database {
   favorites: FavoriteTable
   upload_queue: UploadQueueTable
   users: UserTable
+  user_playlists: UserPlaylistTable
+  artist_albums: ArtistAlbumTable
 }
 
 // ---- DB instance ----

@@ -76,7 +76,7 @@ const Artist = () => {
     );
   }
 
-  const { artist, summary, albums } = artistData;
+  const { artist, summary, albums, appears_on } = artistData;
 
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -133,12 +133,35 @@ const Artist = () => {
             {albums.map((album) => {
               const imageUrl = apiService.getImageUrl(album.image_path, 'album_small')
               return (
-                <AlbumCard 
-                  key={album.id} 
-                  album={album} 
-                  artist={album.artist} 
+                <AlbumCard
+                  key={album.id}
+                  album={album}
+                  artist={album.artist}
                   imageUrl={imageUrl}
-                  onClick={handleAlbumClick} 
+                  onClick={handleAlbumClick}
+                />
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Appears On */}
+      {appears_on && appears_on.length > 0 && (
+        <div className="artist-grid">
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1.5rem 0 0.75rem 0', color: '#1f2937' }}>
+            Appears On
+          </h2>
+          <div className="artist-grid-container">
+            {appears_on.map((album) => {
+              const imageUrl = apiService.getImageUrl(album.image_path, 'album_small')
+              return (
+                <AlbumCard
+                  key={`appears-${album.id}`}
+                  album={album}
+                  artist={album.artist}
+                  imageUrl={imageUrl}
+                  onClick={handleAlbumClick}
                 />
               )
             })}

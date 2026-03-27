@@ -262,6 +262,64 @@ admin.post('/album/:id/image', async (c) => {
   }
 })
 
+// POST /admin/playlist/:id/image — download and save playlist image
+admin.post('/playlist/:id/image', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { image_url, image_name } = body
+
+  if (!image_url || !image_name) {
+    return c.json({ error: 'image_url and image_name are required' }, 400)
+  }
+
+  try {
+    // Download the image
+    console.log(`Downloading playlist image from: ${image_url}`)
+    const response = await fetch(image_url)
+    if (!response.ok) {
+      return c.json({ error: 'Failed to download image from URL' }, 400)
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer())
+
+    // Determine the image directory (use albums directory for playlists too)
+    const imageDir = path.join(projectRoot, 'public', 'images', 'albums')
+    console.log(`Saving playlist image to directory: ${imageDir}`)
+
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(imageDir)) {
+      console.log(`Creating directory: ${imageDir}`)
+      fs.mkdirSync(imageDir, { recursive: true })
+    }
+
+    // Save the image
+    const imagePath = path.join(imageDir, image_name)
+    console.log(`Writing playlist image to: ${imagePath}`)
+    fs.writeFileSync(imagePath, buffer)
+    console.log(`Playlist image saved successfully: ${imagePath}`)
+
+    // Update the playlist record
+    const updated = await db
+      .updateTable('playlists')
+      .set({
+        image_path: image_name,
+        updated_at: new Date(),
+      })
+      .where('id', '=', id)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!updated) {
+      return c.json({ error: 'Playlist not found' }, 404)
+    }
+
+    return c.json({ success: true, playlist: updated })
+  } catch (error) {
+    console.error('Error downloading/saving playlist image:', error)
+    return c.json({ error: 'Failed to save image' }, 500)
+  }
+})
+
 // PUT /admin/track/:id — update a track
 admin.put('/track/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
@@ -484,6 +542,176 @@ admin.post('/album/:id/move-to-artist', async (c) => {
   } catch (error) {
     console.error('Error moving album to new artist:', error)
     return c.json({ error: 'Failed to move album' }, 500)
+  }
+})
+
+// GET /admin/album/:id/artists — list non-primary artists for an album
+admin.get('/album/:id/artists', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  try {
+    const rows = await db
+      .selectFrom('artist_albums')
+      .innerJoin('artists', 'artists.id', 'artist_albums.artist_id')
+      .select([
+        'artist_albums.artist_id',
+        'artist_albums.role',
+        'artist_albums.order',
+        'artists.name',
+      ])
+      .where('artist_albums.album_id', '=', id)
+      .where('artist_albums.role', '!=', 'primary')
+      .orderBy('artist_albums.order', 'asc')
+      .execute()
+    return c.json(rows)
+  } catch (error) {
+    console.error('Error fetching album artists:', error)
+    return c.json({ error: 'Failed to fetch album artists' }, 500)
+  }
+})
+
+// POST /admin/album/:id/artists — add a non-primary artist to an album
+admin.post('/album/:id/artists', async (c) => {
+  const albumId = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { artist_id, role } = body
+
+  if (!artist_id || !role) {
+    return c.json({ error: 'artist_id and role are required' }, 400)
+  }
+  if (!['compilation', 'featured', 'guest', 'collaborator'].includes(role)) {
+    return c.json({ error: 'Invalid role. Must be compilation, featured, guest, or collaborator' }, 400)
+  }
+
+  try {
+    const existing = await db
+      .selectFrom('artist_albums')
+      .select('order')
+      .where('album_id', '=', albumId)
+      .execute()
+    const nextOrder = existing.length > 0 ? Math.max(...existing.map(r => r.order)) + 1 : 1
+
+    const inserted = await db
+      .insertInto('artist_albums')
+      .values({ artist_id, album_id: albumId, role, order: nextOrder })
+      .returningAll()
+      .executeTakeFirst()
+
+    return c.json(inserted)
+  } catch (error: any) {
+    if (error.code === '23505') {
+      return c.json({ error: 'This artist is already associated with this album' }, 409)
+    }
+    console.error('Error adding artist to album:', error)
+    return c.json({ error: 'Failed to add artist to album' }, 500)
+  }
+})
+
+// DELETE /admin/album/:id/artists/:artist_id — remove a non-primary artist from an album
+admin.delete('/album/:id/artists/:artist_id', async (c) => {
+  const albumId = parseInt(c.req.param('id'))
+  const artistId = parseInt(c.req.param('artist_id'))
+
+  try {
+    const deleted = await db
+      .deleteFrom('artist_albums')
+      .where('album_id', '=', albumId)
+      .where('artist_id', '=', artistId)
+      .where('role', '!=', 'primary')
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!deleted) {
+      return c.json({ error: 'Relationship not found or cannot remove primary artist' }, 404)
+    }
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error removing artist from album:', error)
+    return c.json({ error: 'Failed to remove artist from album' }, 500)
+  }
+})
+
+// GET /admin/artist/:id/albums — list non-primary albums for an artist
+admin.get('/artist/:id/albums', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  try {
+    const rows = await db
+      .selectFrom('artist_albums')
+      .innerJoin('albums', 'albums.id', 'artist_albums.album_id')
+      .select([
+        'artist_albums.album_id',
+        'artist_albums.role',
+        'albums.title',
+        'albums.release_year',
+      ])
+      .where('artist_albums.artist_id', '=', id)
+      .where('artist_albums.role', '!=', 'primary')
+      .orderBy('albums.release_year', 'asc')
+      .execute()
+    return c.json(rows)
+  } catch (error) {
+    console.error('Error fetching artist albums:', error)
+    return c.json({ error: 'Failed to fetch artist albums' }, 500)
+  }
+})
+
+// POST /admin/artist/:id/albums — add a non-primary album to an artist
+admin.post('/artist/:id/albums', async (c) => {
+  const artistId = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { album_id, role } = body
+
+  if (!album_id || !role) {
+    return c.json({ error: 'album_id and role are required' }, 400)
+  }
+  if (!['compilation', 'featured', 'guest', 'collaborator'].includes(role)) {
+    return c.json({ error: 'Invalid role. Must be compilation, featured, guest, or collaborator' }, 400)
+  }
+
+  try {
+    const existing = await db
+      .selectFrom('artist_albums')
+      .select('order')
+      .where('album_id', '=', album_id)
+      .execute()
+    const nextOrder = existing.length > 0 ? Math.max(...existing.map(r => r.order)) + 1 : 1
+
+    const inserted = await db
+      .insertInto('artist_albums')
+      .values({ artist_id: artistId, album_id, role, order: nextOrder })
+      .returningAll()
+      .executeTakeFirst()
+
+    return c.json(inserted)
+  } catch (error: any) {
+    if (error.code === '23505') {
+      return c.json({ error: 'This artist is already associated with this album' }, 409)
+    }
+    console.error('Error adding album to artist:', error)
+    return c.json({ error: 'Failed to add album to artist' }, 500)
+  }
+})
+
+// DELETE /admin/artist/:id/albums/:album_id — remove a non-primary album from an artist
+admin.delete('/artist/:id/albums/:album_id', async (c) => {
+  const artistId = parseInt(c.req.param('id'))
+  const albumId = parseInt(c.req.param('album_id'))
+
+  try {
+    const deleted = await db
+      .deleteFrom('artist_albums')
+      .where('artist_id', '=', artistId)
+      .where('album_id', '=', albumId)
+      .where('role', '!=', 'primary')
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!deleted) {
+      return c.json({ error: 'Relationship not found or cannot remove primary relationship' }, 404)
+    }
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error removing album from artist:', error)
+    return c.json({ error: 'Failed to remove album from artist' }, 500)
   }
 })
 

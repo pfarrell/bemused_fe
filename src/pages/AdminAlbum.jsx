@@ -35,10 +35,18 @@ const AdminAlbum = () => {
   const [targetArtistId, setTargetArtistId] = useState('');
   const [movingToArtist, setMovingToArtist] = useState(false);
 
-  // Artist search modal state
+  // Artist search modal state (for Move to Artist)
   const [showArtistSearchModal, setShowArtistSearchModal] = useState(false);
   const [artistSearchQuery, setArtistSearchQuery] = useState('');
   const [artistSearchResults, setArtistSearchResults] = useState([]);
+
+  // Secondary artists state
+  const [secondaryArtists, setSecondaryArtists] = useState([]);
+  const [showAddArtistSection, setShowAddArtistSection] = useState(false);
+  const [addArtistQuery, setAddArtistQuery] = useState('');
+  const [addArtistResults, setAddArtistResults] = useState([]);
+  const [addArtistRole, setAddArtistRole] = useState('featured');
+  const [addArtistSearching, setAddArtistSearching] = useState(false);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -64,6 +72,18 @@ const AdminAlbum = () => {
     if (id) {
       fetchAlbumData();
     }
+  }, [id]);
+
+  useEffect(() => {
+    const loadSecondaryArtists = async () => {
+      try {
+        const response = await apiService.getAlbumSecondaryArtists(id);
+        setSecondaryArtists(response.data);
+      } catch (error) {
+        console.error('Error loading secondary artists:', error);
+      }
+    };
+    if (id) loadSecondaryArtists();
   }, [id]);
 
   // Track changes to form fields
@@ -335,6 +355,43 @@ const AdminAlbum = () => {
     setShowArtistSearchModal(false);
     setArtistSearchQuery('');
     setArtistSearchResults([]);
+  };
+
+  const handleAddArtistSearch = async (e) => {
+    e.preventDefault();
+    if (addArtistQuery.length < 2) return;
+    setAddArtistSearching(true);
+    try {
+      const response = await apiService.search(addArtistQuery);
+      setAddArtistResults(response.data.artists || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setAddArtistSearching(false);
+    }
+  };
+
+  const handleAddArtistToAlbum = async (artist) => {
+    try {
+      await apiService.addArtistToAlbum(id, artist.id, addArtistRole);
+      const response = await apiService.getAlbumSecondaryArtists(id);
+      setSecondaryArtists(response.data);
+      setAddArtistResults([]);
+      setAddArtistQuery('');
+      setShowAddArtistSection(false);
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to add artist');
+    }
+  };
+
+  const handleRemoveArtistFromAlbum = async (artistId) => {
+    if (!window.confirm('Remove this artist from the album?')) return;
+    try {
+      await apiService.removeArtistFromAlbum(id, artistId);
+      setSecondaryArtists(prev => prev.filter(a => a.artist_id !== artistId));
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to remove artist');
+    }
   };
 
   const handleMoveToArtist = async (e) => {
@@ -709,6 +766,177 @@ const AdminAlbum = () => {
             {movingToArtist ? 'Moving...' : 'Move Album to Artist'}
           </button>
         </form>
+      </div>
+
+      {/* Additional Artists Section */}
+      <div style={{
+        marginTop: '3rem',
+        padding: '1.5rem',
+        backgroundColor: '#f0fdf4',
+        borderRadius: '4px',
+        border: '1px solid #86efac'
+      }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#166534' }}>
+          Additional Artists
+        </h3>
+
+        {secondaryArtists.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            {secondaryArtists.map(a => (
+              <div key={a.artist_id} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #bbf7d0'
+              }}>
+                <span style={{ fontWeight: '500' }}>{a.name}</span>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    padding: '0.2rem 0.5rem',
+                    backgroundColor: '#dcfce7',
+                    borderRadius: '9999px',
+                    color: '#166534'
+                  }}>{a.role}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveArtistFromAlbum(a.artist_id)}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!showAddArtistSection ? (
+          <button
+            type="button"
+            onClick={() => setShowAddArtistSection(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#16a34a',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+            }}
+          >
+            + Add Artist
+          </button>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', alignItems: 'center' }}>
+              <select
+                value={addArtistRole}
+                onChange={(e) => setAddArtistRole(e.target.value)}
+                style={{
+                  padding: '0.5rem',
+                  fontSize: '0.875rem',
+                  border: '1px solid #86efac',
+                  borderRadius: '4px',
+                  backgroundColor: 'white',
+                }}
+              >
+                <option value="featured">Featured</option>
+                <option value="collaborator">Collaborator</option>
+                <option value="compilation">Compilation</option>
+                <option value="guest">Guest</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => { setShowAddArtistSection(false); setAddArtistResults([]); setAddArtistQuery(''); }}
+                style={{
+                  padding: '0.5rem',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+            <form onSubmit={handleAddArtistSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <input
+                type="text"
+                value={addArtistQuery}
+                onChange={(e) => setAddArtistQuery(e.target.value)}
+                placeholder="Search artist name..."
+                autoFocus
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '0.875rem',
+                  border: '1px solid #86efac',
+                  borderRadius: '4px',
+                }}
+              />
+              <button
+                type="submit"
+                disabled={addArtistSearching || addArtistQuery.length < 2}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {addArtistSearching ? 'Searching...' : 'Search'}
+              </button>
+            </form>
+            {addArtistResults.length > 0 && (
+              <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}>
+                {addArtistResults.map(artist => (
+                  <div
+                    key={artist.id}
+                    style={{
+                      padding: '0.6rem 0.75rem',
+                      borderBottom: '1px solid #e5e7eb',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span style={{ fontWeight: '500' }}>{artist.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAddArtistToAlbum(artist)}
+                      style={{
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: '#16a34a',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Add as {addArtistRole}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Bulk Update Section - REMOVED, replaced with Move Album section above */}

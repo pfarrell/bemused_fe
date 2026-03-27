@@ -66,9 +66,34 @@ artists.get('/:id', async (c) => {
     .filter((a) => albumIdsWithTracks.has(a.id))
     .map((a) => ({ ...a, artist: { id: artist.id, name: artist.name } }))
 
+  const appearsOnRows = await db
+    .selectFrom('artist_albums')
+    .innerJoin('albums', 'albums.id', 'artist_albums.album_id')
+    .innerJoin('artists as al_artist', 'al_artist.id', 'albums.artist_id')
+    .select([
+      'albums.id',
+      'albums.title',
+      'albums.release_year',
+      'albums.image_path',
+      'al_artist.id as primary_artist_id',
+      'al_artist.name as primary_artist_name',
+    ])
+    .where('artist_albums.artist_id', '=', id)
+    .where('artist_albums.role', '!=', 'primary')
+    .orderBy('albums.release_year', 'asc')
+    .execute()
+
+  const appears_on = appearsOnRows.map(a => ({
+    id: a.id,
+    title: a.title,
+    release_year: a.release_year,
+    image_path: a.image_path,
+    artist: { id: a.primary_artist_id, name: a.primary_artist_name },
+  }))
+
   const summary = await getArtistSummary(artist.name, artist.wikipedia)
 
-  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums })
+  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums, appears_on })
 })
 
 export default artists

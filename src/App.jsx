@@ -4,6 +4,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -136,6 +137,26 @@ function App() {
   return (
     <Router basename={basename}>
       <ScrollToTop /> {/* Add the ScrollToTop component here */}
+      <Toaster
+        position={window.innerWidth <= 768 ? "bottom-center" : "bottom-right"}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            style: {
+              background: '#10b981',
+            },
+          },
+          error: {
+            style: {
+              background: '#ef4444',
+            },
+          },
+        }}
+      />
       <div className="app h-screen overflow-hidden">
         <Routes>
           {/* Auth pages without layout */}

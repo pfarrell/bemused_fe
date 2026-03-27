@@ -131,7 +131,7 @@ const Album = () => {
     );
   }
 
-  const { artist, album, tracks, summary } = albumData;
+  const { artist, album, tracks, summary, secondary_artists } = albumData;
 
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -157,11 +157,27 @@ const Album = () => {
             {album.title}
           </h1>
           
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 1.5rem 0', color: '#7c3aed', cursor: 'pointer' }}
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed', cursor: 'pointer' }}
             onClick={() => navigate(`/artist/${artist.id}`)}
           >
             {artist.name}
           </h2>
+          {secondary_artists && secondary_artists.length > 0 && artist.id !== 161 && (
+            <p style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
+              Also featuring:{' '}
+              {secondary_artists.map((sa, i) => (
+                <span key={sa.id}>
+                  {i > 0 && ' · '}
+                  <span
+                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    onClick={() => navigate(`/artist/${sa.id}`)}
+                  >
+                    {sa.name}
+                  </span>
+                </span>
+              ))}
+            </p>
+          )}
           {summary && Object.keys(summary).length > 0 && (
             <Wikipedia summary={summary} />
           )}

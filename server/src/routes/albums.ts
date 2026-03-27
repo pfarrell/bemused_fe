@@ -54,6 +54,21 @@ albums.get('/:id', async (c) => {
     url: `${streamBase()}/stream/${t.id}`,
   }))
 
+  const secondaryArtistRows = await db
+    .selectFrom('artist_albums')
+    .innerJoin('artists as sa', 'sa.id', 'artist_albums.artist_id')
+    .select([
+      'artist_albums.artist_id as id',
+      'sa.name',
+      'artist_albums.role',
+    ])
+    .where('artist_albums.album_id', '=', id)
+    .where('artist_albums.role', '!=', 'primary')
+    .orderBy('artist_albums.order', 'asc')
+    .execute()
+
+  const secondary_artists = secondaryArtistRows.map(r => ({ id: r.id, name: r.name, role: r.role }))
+
   const summary = await getAlbumSummary(
     artist.name,
     album.title,
@@ -61,7 +76,7 @@ albums.get('/:id', async (c) => {
     album.wikipedia
   )
 
-  return c.json({ album, artist, tracks, summary: summary ?? {} })
+  return c.json({ album, artist, secondary_artists, tracks, summary: summary ?? {} })
 })
 
 export default albums

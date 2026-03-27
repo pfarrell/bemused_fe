@@ -52,6 +52,12 @@ export const apiService = {
   bulkUpdateTracks: (album_id, data) => api.patch(`/admin/album/${album_id}/tracks`, data),
   moveArtistArtifacts: (id, target_artist_id) => api.post(`/admin/artist/${id}/move-artifacts`, { target_artist_id }),
   moveAlbumToArtist: (id, target_artist_id) => api.post(`/admin/album/${id}/move-to-artist`, { target_artist_id }),
+  getAlbumSecondaryArtists: (id) => api.get(`/admin/album/${id}/artists`),
+  addArtistToAlbum: (albumId, artistId, role) => api.post(`/admin/album/${albumId}/artists`, { artist_id: artistId, role }),
+  removeArtistFromAlbum: (albumId, artistId) => api.delete(`/admin/album/${albumId}/artists/${artistId}`),
+  getArtistSecondaryAlbums: (id) => api.get(`/admin/artist/${id}/albums`),
+  addAlbumToArtist: (artistId, albumId, role) => api.post(`/admin/artist/${artistId}/albums`, { album_id: albumId, role }),
+  removeAlbumFromArtist: (artistId, albumId) => api.delete(`/admin/artist/${artistId}/albums/${albumId}`),
 
   // Upload
   uploadTracks: (formData) => api.post('/admin/upload', formData, {
@@ -63,10 +69,12 @@ export const apiService = {
   // Playlists
   getPlaylists: () => api.get('/playlists'),
   getPlaylist: (id) => api.get(`/playlist/${id}`),
+  createPlaylist: (name) => api.post('/playlists', { name }),
   addTrackToPlaylist: (playlistId, trackId) => api.post(`/playlist/${playlistId}/tracks`, { track_id: trackId }),
   removeTrackFromPlaylist: (playlistId, trackId) => api.delete(`/playlist/${playlistId}/tracks/${trackId}`),
   reorderPlaylistTracks: (playlistId, track_orders) => api.patch(`/playlist/${playlistId}/tracks/reorder`, { track_orders }),
   updatePlaylist: (id, data) => api.put(`/playlist/${id}`, data),
+  downloadPlaylistImage: (id, image_url, image_name) => api.post(`/admin/playlist/${id}/image`, { image_url, image_name }),
 
   // Image URL helpers
   getImageUrl: (imagePath, context = 'base') => {

@@ -66,6 +66,23 @@ playlists.get('/', async (c) => {
   return c.json(rows)
 })
 
+// POST /playlists - Create a new playlist
+playlists.post('/', async (c) => {
+  const { name } = await c.req.json()
+
+  const result = await db
+    .insertInto('playlists')
+    .values({
+      name,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .returningAll()
+    .executeTakeFirst()
+
+  return c.json(result)
+})
+
 // GET /top  — top 20 most played tracks in the last 7 days
 playlists.get('/top', async (c) => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -141,6 +158,13 @@ playlists.post('/:id/tracks', async (c) => {
       track_id,
       order: nextOrder,
     })
+    .execute()
+
+  // Update the playlist's updated_at timestamp
+  await db
+    .updateTable('playlists')
+    .set({ updated_at: new Date() })
+    .where('id', '=', playlistId)
     .execute()
 
   return c.json({ success: true })
