@@ -32,7 +32,7 @@ export default function Playlists() {
   if (error) return <Retry message={error} onRetry={loadPlaylists} />;
 
   return (
-    <div style={{ padding: '2rem', paddingBottom: '8rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
+    <div style={{ padding: '2rem', paddingBottom: '8rem', maxWidth: '1400px', margin: '0 auto' }}>
       <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '2rem', color: '#1f2937' }}>
         Playlists
       </h1>

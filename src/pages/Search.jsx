@@ -79,7 +79,7 @@ const Search = () => {
   }
 
   return (
-    <div>
+    <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Artists Section */}
       {results.artists && results.artists.length > 0 && (
         <div className="search-section">
