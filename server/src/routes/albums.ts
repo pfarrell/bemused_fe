@@ -40,8 +40,9 @@ albums.get('/:id', async (c) => {
       'track_artist.image_path as artist_image_path',
     ])
     .where('tracks.album_id', '=', id)
-    .orderBy('tracks.track_number', 'asc')
     .execute()
+
+  trackRows.sort((a, b) => (parseInt(a.track_number ?? '0') || 0) - (parseInt(b.track_number ?? '0') || 0))
 
   const tracks = trackRows.map((t) => ({
     id: t.id,
