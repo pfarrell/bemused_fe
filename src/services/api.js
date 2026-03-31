@@ -58,6 +58,9 @@ export const apiService = {
   getArtistSecondaryAlbums: (id) => api.get(`/admin/artist/${id}/albums`),
   addAlbumToArtist: (artistId, albumId, role) => api.post(`/admin/artist/${artistId}/albums`, { album_id: albumId, role }),
   removeAlbumFromArtist: (artistId, albumId) => api.delete(`/admin/artist/${artistId}/albums/${albumId}`),
+  getRelatedArtists: (id) => api.get(`/admin/artist/${id}/related`),
+  addRelatedArtist: (artistId, relatedArtistId, kind = 'related') => api.post(`/admin/artist/${artistId}/related`, { related_artist_id: relatedArtistId, kind }),
+  removeRelatedArtist: (artistId, relatedArtistId) => api.delete(`/admin/artist/${artistId}/related/${relatedArtistId}`),
 
   // Upload
   uploadTracks: (formData) => api.post('/admin/upload', formData, {

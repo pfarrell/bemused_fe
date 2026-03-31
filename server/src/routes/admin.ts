@@ -715,4 +715,106 @@ admin.delete('/artist/:id/albums/:album_id', async (c) => {
   }
 })
 
+// GET /admin/artist/:id/related — list related artists and members
+admin.get('/artist/:id/related', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  try {
+    const rows = await db
+      .selectFrom('artist_relations')
+      .innerJoin('artists', 'artists.id', 'artist_relations.related_artist_id')
+      .select(['artists.id', 'artists.name', 'artist_relations.kind'])
+      .where('artist_relations.artist_id', '=', id)
+      .orderBy('artists.name', 'asc')
+      .execute()
+    return c.json(rows)
+  } catch (error) {
+    console.error('Error fetching related artists:', error)
+    return c.json({ error: 'Failed to fetch related artists' }, 500)
+  }
+})
+
+// POST /admin/artist/:id/related — add relation (symmetric for 'related', one-directional for 'member')
+admin.post('/artist/:id/related', async (c) => {
+  const artistId = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const relatedId = parseInt(body.related_artist_id)
+  const kind: string = body.kind ?? 'related'
+
+  if (!relatedId || isNaN(relatedId)) {
+    return c.json({ error: 'related_artist_id is required' }, 400)
+  }
+  if (artistId === relatedId) {
+    return c.json({ error: 'An artist cannot be related to itself' }, 400)
+  }
+
+  try {
+    const rows = kind === 'member'
+      ? [{ artist_id: artistId, related_artist_id: relatedId, kind }]
+      : [
+          { artist_id: artistId, related_artist_id: relatedId, kind },
+          { artist_id: relatedId, related_artist_id: artistId, kind },
+        ]
+
+    await db
+      .insertInto('artist_relations')
+      .values(rows)
+      .onConflict((oc) => oc.doNothing())
+      .execute()
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error adding related artist:', error)
+    return c.json({ error: 'Failed to add related artist' }, 500)
+  }
+})
+
+// DELETE /admin/artist/:id/related/:related_id — remove relation
+admin.delete('/artist/:id/related/:related_id', async (c) => {
+  const artistId = parseInt(c.req.param('id'))
+  const relatedId = parseInt(c.req.param('related_id'))
+
+  try {
+    // Look up the kind to determine if we remove one or both directions
+    const existing = await db
+      .selectFrom('artist_relations')
+      .select('kind')
+      .where('artist_id', '=', artistId)
+      .where('related_artist_id', '=', relatedId)
+      .executeTakeFirst()
+
+    const kind = existing?.kind ?? 'related'
+
+    if (kind === 'member') {
+      // One-directional: only remove artistId → relatedId
+      await db
+        .deleteFrom('artist_relations')
+        .where('artist_id', '=', artistId)
+        .where('related_artist_id', '=', relatedId)
+        .execute()
+    } else {
+      // Symmetric: remove both directions
+      await db
+        .deleteFrom('artist_relations')
+        .where((eb) =>
+          eb.or([
+            eb.and([
+              eb('artist_id', '=', artistId),
+              eb('related_artist_id', '=', relatedId),
+            ]),
+            eb.and([
+              eb('artist_id', '=', relatedId),
+              eb('related_artist_id', '=', artistId),
+            ]),
+          ])
+        )
+        .execute()
+    }
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error removing related artist:', error)
+    return c.json({ error: 'Failed to remove related artist' }, 500)
+  }
+})
+
 export default admin

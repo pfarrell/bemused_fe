@@ -5,7 +5,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
+import api from './services/api';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Search from './pages/Search';
@@ -57,6 +59,22 @@ function App() {
       }
     };
     initAuth();
+  }, []);
+
+  // Handle session expiry: if the backend returns 401 while the frontend thinks
+  // we're logged in, clear auth state so ProtectedRoute redirects to login.
+  useEffect(() => {
+    const interceptorId = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401 && useAuthStore.getState().isAuthenticated) {
+          toast.error('Session expired. Please log in again.');
+          useAuthStore.getState().logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => api.interceptors.response.eject(interceptorId);
   }, []);
 
   // 2. FULLSCREEN/PWA SETUP FOR MOBILE

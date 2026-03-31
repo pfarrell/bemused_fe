@@ -76,7 +76,7 @@ const Artist = () => {
     );
   }
 
-  const { artist, summary, albums, appears_on } = artistData;
+  const { artist, summary, albums, appears_on, related_artists, members, member_of } = artistData;
 
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -122,6 +122,57 @@ const Artist = () => {
 
           {/* Wikipedia summary */}
           <Wikipedia summary={summary} />
+
+          {member_of && member_of.length > 0 && (
+            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+              Member of:{' '}
+              {member_of.map((g, i) => (
+                <span key={g.id}>
+                  {i > 0 && ' · '}
+                  <span
+                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    onClick={() => navigate(`/artist/${g.id}`)}
+                  >
+                    {g.name}
+                  </span>
+                </span>
+              ))}
+            </p>
+          )}
+
+          {members && members.length > 0 && (
+            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+              Members:{' '}
+              {members.map((m, i) => (
+                <span key={m.id}>
+                  {i > 0 && ' · '}
+                  <span
+                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    onClick={() => navigate(`/artist/${m.id}`)}
+                  >
+                    {m.name}
+                  </span>
+                </span>
+              ))}
+            </p>
+          )}
+
+          {related_artists && related_artists.length > 0 && (
+            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+              Related artists:{' '}
+              {related_artists.map((ra, i) => (
+                <span key={ra.id}>
+                  {i > 0 && ' · '}
+                  <span
+                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    onClick={() => navigate(`/artist/${ra.id}`)}
+                  >
+                    {ra.name}
+                  </span>
+                </span>
+              ))}
+            </p>
+          )}
 
         </div>
       </div>

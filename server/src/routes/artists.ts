@@ -91,9 +91,30 @@ artists.get('/:id', async (c) => {
     artist: { id: a.primary_artist_id, name: a.primary_artist_name },
   }))
 
+  const relationRows = await db
+    .selectFrom('artist_relations')
+    .innerJoin('artists as ra', 'ra.id', 'artist_relations.related_artist_id')
+    .select(['ra.id', 'ra.name', 'artist_relations.kind'])
+    .where('artist_relations.artist_id', '=', id)
+    .orderBy('ra.name', 'asc')
+    .execute()
+
+  const related_artists = relationRows.filter(r => r.kind === 'related').map(r => ({ id: r.id, name: r.name }))
+  const members = relationRows.filter(r => r.kind === 'member').map(r => ({ id: r.id, name: r.name }))
+
+  const memberOfRows = await db
+    .selectFrom('artist_relations')
+    .innerJoin('artists as ga', 'ga.id', 'artist_relations.artist_id')
+    .select(['ga.id', 'ga.name'])
+    .where('artist_relations.related_artist_id', '=', id)
+    .where('artist_relations.kind', '=', 'member')
+    .orderBy('ga.name', 'asc')
+    .execute()
+  const member_of = memberOfRows.map(r => ({ id: r.id, name: r.name }))
+
   const summary = await getArtistSummary(artist.name, artist.wikipedia)
 
-  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums, appears_on })
+  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums, appears_on, related_artists, members, member_of })
 })
 
 export default artists

@@ -141,6 +141,14 @@ interface ArtistAlbumTable {
   created_at: ColumnType<Date, string | Date | undefined, never>
 }
 
+interface ArtistRelationTable {
+  id: Generated<number>
+  artist_id: number
+  related_artist_id: number
+  kind: string
+  created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
 export interface Database {
   artists: ArtistTable
   albums: AlbumTable
@@ -154,6 +162,7 @@ export interface Database {
   users: UserTable
   user_playlists: UserPlaylistTable
   artist_albums: ArtistAlbumTable
+  artist_relations: ArtistRelationTable
 }
 
 // ---- DB instance ----

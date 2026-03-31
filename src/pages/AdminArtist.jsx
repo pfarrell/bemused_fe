@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
+import toast from 'react-hot-toast';
 
 const AdminArtist = () => {
   const { id } = useParams();
@@ -26,21 +27,25 @@ const AdminArtist = () => {
   const [downloadingImage, setDownloadingImage] = useState(false);
 
   // Move artifacts state
-  const [targetArtistId, setTargetArtistId] = useState('');
   const [movingArtifacts, setMovingArtifacts] = useState(false);
+  const [moveArtistQuery, setMoveArtistQuery] = useState('');
+  const [moveArtistResults, setMoveArtistResults] = useState([]);
+  const [moveArtistSearching, setMoveArtistSearching] = useState(false);
+  const [selectedTargetArtist, setSelectedTargetArtist] = useState(null);
 
-  // Artist search modal state (for Move Artifacts)
-  const [showArtistSearchModal, setShowArtistSearchModal] = useState(false);
-  const [artistSearchQuery, setArtistSearchQuery] = useState('');
-  const [artistSearchResults, setArtistSearchResults] = useState([]);
+  // Related artists state
+  const [relatedArtists, setRelatedArtists] = useState([]);
+
+  // Unified relations add form state
+  const [showAddRelationSection, setShowAddRelationSection] = useState(false);
+  const [relationTypeToAdd, setRelationTypeToAdd] = useState('related_artist');
+  const [addRelationQuery, setAddRelationQuery] = useState('');
+  const [addRelationResults, setAddRelationResults] = useState([]);
+  const [addRelationSearching, setAddRelationSearching] = useState(false);
+  const [addRelationRole, setAddRelationRole] = useState('featured');
 
   // Appears On (non-primary albums) state
   const [appearsOnAlbums, setAppearsOnAlbums] = useState([]);
-  const [showAddAlbumSection, setShowAddAlbumSection] = useState(false);
-  const [addAlbumQuery, setAddAlbumQuery] = useState('');
-  const [addAlbumResults, setAddAlbumResults] = useState([]);
-  const [addAlbumRole, setAddAlbumRole] = useState('featured');
-  const [addAlbumSearching, setAddAlbumSearching] = useState(false);
 
   useEffect(() => {
     const fetchArtistData = async () => {
@@ -75,6 +80,18 @@ const AdminArtist = () => {
       }
     };
     if (id) loadAppearsOn();
+  }, [id]);
+
+  useEffect(() => {
+    const loadRelatedArtists = async () => {
+      try {
+        const response = await apiService.getRelatedArtists(id);
+        setRelatedArtists(response.data);
+      } catch (error) {
+        console.error('Error loading related artists:', error);
+      }
+    };
+    if (id) loadRelatedArtists();
   }, [id]);
 
   // Track changes to form fields
@@ -257,53 +274,17 @@ const AdminArtist = () => {
     }
   };
 
-  const handleArtistSearch = async (e) => {
+  const handleMoveArtistSearch = async (e) => {
     e.preventDefault();
-    if (artistSearchQuery.length < 2) {
-      setError('Please enter at least 2 characters to search');
-      return;
-    }
-
+    if (moveArtistQuery.length < 2) return;
+    setMoveArtistSearching(true);
     try {
-      const response = await apiService.search(artistSearchQuery);
-      setArtistSearchResults(response.data.artists || []);
+      const response = await apiService.search(moveArtistQuery);
+      setMoveArtistResults((response.data.artists || []).filter(a => String(a.id) !== String(id)));
     } catch (error) {
       console.error('Error searching artists:', error);
-      setError('Failed to search artists');
-    }
-  };
-
-  const handleSelectArtist = (artist) => {
-    setTargetArtistId(String(artist.id));
-    setShowArtistSearchModal(false);
-    setArtistSearchQuery('');
-    setArtistSearchResults([]);
-  };
-
-  const handleAddAlbumSearch = async (e) => {
-    e.preventDefault();
-    if (addAlbumQuery.length < 2) return;
-    setAddAlbumSearching(true);
-    try {
-      const response = await apiService.search(addAlbumQuery);
-      setAddAlbumResults(response.data.albums || []);
-    } catch (error) {
-      console.error('Search failed:', error);
     } finally {
-      setAddAlbumSearching(false);
-    }
-  };
-
-  const handleAddAlbumToArtist = async (album) => {
-    try {
-      await apiService.addAlbumToArtist(id, album.id, addAlbumRole);
-      const response = await apiService.getArtistSecondaryAlbums(id);
-      setAppearsOnAlbums(response.data);
-      setAddAlbumResults([]);
-      setAddAlbumQuery('');
-      setShowAddAlbumSection(false);
-    } catch (error) {
-      alert(error.response?.data?.error || 'Failed to add album');
+      setMoveArtistSearching(false);
     }
   };
 
@@ -317,15 +298,60 @@ const AdminArtist = () => {
     }
   };
 
+  const handleAddRelationSearch = async (e) => {
+    e.preventDefault();
+    if (addRelationQuery.length < 2) return;
+    setAddRelationSearching(true);
+    try {
+      const response = await apiService.search(addRelationQuery);
+      if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') {
+        setAddRelationResults((response.data.artists || []).filter(a => String(a.id) !== String(id)));
+      } else {
+        setAddRelationResults(response.data.albums || []);
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setAddRelationSearching(false);
+    }
+  };
+
+  const handleAddRelation = async (item) => {
+    try {
+      if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') {
+        const kind = relationTypeToAdd === 'member' ? 'member' : 'related';
+        await apiService.addRelatedArtist(id, item.id, kind);
+        const response = await apiService.getRelatedArtists(id);
+        setRelatedArtists(response.data);
+      } else {
+        await apiService.addAlbumToArtist(id, item.id, addRelationRole);
+        const response = await apiService.getArtistSecondaryAlbums(id);
+        setAppearsOnAlbums(response.data);
+      }
+      setAddRelationResults([]);
+      setAddRelationQuery('');
+      setShowAddRelationSection(false);
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to add relation');
+    }
+  };
+
+  const handleRemoveRelatedArtist = async (relatedArtistId) => {
+    if (!window.confirm('Remove this related artist?')) return;
+    try {
+      await apiService.removeRelatedArtist(id, relatedArtistId);
+      setRelatedArtists(prev => prev.filter(ra => ra.id !== relatedArtistId));
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to remove related artist');
+    }
+  };
+
   const handleMoveArtifacts = async (e) => {
     e.preventDefault();
-    if (!targetArtistId) {
-      setError('Target Artist ID is required');
-      return;
-    }
+    if (!selectedTargetArtist) return;
 
     const confirmed = window.confirm(
-      `Are you sure you want to move ALL albums and tracks from "${artistData.name}" (ID: ${id}) to artist ID ${targetArtistId}?\n\nThis will update all albums and tracks to belong to the new artist. This action cannot be undone.`
+      `Are you sure you want to move ALL albums and tracks from "${artistData.name}" to "${selectedTargetArtist.name}"?\n\nThis will update all albums and tracks to belong to the new artist. This action cannot be undone.`
     );
 
     if (!confirmed) return;
@@ -334,13 +360,12 @@ const AdminArtist = () => {
     setError(null);
 
     try {
-      const response = await apiService.moveArtistArtifacts(id, targetArtistId);
+      const response = await apiService.moveArtistArtifacts(id, selectedTargetArtist.id);
       const { albums_moved, tracks_moved } = response.data;
 
-      alert(`Successfully moved ${albums_moved} album(s) and ${tracks_moved} track(s) to artist ID ${targetArtistId}.`);
+      toast.success(`Moved ${albums_moved} album(s) and ${tracks_moved} track(s) to "${selectedTargetArtist.name}".`);
 
-      // Navigate to the target artist page
-      navigate(`/artist/${targetArtistId}`);
+      navigate(`/artist/${selectedTargetArtist.id}`);
     } catch (error) {
       console.error('Error moving artifacts:', error);
       setError(error.response?.data?.error || 'Failed to move artifacts');
@@ -580,77 +605,7 @@ const AdminArtist = () => {
         </div>
       </form>
 
-      {/* Move Artifacts Section */}
-      <div style={{
-        marginTop: '3rem',
-        padding: '1.5rem',
-        backgroundColor: '#fff3cd',
-        borderRadius: '4px',
-        border: '1px solid #ffc107'
-      }}>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#856404' }}>
-          Move All Artifacts to Another Artist
-        </h3>
-        <p style={{ marginBottom: '1rem', color: '#856404', fontSize: '0.875rem' }}>
-          This will move ALL albums and tracks from this artist to another artist. Use this when duplicate artists were created during import.
-        </p>
-        <form onSubmit={handleMoveArtifacts}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#856404' }}>
-              Target Artist ID
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="number"
-                value={targetArtistId}
-                onChange={(e) => setTargetArtistId(e.target.value)}
-                placeholder="Enter artist ID to move artifacts to"
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ffc107',
-                  borderRadius: '4px',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowArtistSearchModal(true)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Search
-              </button>
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={movingArtifacts || !targetArtistId}
-            style={{
-              padding: '0.75rem 1.5rem',
-              backgroundColor: '#ff8c00',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              cursor: (movingArtifacts || !targetArtistId) ? 'not-allowed' : 'pointer',
-              opacity: (movingArtifacts || !targetArtistId) ? 0.6 : 1,
-            }}
-          >
-            {movingArtifacts ? 'Moving...' : 'Move All Artifacts'}
-          </button>
-        </form>
-      </div>
-
-      {/* Appears On Section */}
+      {/* Relations Section */}
       <div style={{
         marginTop: '3rem',
         padding: '1.5rem',
@@ -659,11 +614,95 @@ const AdminArtist = () => {
         border: '1px solid #86efac'
       }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#166534' }}>
-          Appears On
+          Relations
         </h3>
 
+        {/* Members */}
+        {relatedArtists.filter(r => r.kind === 'member').length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#166534', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Members
+            </div>
+            {relatedArtists.filter(r => r.kind === 'member').map(ra => (
+              <div key={ra.id} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #bbf7d0'
+              }}>
+                <span
+                  style={{ fontWeight: '500', color: '#7c3aed', cursor: 'pointer' }}
+                  onClick={() => navigate(`/artist/${ra.id}`)}
+                >
+                  {ra.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRelatedArtist(ra.id)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Related Artists */}
+        {relatedArtists.filter(r => r.kind === 'related').length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#166534', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Related Artists
+            </div>
+            {relatedArtists.filter(r => r.kind === 'related').map(ra => (
+              <div key={ra.id} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #bbf7d0'
+              }}>
+                <span
+                  style={{ fontWeight: '500', color: '#7c3aed', cursor: 'pointer' }}
+                  onClick={() => navigate(`/artist/${ra.id}`)}
+                >
+                  {ra.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRelatedArtist(ra.id)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Appears On Albums */}
         {appearsOnAlbums.length > 0 && (
           <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#166534', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Appears On
+            </div>
             {appearsOnAlbums.map(a => (
               <div key={a.album_id} style={{
                 display: 'flex',
@@ -673,7 +712,10 @@ const AdminArtist = () => {
                 borderBottom: '1px solid #bbf7d0'
               }}>
                 <span style={{ fontWeight: '500' }}>
-                  {a.title}
+                  <span
+                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    onClick={() => navigate(`/album/${a.album_id}`)}
+                  >{a.title}</span>
                   {a.release_year && <span style={{ fontWeight: 'normal', color: '#6b7280', marginLeft: '0.5rem' }}>({a.release_year})</span>}
                 </span>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -705,10 +747,11 @@ const AdminArtist = () => {
           </div>
         )}
 
-        {!showAddAlbumSection ? (
+        {/* Add Relation Form */}
+        {!showAddRelationSection ? (
           <button
             type="button"
-            onClick={() => setShowAddAlbumSection(true)}
+            onClick={() => setShowAddRelationSection(true)}
             style={{
               padding: '0.5rem 1rem',
               backgroundColor: '#16a34a',
@@ -719,14 +762,18 @@ const AdminArtist = () => {
               cursor: 'pointer',
             }}
           >
-            + Add Album
+            + Add Relation
           </button>
         ) : (
           <div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', alignItems: 'center' }}>
               <select
-                value={addAlbumRole}
-                onChange={(e) => setAddAlbumRole(e.target.value)}
+                value={relationTypeToAdd}
+                onChange={(e) => {
+                  setRelationTypeToAdd(e.target.value);
+                  setAddRelationResults([]);
+                  setAddRelationQuery('');
+                }}
                 style={{
                   padding: '0.5rem',
                   fontSize: '0.875rem',
@@ -735,14 +782,35 @@ const AdminArtist = () => {
                   backgroundColor: 'white',
                 }}
               >
-                <option value="featured">Featured</option>
-                <option value="collaborator">Collaborator</option>
-                <option value="compilation">Compilation</option>
-                <option value="guest">Guest</option>
+                <option value="related_artist">Related Artist</option>
+                <option value="member">Member</option>
+                <option value="appears_on">Appears On Album</option>
               </select>
+              {relationTypeToAdd === 'appears_on' && (
+                <select
+                  value={addRelationRole}
+                  onChange={(e) => setAddRelationRole(e.target.value)}
+                  style={{
+                    padding: '0.5rem',
+                    fontSize: '0.875rem',
+                    border: '1px solid #86efac',
+                    borderRadius: '4px',
+                    backgroundColor: 'white',
+                  }}
+                >
+                  <option value="featured">Featured</option>
+                  <option value="collaborator">Collaborator</option>
+                  <option value="compilation">Compilation</option>
+                  <option value="guest">Guest</option>
+                </select>
+              )}
               <button
                 type="button"
-                onClick={() => { setShowAddAlbumSection(false); setAddAlbumResults([]); setAddAlbumQuery(''); }}
+                onClick={() => {
+                  setShowAddRelationSection(false);
+                  setAddRelationResults([]);
+                  setAddRelationQuery('');
+                }}
                 style={{
                   padding: '0.5rem',
                   backgroundColor: '#6b7280',
@@ -756,12 +824,12 @@ const AdminArtist = () => {
                 Cancel
               </button>
             </div>
-            <form onSubmit={handleAddAlbumSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <form onSubmit={handleAddRelationSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
               <input
                 type="text"
-                value={addAlbumQuery}
-                onChange={(e) => setAddAlbumQuery(e.target.value)}
-                placeholder="Search album title..."
+                value={addRelationQuery}
+                onChange={(e) => setAddRelationQuery(e.target.value)}
+                placeholder={relationTypeToAdd === 'appears_on' ? 'Search album title...' : 'Search artist name...'}
                 autoFocus
                 style={{
                   flex: 1,
@@ -773,7 +841,7 @@ const AdminArtist = () => {
               />
               <button
                 type="submit"
-                disabled={addAlbumSearching || addAlbumQuery.length < 2}
+                disabled={addRelationSearching || addRelationQuery.length < 2}
                 style={{
                   padding: '0.5rem 1rem',
                   backgroundColor: '#3b82f6',
@@ -784,14 +852,14 @@ const AdminArtist = () => {
                   cursor: 'pointer',
                 }}
               >
-                {addAlbumSearching ? 'Searching...' : 'Search'}
+                {addRelationSearching ? 'Searching...' : 'Search'}
               </button>
             </form>
-            {addAlbumResults.length > 0 && (
+            {addRelationResults.length > 0 && (
               <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}>
-                {addAlbumResults.map(album => (
+                {addRelationResults.map(item => (
                   <div
-                    key={album.id}
+                    key={item.id}
                     style={{
                       padding: '0.6rem 0.75rem',
                       borderBottom: '1px solid #e5e7eb',
@@ -801,12 +869,15 @@ const AdminArtist = () => {
                     }}
                   >
                     <div>
-                      <span style={{ fontWeight: '500' }}>{album.title}</span>
-                      {album.artist && <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>by {album.artist.name}</span>}
+                      <span style={{ fontWeight: '500' }}>{item.name || item.title}</span>
+                      {item.artist && <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>by {item.artist.name}</span>}
+                      {(relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') && (
+                        <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>{item.album_count} album{item.album_count !== 1 ? 's' : ''} · ID {item.id}</span>
+                      )}
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleAddAlbumToArtist(album)}
+                      onClick={() => handleAddRelation(item)}
                       style={{
                         padding: '0.25rem 0.75rem',
                         backgroundColor: '#16a34a',
@@ -817,7 +888,7 @@ const AdminArtist = () => {
                         cursor: 'pointer',
                       }}
                     >
-                      Add as {addAlbumRole}
+                      Add
                     </button>
                   </div>
                 ))}
@@ -827,125 +898,115 @@ const AdminArtist = () => {
         )}
       </div>
 
-      {/* Artist Search Modal */}
-      {showArtistSearchModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setShowArtistSearchModal(false)}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              padding: '2rem',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              width: '90%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-              Search for Artist
-            </h3>
-            <form onSubmit={handleArtistSearch} style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="text"
-                  value={artistSearchQuery}
-                  onChange={(e) => setArtistSearchQuery(e.target.value)}
-                  placeholder="Enter artist name..."
-                  autoFocus
-                  style={{
-                    flex: 1,
-                    padding: '0.5rem',
-                    fontSize: '1rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                  }}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Search
-                </button>
-              </div>
-            </form>
-
-            {artistSearchResults.length > 0 ? (
-              <div style={{ marginTop: '1rem' }}>
-                <p style={{ marginBottom: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
-                  Click an artist to select:
-                </p>
-                <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-                  {artistSearchResults.map((artist) => (
-                    <div
-                      key={artist.id}
-                      onClick={() => handleSelectArtist(artist)}
-                      style={{
-                        padding: '0.75rem',
-                        borderBottom: '1px solid #e5e7eb',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
-                    >
-                      <span style={{ fontWeight: '500' }}>{artist.name}</span>
-                      <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                        ID: {artist.id}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : artistSearchQuery.length >= 2 ? (
-              <p style={{ marginTop: '1rem', color: '#6b7280', textAlign: 'center' }}>
-                No artists found. Try a different search term.
-              </p>
-            ) : null}
-
-            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowArtistSearchModal(false)}
-                style={{
-                  padding: '0.5rem 1.5rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Close
-              </button>
-            </div>
+      {/* Move Artifacts Section */}
+      <div style={{
+        marginTop: '3rem',
+        padding: '1.5rem',
+        backgroundColor: '#fff3cd',
+        borderRadius: '4px',
+        border: '1px solid #ffc107'
+      }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#856404' }}>
+          Move All Artifacts to Another Artist
+        </h3>
+        <p style={{ marginBottom: '1rem', color: '#856404', fontSize: '0.875rem' }}>
+          This will move ALL albums and tracks from this artist to another artist. Use this when duplicate artists were created during import.
+        </p>
+        <form onSubmit={handleMoveArtistSearch} style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={moveArtistQuery}
+              onChange={(e) => {
+                setMoveArtistQuery(e.target.value);
+                setSelectedTargetArtist(null);
+                setMoveArtistResults([]);
+              }}
+              placeholder="Search for target artist..."
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: '1px solid #ffc107',
+                borderRadius: '4px',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={moveArtistSearching || moveArtistQuery.length < 2}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {moveArtistSearching ? 'Searching...' : 'Search'}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+        {moveArtistResults.length > 0 && !selectedTargetArtist && (
+          <div style={{ marginBottom: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto' }}>
+            {moveArtistResults.map(artist => (
+              <div
+                key={artist.id}
+                onClick={() => {
+                  setSelectedTargetArtist(artist);
+                  setMoveArtistResults([]);
+                }}
+                style={{
+                  padding: '0.6rem 0.75rem',
+                  borderBottom: '1px solid #e5e7eb',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fefce8')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+              >
+                <span style={{ fontWeight: '500' }}>{artist.name}</span>
+                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{artist.album_count} album{artist.album_count !== 1 ? 's' : ''} · ID {artist.id}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {selectedTargetArtist && (
+          <p style={{ marginBottom: '1rem', color: '#856404', fontSize: '0.875rem' }}>
+            Target: <strong>{selectedTargetArtist.name}</strong>
+            <button
+              type="button"
+              onClick={() => { setSelectedTargetArtist(null); setMoveArtistQuery(''); }}
+              style={{ marginLeft: '0.5rem', background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '0.875rem' }}
+            >
+              ✕
+            </button>
+          </p>
+        )}
+        <form onSubmit={handleMoveArtifacts}>
+          <button
+            type="submit"
+            disabled={movingArtifacts || !selectedTargetArtist}
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#ff8c00',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '1rem',
+              cursor: (movingArtifacts || !selectedTargetArtist) ? 'not-allowed' : 'pointer',
+              opacity: (movingArtifacts || !selectedTargetArtist) ? 0.6 : 1,
+            }}
+          >
+            {movingArtifacts ? 'Moving...' : 'Move All Artifacts'}
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 };

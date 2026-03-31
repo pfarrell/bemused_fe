@@ -363,7 +363,8 @@ const AdminAlbum = () => {
     setAddArtistSearching(true);
     try {
       const response = await apiService.search(addArtistQuery);
-      setAddArtistResults(response.data.artists || []);
+      const primaryArtistId = albumData?.album?.artist_id;
+      setAddArtistResults((response.data.artists || []).filter(a => a.id !== primaryArtistId));
     } catch (error) {
       console.error('Search failed:', error);
     } finally {

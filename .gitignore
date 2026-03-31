@@ -26,3 +26,10 @@ dist-ssr
 # Server
 server/.env
 server/dist
+
+# Git worktrees
+.worktrees/
+
+# Claude
+.superpowers
+docs/superpowers
