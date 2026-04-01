@@ -1,8 +1,11 @@
 import { Hono } from 'hono'
 import { db } from '../db/database.js'
+import { lookupAlbumMBID, lookupArtistMBID } from '../services/musicbrainz.js'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+
+const MBID_RETRYABLE = ['unmatched', 'not_found', 'low_confidence']
 
 const admin = new Hono()
 
@@ -38,6 +41,8 @@ admin.put('/artist/:id', async (c) => {
   }
 
   try {
+    const current = await db.selectFrom('artists').select(['name', 'mbid_status']).where('id', '=', id).executeTakeFirst()
+
     const updated = await db
       .updateTable('artists')
       .set({
@@ -52,6 +57,13 @@ admin.put('/artist/:id', async (c) => {
 
     if (!updated) {
       return c.json({ error: 'Artist not found' }, 404)
+    }
+
+    // Re-trigger MBID lookup if name changed and status is retryable
+    if (current && current.name !== name && MBID_RETRYABLE.includes(current.mbid_status ?? 'unmatched')) {
+      lookupArtistMBID(id, name).catch(err =>
+        console.warn(`MBID re-lookup failed for artist ${id}:`, err.message)
+      )
     }
 
     return c.json(updated)
@@ -77,6 +89,13 @@ admin.put('/album/:id', async (c) => {
   }
 
   try {
+    const current = await db
+      .selectFrom('albums')
+      .innerJoin('artists', 'artists.id', 'albums.artist_id')
+      .select(['albums.title', 'albums.artist_id', 'albums.mbid_status', 'albums.release_year', 'artists.name as artist_name'])
+      .where('albums.id', '=', id)
+      .executeTakeFirst()
+
     const updated = await db
       .updateTable('albums')
       .set({
@@ -93,6 +112,24 @@ admin.put('/album/:id', async (c) => {
 
     if (!updated) {
       return c.json({ error: 'Album not found' }, 404)
+    }
+
+    // Re-trigger MBID lookup if matching fields changed and status is retryable
+    if (current && MBID_RETRYABLE.includes(current.mbid_status ?? 'unmatched')) {
+      const titleChanged = current.title !== title
+      const artistChanged = current.artist_id !== artist_id
+      if (titleChanged || artistChanged) {
+        // Resolve the new artist name if artist changed
+        const artistNamePromise = artistChanged
+          ? db.selectFrom('artists').select('name').where('id', '=', artist_id).executeTakeFirst().then(r => r?.name ?? current.artist_name)
+          : Promise.resolve(current.artist_name)
+
+        artistNamePromise.then(artistName =>
+          lookupAlbumMBID(id, title, artistName, undefined, release_year || null)
+        ).catch(err =>
+          console.warn(`MBID re-lookup failed for album ${id}:`, err.message)
+        )
+      }
     }
 
     return c.json(updated)

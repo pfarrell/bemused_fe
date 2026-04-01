@@ -18,6 +18,8 @@ const AdminAlbum = () => {
   const [releaseYear, setReleaseYear] = useState('');
   const [imagePath, setImagePath] = useState('');
   const [wikipedia, setWikipedia] = useState('');
+  const [musicbrainzId, setMusicbrainzId] = useState('');
+  const [mbidStatus, setMbidStatus] = useState('');
 
   // Track if form has unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -60,6 +62,8 @@ const AdminAlbum = () => {
         setReleaseYear(album.release_year || '');
         setImagePath(album.image_path || '');
         setWikipedia(album.wikipedia || '');
+        setMusicbrainzId(album.musicbrainz_id || '');
+        setMbidStatus(album.mbid_status || '');
         setTracks(tracks || []);
       } catch (error) {
         console.error('Error fetching album data:', error);
@@ -642,6 +646,31 @@ const AdminAlbum = () => {
           <small style={{ color: '#666', fontSize: '0.875rem' }}>
             The part after wikipedia.org/wiki/
           </small>
+        </div>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            MusicBrainz
+          </label>
+          {musicbrainzId ? (
+            <a
+              href={`https://musicbrainz.org/release/${musicbrainzId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#3b82f6', fontSize: '0.875rem', wordBreak: 'break-all' }}
+            >
+              {musicbrainzId}
+            </a>
+          ) : (
+            <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+              {mbidStatus === 'not_found' ? 'Not found on MusicBrainz' : mbidStatus === 'low_confidence' ? 'Low confidence match' : 'Not yet looked up'}
+            </span>
+          )}
+          {mbidStatus && (
+            <small style={{ display: 'block', color: '#9ca3af', marginTop: '0.25rem' }}>
+              Status: {mbidStatus}
+            </small>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>

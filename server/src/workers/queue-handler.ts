@@ -16,6 +16,7 @@ import fs from 'fs'
 import path from 'path'
 import { parseFile } from 'music-metadata'
 import NodeID3 from 'node-id3'
+import { lookupAlbumMBID } from '../services/musicbrainz.js'
 
 const POLL_INTERVAL_MS = 5000 // Poll every 5 seconds
 const UPLOAD_PATH = process.env.BEMUSED_UPLOAD_PATH
@@ -239,6 +240,30 @@ async function processQueueItem(item: any) {
           .returningAll()
           .executeTakeFirst()
       }
+    }
+
+    // Async MBID lookup — non-blocking, upload success does not depend on it
+    if (album) {
+      const trackCountResult = await db
+        .selectFrom('tracks')
+        .select(db.fn.count<number>('id').as('count'))
+        .where('album_id', '=', album.id)
+        .executeTakeFirst()
+      const trackCount = Number(trackCountResult?.count ?? 0)
+
+      lookupAlbumMBID(
+        album.id,
+        album.title,
+        albumArtist!.name,
+        trackCount,
+        album.release_year
+      ).then(result => {
+        if (result.status !== 'unmatched') {
+          console.log(`  🎯 MBID assigned to album ${album!.id}: ${result.mbid} (${result.status})`)
+        }
+      }).catch(err => {
+        console.warn(`  ⚠️  MBID lookup failed for album ${album!.id}:`, err.message)
+      })
     }
 
     // Calculate track number: ID3 tag > filename > null

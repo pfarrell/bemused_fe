@@ -8,6 +8,9 @@ interface ArtistTable {
   name: string
   image_path: string | null
   wikipedia: string | null
+  musicbrainz_id: string | null
+  mbid_confidence: number | null
+  mbid_status: string | null
   created_at: ColumnType<Date, string | undefined, never>
   updated_at: ColumnType<Date, string | undefined, string | Date>
 }
@@ -21,6 +24,9 @@ interface AlbumTable {
   genre_id: number | null
   image_path: string | null
   wikipedia: string | null
+  musicbrainz_id: string | null
+  mbid_confidence: number | null
+  mbid_status: string | null
   created_at: ColumnType<Date, string | undefined, never>
   updated_at: ColumnType<Date, string | undefined, string | Date>
 }

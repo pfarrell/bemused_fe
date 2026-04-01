@@ -27,8 +27,7 @@ rsync -avz --delete \
   -e "ssh -p ${REMOTE_PORT}" \
   --exclude 'node_modules' \
   --exclude '.env' \
-  --exclude 'src' \
-  dist package.json package-lock.json migrations scripts \
+  dist src package.json package-lock.json migrations scripts \
   ${REMOTE_USER}@${REMOTE_HOST}:${RELEASE_DIR}/
 
 # Install production dependencies on remote
