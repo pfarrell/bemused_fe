@@ -854,4 +854,235 @@ admin.delete('/artist/:id/related/:related_id', async (c) => {
   }
 })
 
+// --- Image management helpers ---
+
+type EntityKind = 'album' | 'artist'
+
+async function getImagesForEntity(entityKind: EntityKind, entityId: number) {
+  const field = entityKind === 'album' ? 'album_id' : 'artist_id'
+  return db
+    .selectFrom('images')
+    .leftJoin('media_files', (join) =>
+      join
+        .onRef('media_files.entity_id', '=', 'images.id')
+        .on('media_files.entity_type', '=', 'image')
+    )
+    .select([
+      'images.id',
+      'images.is_primary',
+      'images.source',
+      'images.status',
+      'images.width',
+      'images.height',
+      'images.created_at',
+      'media_files.absolute_path as path',
+    ])
+    .where(`images.${field}` as any, '=', entityId)
+    .orderBy('images.is_primary', 'desc')
+    .orderBy('images.created_at', 'asc')
+    .execute()
+}
+
+async function downloadAndSaveImage(
+  imageUrl: string,
+  imageName: string,
+  subdir: 'albums' | 'artists'
+): Promise<string> {
+  const response = await fetch(imageUrl)
+  if (!response.ok) throw new Error(`Failed to download image: ${response.status}`)
+  const buffer = Buffer.from(await response.arrayBuffer())
+  const imageDir = path.join(projectRoot, 'public', 'images', subdir)
+  if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir, { recursive: true })
+  const imagePath = path.join(imageDir, imageName)
+  fs.writeFileSync(imagePath, buffer)
+  return imageName
+}
+
+async function createImageRecord(
+  entityKind: EntityKind,
+  entityId: number,
+  filePath: string,
+  source: string,
+  isPrimary: boolean,
+  status: string = 'active'
+) {
+  const image = await db
+    .insertInto('images')
+    .values({
+      ...(entityKind === 'album' ? { album_id: entityId } : { artist_id: entityId }),
+      is_primary: isPrimary,
+      source,
+      status,
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow()
+
+  await db
+    .insertInto('media_files')
+    .values({
+      entity_type: 'image',
+      entity_id: image.id,
+      discriminator: 'image',
+      absolute_path: filePath,
+      name: filePath,
+      file_type: 'image',
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .execute()
+
+  // If primary, sync image_path on the parent record and clear other primaries
+  if (isPrimary) {
+    await db
+      .updateTable('images')
+      .set({ is_primary: false })
+      .where(entityKind === 'album' ? 'album_id' : 'artist_id', '=', entityId)
+      .where('id', '!=', image.id)
+      .execute()
+
+    if (entityKind === 'album') {
+      await db.updateTable('albums').set({ image_path: filePath, updated_at: new Date() }).where('id', '=', entityId).execute()
+    } else {
+      await db.updateTable('artists').set({ image_path: filePath, updated_at: new Date() }).where('id', '=', entityId).execute()
+    }
+  }
+
+  return image
+}
+
+// GET /admin/album/:id/images
+admin.get('/album/:id/images', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const images = await getImagesForEntity('album', id)
+  return c.json(images)
+})
+
+// POST /admin/album/:id/images — download and add a new image
+admin.post('/album/:id/images', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const { image_url, image_name, set_primary = false } = await c.req.json()
+  if (!image_url || !image_name) return c.json({ error: 'image_url and image_name are required' }, 400)
+
+  try {
+    const filePath = await downloadAndSaveImage(image_url, image_name, 'albums')
+    const image = await createImageRecord('album', id, filePath, 'manual', set_primary)
+    return c.json({ success: true, image })
+  } catch (err) {
+    console.error('Error adding album image:', err)
+    return c.json({ error: 'Failed to save image' }, 500)
+  }
+})
+
+// PATCH /admin/album/:id/images/:imgId/primary — set as primary
+admin.patch('/album/:id/images/:imgId/primary', async (c) => {
+  const albumId = parseInt(c.req.param('id'))
+  const imgId = parseInt(c.req.param('imgId'))
+
+  try {
+    // Clear existing primary
+    await db.updateTable('images').set({ is_primary: false }).where('album_id', '=', albumId).execute()
+    // Set new primary
+    const image = await db
+      .updateTable('images')
+      .set({ is_primary: true })
+      .where('id', '=', imgId)
+      .where('album_id', '=', albumId)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!image) return c.json({ error: 'Image not found' }, 404)
+
+    // Sync image_path
+    const mf = await db.selectFrom('media_files').select('absolute_path').where('entity_type', '=', 'image').where('entity_id', '=', imgId).executeTakeFirst()
+    if (mf?.absolute_path) {
+      await db.updateTable('albums').set({ image_path: mf.absolute_path, updated_at: new Date() }).where('id', '=', albumId).execute()
+    }
+
+    return c.json({ success: true, image })
+  } catch (err) {
+    console.error('Error setting primary image:', err)
+    return c.json({ error: 'Failed to set primary image' }, 500)
+  }
+})
+
+// DELETE /admin/album/:id/images/:imgId
+admin.delete('/album/:id/images/:imgId', async (c) => {
+  const albumId = parseInt(c.req.param('id'))
+  const imgId = parseInt(c.req.param('imgId'))
+
+  try {
+    const image = await db.deleteFrom('images').where('id', '=', imgId).where('album_id', '=', albumId).returningAll().executeTakeFirst()
+    if (!image) return c.json({ error: 'Image not found' }, 404)
+    await db.deleteFrom('media_files').where('entity_type', '=', 'image').where('entity_id', '=', imgId).execute()
+    return c.json({ success: true })
+  } catch (err) {
+    return c.json({ error: 'Failed to delete image' }, 500)
+  }
+})
+
+// GET /admin/artist/:id/images
+admin.get('/artist/:id/images', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const images = await getImagesForEntity('artist', id)
+  return c.json(images)
+})
+
+// POST /admin/artist/:id/images
+admin.post('/artist/:id/images', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const { image_url, image_name, set_primary = false } = await c.req.json()
+  if (!image_url || !image_name) return c.json({ error: 'image_url and image_name are required' }, 400)
+
+  try {
+    const filePath = await downloadAndSaveImage(image_url, image_name, 'artists')
+    const image = await createImageRecord('artist', id, filePath, 'manual', set_primary)
+    return c.json({ success: true, image })
+  } catch (err) {
+    return c.json({ error: 'Failed to save image' }, 500)
+  }
+})
+
+// PATCH /admin/artist/:id/images/:imgId/primary
+admin.patch('/artist/:id/images/:imgId/primary', async (c) => {
+  const artistId = parseInt(c.req.param('id'))
+  const imgId = parseInt(c.req.param('imgId'))
+
+  try {
+    await db.updateTable('images').set({ is_primary: false }).where('artist_id', '=', artistId).execute()
+    const image = await db
+      .updateTable('images')
+      .set({ is_primary: true })
+      .where('id', '=', imgId)
+      .where('artist_id', '=', artistId)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!image) return c.json({ error: 'Image not found' }, 404)
+
+    const mf = await db.selectFrom('media_files').select('absolute_path').where('entity_type', '=', 'image').where('entity_id', '=', imgId).executeTakeFirst()
+    if (mf?.absolute_path) {
+      await db.updateTable('artists').set({ image_path: mf.absolute_path, updated_at: new Date() }).where('id', '=', artistId).execute()
+    }
+
+    return c.json({ success: true, image })
+  } catch (err) {
+    return c.json({ error: 'Failed to set primary image' }, 500)
+  }
+})
+
+// DELETE /admin/artist/:id/images/:imgId
+admin.delete('/artist/:id/images/:imgId', async (c) => {
+  const artistId = parseInt(c.req.param('id'))
+  const imgId = parseInt(c.req.param('imgId'))
+
+  try {
+    const image = await db.deleteFrom('images').where('id', '=', imgId).where('artist_id', '=', artistId).returningAll().executeTakeFirst()
+    if (!image) return c.json({ error: 'Image not found' }, 404)
+    await db.deleteFrom('media_files').where('entity_type', '=', 'image').where('entity_id', '=', imgId).execute()
+    return c.json({ success: true })
+  } catch (err) {
+    return c.json({ error: 'Failed to delete image' }, 500)
+  }
+})
+
 export default admin

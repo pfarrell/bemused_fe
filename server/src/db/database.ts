@@ -53,7 +53,9 @@ interface MediaFileTable {
   absolute_path: string | null
   name: string | null
   file_type: string | null
-  track_id: number | null
+  track_id: number | null        // legacy — use entity_id for new records
+  entity_id: number | null
+  entity_type: string | null
   file_missing: boolean | null
   file_hash: string | null
   created_at: Date | null
@@ -155,6 +157,18 @@ interface ArtistRelationTable {
   created_at: ColumnType<Date, string | Date | undefined, never>
 }
 
+interface ImageTable {
+  id: Generated<number>
+  album_id: number | null
+  artist_id: number | null
+  is_primary: boolean
+  source: string
+  status: string
+  width: number | null
+  height: number | null
+  created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
 export interface Database {
   artists: ArtistTable
   albums: AlbumTable
@@ -169,6 +183,7 @@ export interface Database {
   user_playlists: UserPlaylistTable
   artist_albums: ArtistAlbumTable
   artist_relations: ArtistRelationTable
+  images: ImageTable
 }
 
 // ---- DB instance ----

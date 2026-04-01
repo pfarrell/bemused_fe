@@ -79,6 +79,23 @@ export const apiService = {
   updatePlaylist: (id, data) => api.put(`/playlist/${id}`, data),
   downloadPlaylistImage: (id, image_url, image_name) => api.post(`/admin/playlist/${id}/image`, { image_url, image_name }),
 
+  // Image management
+  getAlbumImages: (albumId) => api.get(`/admin/album/${albumId}/images`),
+  addAlbumImage: (albumId, image_url, image_name, set_primary = false) =>
+    api.post(`/admin/album/${albumId}/images`, { image_url, image_name, set_primary }),
+  setAlbumImagePrimary: (albumId, imgId) =>
+    api.patch(`/admin/album/${albumId}/images/${imgId}/primary`),
+  deleteAlbumImage: (albumId, imgId) =>
+    api.delete(`/admin/album/${albumId}/images/${imgId}`),
+
+  getArtistImages: (artistId) => api.get(`/admin/artist/${artistId}/images`),
+  addArtistImage: (artistId, image_url, image_name, set_primary = false) =>
+    api.post(`/admin/artist/${artistId}/images`, { image_url, image_name, set_primary }),
+  setArtistImagePrimary: (artistId, imgId) =>
+    api.patch(`/admin/artist/${artistId}/images/${imgId}/primary`),
+  deleteArtistImage: (artistId, imgId) =>
+    api.delete(`/admin/artist/${artistId}/images/${imgId}`),
+
   // Image URL helpers
   getImageUrl: (imagePath, context = 'base') => {
     if (!imagePath) return null;

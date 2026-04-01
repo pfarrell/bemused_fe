@@ -23,10 +23,12 @@ const AdminArtist = () => {
   // Track if form has unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Image download state
-  const [imageUrl, setImageUrl] = useState('');
-  const [imageName, setImageName] = useState('');
-  const [downloadingImage, setDownloadingImage] = useState(false);
+  // Image gallery state
+  const [images, setImages] = useState([]);
+  const [loadingImages, setLoadingImages] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newImageName, setNewImageName] = useState('');
+  const [addingImage, setAddingImage] = useState(false);
 
   // Move artifacts state
   const [movingArtifacts, setMovingArtifacts] = useState(false);
@@ -61,6 +63,8 @@ const AdminArtist = () => {
         setWikipedia(artist.wikipedia || '');
         setMusicbrainzId(artist.musicbrainz_id || '');
         setMbidStatus(artist.mbid_status || '');
+        const imagesRes = await apiService.getArtistImages(id);
+        setImages(imagesRes.data);
       } catch (error) {
         console.error('Error fetching artist data:', error);
         setError('Failed to load artist');
@@ -246,36 +250,6 @@ const AdminArtist = () => {
   const handleNavigateBack = (e) => {
     e.preventDefault();
     handleNavigateAway(`/artist/${id}`);
-  };
-
-  const handleDownloadImage = async (e) => {
-    e.preventDefault();
-    if (!imageUrl || !imageName) {
-      setError('Both Image URL and Image Name are required');
-      return;
-    }
-
-    setDownloadingImage(true);
-    setError(null);
-
-    try {
-      await apiService.downloadArtistImage(id, imageUrl, imageName);
-
-      // Update the image path in the form with the newly downloaded image
-      setImagePath(imageName);
-      setImageUrl('');
-      setImageName('');
-
-      // Refresh artist data to get updated image_path from server
-      const response = await apiService.getArtist(id);
-      const { artist } = response.data;
-      setArtistData(artist);
-    } catch (error) {
-      console.error('Error downloading image:', error);
-      setError(error.response?.data?.error || 'Failed to download image');
-    } finally {
-      setDownloadingImage(false);
-    }
   };
 
   const handleMoveArtistSearch = async (e) => {
@@ -467,69 +441,112 @@ const AdminArtist = () => {
           )}
         </div>
 
-        {/* Image Download Section */}
-        <div style={{
-          marginBottom: '1.5rem',
-          padding: '1rem',
-          backgroundColor: '#f9fafb',
-          borderRadius: '4px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-            Download Image from URL
-          </h3>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              Image URL
-            </label>
-            <input
-              type="text"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
+        {/* Image Gallery */}
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>Images</h3>
+
+          {loadingImages ? (
+            <p>Loading images...</p>
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+              {images.map(img => (
+                <div key={img.id} style={{
+                  border: img.is_primary ? '2px solid #4ade80' : '2px solid #444',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  width: '120px',
+                }}>
+                  <img
+                    src={apiService.getImageUrl(img.path, 'artist_page')}
+                    alt=""
+                    style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
+                  />
+                  <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{img.source}</div>
+                  {img.status === 'proposed' && (
+                    <div style={{ fontSize: '11px', color: '#facc15' }}>proposed</div>
+                  )}
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                    {!img.is_primary && (
+                      <button
+                        onClick={async () => {
+                          await apiService.setArtistImagePrimary(id, img.id);
+                          const res = await apiService.getArtistImages(id);
+                          setImages(res.data);
+                        }}
+                        style={{ fontSize: '11px', padding: '2px 6px' }}
+                      >
+                        Set Primary
+                      </button>
+                    )}
+                    {img.is_primary && (
+                      <span style={{ fontSize: '11px', color: '#4ade80' }}>✓ Primary</span>
+                    )}
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Delete this image?')) return;
+                        await apiService.deleteArtistImage(id, img.id);
+                        setImages(images.filter(i => i.id !== img.id));
+                      }}
+                      style={{ fontSize: '11px', padding: '2px 6px', color: '#f87171' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 'bold', fontSize: '0.875rem' }}>Image URL</label>
+              <input
+                type="text"
+                value={newImageUrl}
+                onChange={e => setNewImageUrl(e.target.value)}
+                placeholder="https://..."
+                style={{ width: '300px', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 'bold', fontSize: '0.875rem' }}>File name</label>
+              <input
+                type="text"
+                value={newImageName}
+                onChange={e => setNewImageName(e.target.value)}
+                placeholder="artist_123.jpg"
+                style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+            </div>
+            <button
+              onClick={async () => {
+                if (!newImageUrl || !newImageName) return;
+                setAddingImage(true);
+                try {
+                  await apiService.addArtistImage(id, newImageUrl, newImageName, images.length === 0);
+                  const res = await apiService.getArtistImages(id);
+                  setImages(res.data);
+                  setNewImageUrl('');
+                  setNewImageName('');
+                } finally {
+                  setAddingImage(false);
+                }
               }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              Save as Filename
-            </label>
-            <input
-              type="text"
-              value={imageName}
-              onChange={(e) => setImageName(e.target.value)}
-              placeholder="beatles.jpg"
+              disabled={addingImage || !newImageUrl || !newImageName}
               style={{
-                width: '100%',
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ccc',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#10b981',
+                color: 'white',
+                border: 'none',
                 borderRadius: '4px',
+                fontSize: '0.875rem',
+                cursor: (addingImage || !newImageUrl || !newImageName) ? 'not-allowed' : 'pointer',
+                opacity: (addingImage || !newImageUrl || !newImageName) ? 0.6 : 1,
               }}
-            />
+            >
+              {addingImage ? 'Adding...' : 'Add Image'}
+            </button>
           </div>
-          <button
-            onClick={handleDownloadImage}
-            disabled={downloadingImage || !imageUrl || !imageName}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              cursor: (downloadingImage || !imageUrl || !imageName) ? 'not-allowed' : 'pointer',
-              opacity: (downloadingImage || !imageUrl || !imageName) ? 0.6 : 1,
-            }}
-          >
-            {downloadingImage ? 'Downloading...' : 'Download & Save Image'}
-          </button>
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
