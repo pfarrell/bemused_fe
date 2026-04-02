@@ -1,6 +1,14 @@
 // server/src/services/musicbrainz.ts
 
 import { db } from '../db/database.js'
+import { fetchAlbumArtFromCAA } from './coverArtArchive.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const IMAGES_DIR = process.env.NODE_ENV === 'production'
+  ? '/var/www/bemused-node/current/public/images'
+  : path.resolve(__dirname, '../../../public/images')
 
 const MB_BASE = 'https://musicbrainz.org/ws/2'
 const USER_AGENT = 'Bemused/1.0 (https://patf.net)'
@@ -84,6 +92,12 @@ export async function lookupAlbumMBID(
   }
 
   await updateAlbumMBID(albumId, top.id, confidence, status)
+
+  // Async image fetch from Cover Art Archive — non-blocking
+  fetchAlbumArtFromCAA(albumId, top.id, IMAGES_DIR).catch(err => {
+    console.warn(`  ⚠️  CAA image fetch failed post-MBID for album ${albumId}:`, err.message)
+  })
+
   return { mbid: top.id, confidence, status }
 }
 

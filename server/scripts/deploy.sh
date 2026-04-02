@@ -59,6 +59,10 @@ if ! ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "test -f ${SHARED_DIR}/
   fi
 fi
 
+# Link shared .env into release
+echo "🔗 Linking shared .env..."
+ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "ln -nfs ${SHARED_DIR}/.env ${RELEASE_DIR}/.env"
+
 # Update symlink to new release
 echo "🔗 Updating current symlink..."
 ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "ln -nfs ${RELEASE_DIR} ${CURRENT_DIR}"
