@@ -2,8 +2,10 @@
 // Fanart.tv API — artist images keyed by MusicBrainz ID
 //
 // source values used:
-//   'fanart'       — artistthumb photos
-//   'fanart_logo'  — musiclogo / hdmusiclogo (transparent wordmarks)
+//   'fanart'            — artistthumb photos
+//   'fanart_logo'       — musiclogo / hdmusiclogo (transparent wordmarks)
+//   'fanart_background' — artistbackground (wallpapers)
+//   'fanart_banner'     — artistbanner (banners)
 
 import { db } from '../db/database.js'
 import fs from 'fs'
@@ -22,6 +24,8 @@ interface FanartResponse {
   artistthumb?: FanartThumb[]
   hdmusiclogo?: FanartThumb[]
   musiclogo?: FanartThumb[]
+  artistbackground?: FanartThumb[]
+  artistbanner?: FanartThumb[]
 }
 
 async function downloadImage(url: string, dir: string, filename: string): Promise<void> {
@@ -104,8 +108,10 @@ export async function fetchArtistImageFromFanart(
     ...(data.hdmusiclogo ?? []).map(l => ({ ...l, type: 'hd' })),
     ...(data.musiclogo ?? []).map(l => ({ ...l, type: 'sd' })),
   ].sort((a, b) => parseInt(b.likes) - parseInt(a.likes))
+  const backgrounds = (data.artistbackground ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes))
+  const banners = (data.artistbanner ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes))
 
-  if (thumbs.length === 0 && logos.length === 0) {
+  if (thumbs.length === 0 && logos.length === 0 && backgrounds.length === 0 && banners.length === 0) {
     await markNotFound(artistId)
     console.log(`  ℹ️  No Fanart.tv images for artist ${artistId} (${mbid})`)
     return { downloaded: 0, existing: 0 }
@@ -143,6 +149,50 @@ export async function fetchArtistImageFromFanart(
       downloaded++
     } catch (err) {
       console.warn(`  ⚠️  Failed to save thumb ${thumb.id}: ${(err as Error).message}`)
+    }
+  }
+
+  // Save all backgrounds (eligible for primary — preferred over thumbs being absent)
+  for (const bg of backgrounds) {
+    const ext = bg.url.split('.').pop()?.split('?')[0] ?? 'jpg'
+    const filename = `artist_${artistId}_fanart_bg_${bg.id}.${ext}`
+    const alreadyExists = await db.selectFrom('media_files').select('id').where('absolute_path', '=', filename).executeTakeFirst()
+    if (alreadyExists) { existing++; continue }
+    try {
+      await downloadImage(bg.url, artistDir, filename)
+      const isPrimary = !primarySet
+      await saveImageRecord(artistId, filename, 'fanart_background', isPrimary)
+      if (isPrimary) {
+        primarySet = true
+        console.log(`  ✅ New background (primary): ${filename}`)
+      } else {
+        console.log(`  ✅ New background: ${filename}`)
+      }
+      downloaded++
+    } catch (err) {
+      console.warn(`  ⚠️  Failed to save background ${bg.id}: ${(err as Error).message}`)
+    }
+  }
+
+  // Save all banners (eligible for primary — preferred over having no image at all)
+  for (const banner of banners) {
+    const ext = banner.url.split('.').pop()?.split('?')[0] ?? 'jpg'
+    const filename = `artist_${artistId}_fanart_banner_${banner.id}.${ext}`
+    const alreadyExists = await db.selectFrom('media_files').select('id').where('absolute_path', '=', filename).executeTakeFirst()
+    if (alreadyExists) { existing++; continue }
+    try {
+      await downloadImage(banner.url, artistDir, filename)
+      const isPrimary = !primarySet
+      await saveImageRecord(artistId, filename, 'fanart_banner', isPrimary)
+      if (isPrimary) {
+        primarySet = true
+        console.log(`  ✅ New banner (primary): ${filename}`)
+      } else {
+        console.log(`  ✅ New banner: ${filename}`)
+      }
+      downloaded++
+    } catch (err) {
+      console.warn(`  ⚠️  Failed to save banner ${banner.id}: ${(err as Error).message}`)
     }
   }
 
