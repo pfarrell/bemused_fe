@@ -112,11 +112,10 @@ export async function fetchLBSimilarArtists(
     if (!relatedArtist || relatedArtist.id === artistId) continue
 
     // Upsert both directions symmetrically
-    // kind is intentionally not updated — manual 'related' rows must not be reclassified by algorithmic sources
     for (const [a, b] of [[artistId, relatedArtist.id], [relatedArtist.id, artistId]] as [number, number][]) {
       await db
         .insertInto('artist_relations')
-        .values({ artist_id: a, related_artist_id: b, kind: 'related', source: 'listenbrainz', similarity })
+        .values({ artist_id: a, related_artist_id: b, kind: 'similar', source: 'listenbrainz', similarity })
         .onConflict(oc => oc
           .columns(['artist_id', 'related_artist_id'])
           .doUpdateSet({
