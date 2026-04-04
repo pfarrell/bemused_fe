@@ -154,7 +154,18 @@ interface ArtistRelationTable {
   artist_id: number
   related_artist_id: number
   kind: string
+  source: string        // 'manual' | 'lastfm' | 'listenbrainz' | 'musicbrainz'
+  similarity: number | null
   created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
+interface ExternalLookupTable {
+  id: Generated<number>
+  entity_type: string
+  entity_id: number
+  service: string
+  checked_at: ColumnType<Date, string | Date | undefined, string | Date>
+  result: string | null
 }
 
 interface ImageTable {
@@ -183,6 +194,7 @@ export interface Database {
   user_playlists: UserPlaylistTable
   artist_albums: ArtistAlbumTable
   artist_relations: ArtistRelationTable
+  external_lookups: ExternalLookupTable
   images: ImageTable
 }
 

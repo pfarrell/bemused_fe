@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
+import toast from 'react-hot-toast';
 
 const AdminAlbum = () => {
   const { id } = useParams();
@@ -35,14 +36,17 @@ const AdminAlbum = () => {
   const [tracks, setTracks] = useState([]);
   const [trackChanges, setTrackChanges] = useState({});
 
-  // Move to new artist state
+  // Transfer section (move to artist / merge into album)
+  const [transferMode, setTransferMode] = useState('move'); // 'move' | 'merge'
+  const [transferQuery, setTransferQuery] = useState('');
+  const [transferResults, setTransferResults] = useState([]);
+  const [transferSearching, setTransferSearching] = useState(false);
   const [targetArtistId, setTargetArtistId] = useState('');
+  const [selectedArtistName, setSelectedArtistName] = useState('');
   const [movingToArtist, setMovingToArtist] = useState(false);
-
-  // Artist search modal state (for Move to Artist)
-  const [showArtistSearchModal, setShowArtistSearchModal] = useState(false);
-  const [artistSearchQuery, setArtistSearchQuery] = useState('');
-  const [artistSearchResults, setArtistSearchResults] = useState([]);
+  const [mergeDestAlbum, setMergeDestAlbum] = useState(null);
+  const [mergeOffset, setMergeOffset] = useState('');
+  const [mergingAlbum, setMergingAlbum] = useState(false);
 
   // Secondary artists state
   const [secondaryArtists, setSecondaryArtists] = useState([]);
@@ -312,27 +316,77 @@ const AdminAlbum = () => {
     }
   };
 
-  const handleArtistSearch = async (e) => {
-    e.preventDefault();
-    if (artistSearchQuery.length < 2) {
-      setError('Please enter at least 2 characters to search');
-      return;
-    }
+  const handleTransferModeChange = (mode) => {
+    setTransferMode(mode);
+    setTransferQuery('');
+    setTransferResults([]);
+    setTargetArtistId('');
+    setSelectedArtistName('');
+    setMergeDestAlbum(null);
+    setMergeOffset('');
+  };
 
+  const handleTransferSearch = async (e) => {
+    e.preventDefault();
+    if (transferQuery.length < 2) return;
+    setTransferSearching(true);
     try {
-      const response = await apiService.search(artistSearchQuery);
-      setArtistSearchResults(response.data.artists || []);
+      const response = await apiService.search(transferQuery);
+      if (transferMode === 'move') {
+        const currentArtistId = albumData?.album?.artist_id;
+        setTransferResults((response.data.artists || []).filter(a => a.id !== currentArtistId));
+      } else {
+        const currentArtistId = albumData?.album?.artist_id;
+        const filtered = (response.data.albums || []).filter(a => String(a.id) !== String(id));
+        filtered.sort((a, b) => {
+          const aIsSame = a.artist_id === currentArtistId || a.artist?.id === currentArtistId;
+          const bIsSame = b.artist_id === currentArtistId || b.artist?.id === currentArtistId;
+          if (aIsSame && !bIsSame) return -1;
+          if (!aIsSame && bIsSame) return 1;
+          return 0;
+        });
+        setTransferResults(filtered);
+      }
     } catch (error) {
-      console.error('Error searching artists:', error);
-      setError('Failed to search artists');
+      console.error('Transfer search error:', error);
+    } finally {
+      setTransferSearching(false);
     }
   };
 
-  const handleSelectArtist = (artist) => {
-    setTargetArtistId(String(artist.id));
-    setShowArtistSearchModal(false);
-    setArtistSearchQuery('');
-    setArtistSearchResults([]);
+  const handleSelectTransferResult = async (item) => {
+    setTransferResults([]);
+    setTransferQuery('');
+    if (transferMode === 'move') {
+      setTargetArtistId(String(item.id));
+      setSelectedArtistName(item.name);
+    } else {
+      setMergeDestAlbum(item);
+      const maxTrackNum = item.track_count ? parseInt(item.track_count) : 0;
+      setMergeOffset(String(maxTrackNum));
+    }
+  };
+
+  const handleMergeAlbum = async () => {
+    if (!mergeDestAlbum) return;
+    const offset = parseInt(mergeOffset) || 0;
+    const confirmed = window.confirm(
+      `Merge "${albumData?.album?.title}" into "${mergeDestAlbum.title}"?\n\n` +
+      (offset > 0 ? `Track numbers will be incremented by ${offset}.\n\n` : 'Track numbers will not be changed.\n\n') +
+      `This album will be deleted after the merge. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setMergingAlbum(true);
+    try {
+      const response = await apiService.mergeAlbum(id, mergeDestAlbum.id, offset);
+      const { tracks_moved } = response.data;
+      toast.success(`Merged ${tracks_moved} track(s) into "${mergeDestAlbum.title}".`);
+      navigate(`/admin/album/${mergeDestAlbum.id}`);
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to merge album');
+    } finally {
+      setMergingAlbum(false);
+    }
   };
 
   const handleAddArtistSearch = async (e) => {
@@ -373,15 +427,14 @@ const AdminAlbum = () => {
     }
   };
 
-  const handleMoveToArtist = async (e) => {
-    e.preventDefault();
+  const handleMoveToArtist = async () => {
     if (!targetArtistId) {
       setError('Target Artist ID is required');
       return;
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to move this album "${albumData?.album?.title}" and ALL its tracks to artist ID ${targetArtistId}?\n\nThis will update the album and all tracks to belong to the new artist. This action cannot be undone.`
+      `Move "${albumData?.album?.title}" and ALL its tracks to ${selectedArtistName || `artist ID ${targetArtistId}`}?\n\nThis will update the album and all tracks to belong to the new artist. This cannot be undone.`
     );
 
     if (!confirmed) return;
@@ -392,10 +445,7 @@ const AdminAlbum = () => {
     try {
       const response = await apiService.moveAlbumToArtist(id, targetArtistId);
       const { tracks_moved } = response.data;
-
-      alert(`Successfully moved album and ${tracks_moved} track(s) to artist ID ${targetArtistId}.`);
-
-      // Navigate to the album page (which will now show under the new artist)
+      toast.success(`Moved album and ${tracks_moved} track(s) to ${selectedArtistName}.`);
       navigate(`/album/${id}`);
     } catch (error) {
       console.error('Error moving album:', error);
@@ -745,74 +795,113 @@ const AdminAlbum = () => {
         </div>
       </form>
 
-      {/* Move Album to New Artist Section */}
-      <div style={{
-        marginTop: '3rem',
-        padding: '1.5rem',
-        backgroundColor: '#fff3cd',
-        borderRadius: '4px',
-        border: '1px solid #ffc107'
-      }}>
+      {/* Transfer Section — Move to Artist or Merge into Album */}
+      <div style={{ marginTop: '3rem', padding: '1.5rem', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid #ffc107' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#856404' }}>
-          Move Album to Another Artist
+          Transfer Album
         </h3>
-        <p style={{ marginBottom: '1rem', color: '#856404', fontSize: '0.875rem' }}>
-          This will move this album and ALL its tracks to another artist. Use this when an album was imported with the wrong artist.
-        </p>
-        <form onSubmit={handleMoveToArtist}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#856404' }}>
-              Target Artist ID
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="number"
-                value={targetArtistId}
-                onChange={(e) => setTargetArtistId(e.target.value)}
-                placeholder="Enter artist ID to move album to"
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ffc107',
-                  borderRadius: '4px',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowArtistSearchModal(true)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Search
-              </button>
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={movingToArtist || !targetArtistId}
-            style={{
-              padding: '0.75rem 1.5rem',
-              backgroundColor: '#ff8c00',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              cursor: (movingToArtist || !targetArtistId) ? 'not-allowed' : 'pointer',
-              opacity: (movingToArtist || !targetArtistId) ? 0.6 : 1,
-            }}
+
+        <div style={{ marginBottom: '1rem' }}>
+          <select
+            value={transferMode}
+            onChange={e => handleTransferModeChange(e.target.value)}
+            style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: 'white', color: '#856404', cursor: 'pointer' }}
           >
-            {movingToArtist ? 'Moving...' : 'Move Album to Artist'}
-          </button>
+            <option value="move">Move to another artist</option>
+            <option value="merge">Merge into another album</option>
+          </select>
+        </div>
+
+        <p style={{ marginBottom: '0.75rem', color: '#856404', fontSize: '0.875rem' }}>
+          {transferMode === 'move'
+            ? 'Moves this album and all its tracks to another artist.'
+            : 'Moves all tracks into another album, then deletes this album. Use for consolidating multi-disc albums.'}
+        </p>
+
+        <form onSubmit={handleTransferSearch} style={{ marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={transferQuery}
+              onChange={e => setTransferQuery(e.target.value)}
+              placeholder={transferMode === 'move' ? 'Search for artist...' : 'Search for destination album...'}
+              style={{ flex: 1, padding: '0.5rem', fontSize: '1rem', border: '1px solid #ffc107', borderRadius: '4px' }}
+            />
+            <button
+              type="submit"
+              disabled={transferSearching}
+              style={{ padding: '0.5rem 1rem', backgroundColor: '#6b7280', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              {transferSearching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
         </form>
+
+        {transferResults.length > 0 && (
+          <div style={{ border: '1px solid #ffc107', borderRadius: '4px', marginBottom: '0.75rem', maxHeight: '200px', overflowY: 'auto' }}>
+            {transferResults.map(item => (
+              <div
+                key={item.id}
+                onClick={() => handleSelectTransferResult(item)}
+                style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', borderBottom: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fef9c3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}
+              >
+                <span>{item.name || item.title}</span>
+                <span style={{ fontSize: '0.8rem', color: '#92400e' }}>
+                  {transferMode === 'move'
+                    ? `${item.album_count != null ? `${item.album_count} albums` : ''}`
+                    : `${item.artist?.name}${item.track_count != null ? ` · ${item.track_count} tracks` : ''}`}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {transferMode === 'move' && selectedArtistName && (
+          <p style={{ marginBottom: '0.75rem', fontSize: '0.875rem', color: '#856404' }}>
+            Selected: <strong>{selectedArtistName}</strong>
+          </p>
+        )}
+
+        {transferMode === 'merge' && mergeDestAlbum && (
+          <div style={{ marginBottom: '0.75rem' }}>
+            <p style={{ fontSize: '0.875rem', color: '#856404', marginBottom: '0.5rem' }}>
+              Destination: <strong>{mergeDestAlbum.title}</strong>
+              {mergeDestAlbum.artist?.name && <span> — {mergeDestAlbum.artist.name}</span>}
+              {mergeDestAlbum.track_count != null && <span> ({mergeDestAlbum.track_count} tracks)</span>}
+            </p>
+            <label style={{ display: 'block', fontSize: '0.875rem', color: '#856404', marginBottom: '0.25rem' }}>
+              Track number offset (0 = no change):
+            </label>
+            <input
+              type="number"
+              value={mergeOffset}
+              onChange={e => setMergeOffset(e.target.value)}
+              min="0"
+              style={{ width: '100px', padding: '0.4rem', fontSize: '1rem', border: '1px solid #ffc107', borderRadius: '4px' }}
+            />
+          </div>
+        )}
+
+        <button
+          onClick={transferMode === 'move' ? handleMoveToArtist : handleMergeAlbum}
+          disabled={transferMode === 'move' ? (movingToArtist || !targetArtistId) : (mergingAlbum || !mergeDestAlbum)}
+          style={{
+            padding: '0.75rem 1.5rem',
+            backgroundColor: '#ff8c00',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            opacity: (transferMode === 'move' ? (movingToArtist || !targetArtistId) : (mergingAlbum || !mergeDestAlbum)) ? 0.6 : 1,
+          }}
+        >
+          {transferMode === 'move'
+            ? (movingToArtist ? 'Moving...' : 'Move Album to Artist')
+            : (mergingAlbum ? 'Merging...' : 'Merge into Album')}
+        </button>
       </div>
 
       {/* Additional Artists Section */}
@@ -1190,125 +1279,6 @@ const AdminAlbum = () => {
         </div>
       )}
 
-      {/* Artist Search Modal */}
-      {showArtistSearchModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setShowArtistSearchModal(false)}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              padding: '2rem',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              width: '90%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-              Search for Artist
-            </h3>
-            <form onSubmit={handleArtistSearch} style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="text"
-                  value={artistSearchQuery}
-                  onChange={(e) => setArtistSearchQuery(e.target.value)}
-                  placeholder="Enter artist name..."
-                  autoFocus
-                  style={{
-                    flex: 1,
-                    padding: '0.5rem',
-                    fontSize: '1rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                  }}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Search
-                </button>
-              </div>
-            </form>
-
-            {artistSearchResults.length > 0 ? (
-              <div style={{ marginTop: '1rem' }}>
-                <p style={{ marginBottom: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
-                  Click an artist to select:
-                </p>
-                <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-                  {artistSearchResults.map((artist) => (
-                    <div
-                      key={artist.id}
-                      onClick={() => handleSelectArtist(artist)}
-                      style={{
-                        padding: '0.75rem',
-                        borderBottom: '1px solid #e5e7eb',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
-                    >
-                      <span style={{ fontWeight: '500' }}>{artist.name}</span>
-                      <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                        ID: {artist.id}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : artistSearchQuery.length >= 2 ? (
-              <p style={{ marginTop: '1rem', color: '#6b7280', textAlign: 'center' }}>
-                No artists found. Try a different search term.
-              </p>
-            ) : null}
-
-            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowArtistSearchModal(false)}
-                style={{
-                  padding: '0.5rem 1.5rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

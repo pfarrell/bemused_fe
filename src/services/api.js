@@ -52,6 +52,7 @@ export const apiService = {
   bulkUpdateTracks: (album_id, data) => api.patch(`/admin/album/${album_id}/tracks`, data),
   moveArtistArtifacts: (id, target_artist_id) => api.post(`/admin/artist/${id}/move-artifacts`, { target_artist_id }),
   moveAlbumToArtist: (id, target_artist_id) => api.post(`/admin/album/${id}/move-to-artist`, { target_artist_id }),
+  mergeAlbum: (id, destination_album_id, track_offset) => api.post(`/admin/album/${id}/merge`, { destination_album_id, track_offset }),
   getAlbumSecondaryArtists: (id) => api.get(`/admin/album/${id}/artists`),
   addArtistToAlbum: (albumId, artistId, role) => api.post(`/admin/album/${albumId}/artists`, { artist_id: artistId, role }),
   removeArtistFromAlbum: (albumId, artistId) => api.delete(`/admin/album/${albumId}/artists/${artistId}`),

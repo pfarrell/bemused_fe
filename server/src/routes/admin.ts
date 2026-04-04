@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/database.js'
+import { sql } from 'kysely'
 import { lookupAlbumMBID, lookupArtistMBID } from '../services/musicbrainz.js'
 import fs from 'fs'
 import path from 'path'
@@ -582,6 +583,67 @@ admin.post('/album/:id/move-to-artist', async (c) => {
   }
 })
 
+// POST /admin/album/:id/merge — merge all tracks into another album, then delete this album
+// Body: { destination_album_id: number, track_offset: number }
+// track_offset is added to each track's track_number (0 = no change)
+// Track artist_id is updated to match destination album's artist, unless destination is Various Artists (id=161)
+const VARIOUS_ARTISTS_ID = 161
+
+admin.post('/album/:id/merge', async (c) => {
+  const sourceAlbumId = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { destination_album_id, track_offset = 0 } = body
+
+  if (!destination_album_id) return c.json({ error: 'destination_album_id is required' }, 400)
+  if (sourceAlbumId === parseInt(destination_album_id)) return c.json({ error: 'Cannot merge an album into itself' }, 400)
+
+  const destAlbum = await db
+    .selectFrom('albums')
+    .select(['id', 'artist_id'])
+    .where('id', '=', parseInt(destination_album_id))
+    .executeTakeFirst()
+
+  if (!destAlbum) return c.json({ error: 'Destination album not found' }, 404)
+
+  const sourceAlbum = await db
+    .selectFrom('albums')
+    .select('id')
+    .where('id', '=', sourceAlbumId)
+    .executeTakeFirst()
+
+  if (!sourceAlbum) return c.json({ error: 'Source album not found' }, 404)
+
+  try {
+    const offset = parseInt(track_offset) || 0
+
+    if (offset > 0) {
+      await db
+        .updateTable('tracks')
+        .set({ track_number: sql`track_number::integer + ${offset}`, updated_at: new Date() })
+        .where('album_id', '=', sourceAlbumId)
+        .execute()
+    }
+
+    const updateSet: Record<string, any> = { album_id: destAlbum.id, updated_at: new Date() }
+    if (destAlbum.artist_id !== VARIOUS_ARTISTS_ID) {
+      updateSet.artist_id = destAlbum.artist_id
+    }
+
+    const result = await db
+      .updateTable('tracks')
+      .set(updateSet)
+      .where('album_id', '=', sourceAlbumId)
+      .execute()
+
+    await db.deleteFrom('albums').where('id', '=', sourceAlbumId).execute()
+
+    return c.json({ success: true, tracks_moved: Number(result[0]?.numUpdatedRows || 0) })
+  } catch (error) {
+    console.error('Error merging album:', error)
+    return c.json({ error: 'Failed to merge album' }, 500)
+  }
+})
+
 // GET /admin/album/:id/artists — list non-primary artists for an album
 admin.get('/album/:id/artists', async (c) => {
   const id = parseInt(c.req.param('id'))
@@ -759,8 +821,10 @@ admin.get('/artist/:id/related', async (c) => {
     const rows = await db
       .selectFrom('artist_relations')
       .innerJoin('artists', 'artists.id', 'artist_relations.related_artist_id')
-      .select(['artists.id', 'artists.name', 'artist_relations.kind'])
+      .select(['artists.id', 'artists.name', 'artist_relations.kind', 'artist_relations.source', 'artist_relations.similarity'])
       .where('artist_relations.artist_id', '=', id)
+      .where('artist_relations.source', '=', 'manual')
+      .orderBy('artist_relations.similarity', 'desc')
       .orderBy('artists.name', 'asc')
       .execute()
     return c.json(rows)
@@ -786,10 +850,10 @@ admin.post('/artist/:id/related', async (c) => {
 
   try {
     const rows = kind === 'member'
-      ? [{ artist_id: artistId, related_artist_id: relatedId, kind }]
+      ? [{ artist_id: artistId, related_artist_id: relatedId, kind, source: 'manual', similarity: 1.0 }]
       : [
-          { artist_id: artistId, related_artist_id: relatedId, kind },
-          { artist_id: relatedId, related_artist_id: artistId, kind },
+          { artist_id: artistId, related_artist_id: relatedId, kind, source: 'manual', similarity: 1.0 },
+          { artist_id: relatedId, related_artist_id: artistId, kind, source: 'manual', similarity: 1.0 },
         ]
 
     await db
@@ -888,7 +952,9 @@ async function downloadAndSaveImage(
   imageName: string,
   subdir: 'albums' | 'artists'
 ): Promise<string> {
-  const response = await fetch(imageUrl)
+  const response = await fetch(imageUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Bemused/1.0)' }
+  })
   if (!response.ok) throw new Error(`Failed to download image: ${response.status}`)
   const buffer = Buffer.from(await response.arrayBuffer())
   const imageDir = path.join(projectRoot, 'public', 'images', subdir)
@@ -1038,7 +1104,7 @@ admin.post('/artist/:id/images', async (c) => {
     const image = await createImageRecord('artist', id, filePath, 'manual', set_primary)
     return c.json({ success: true, image })
   } catch (err) {
-    return c.json({ error: 'Failed to save image' }, 500)
+    return c.json({ error: (err as Error).message || 'Failed to save image' }, 500)
   }
 })
 

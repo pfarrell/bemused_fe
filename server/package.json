@@ -9,7 +9,10 @@
     "start": "node dist/index.js",
     "deploy": "npm run build && ./scripts/deploy.sh",
     "mbid-lookup": "tsx scripts/mbid-lookup.ts",
-    "image-lookup": "tsx scripts/image-lookup.ts"
+    "image-lookup": "tsx scripts/image-lookup.ts",
+    "similar-artists": "tsx scripts/similar-artists.ts",
+    "similar-artists-lb": "tsx scripts/similar-artists-lb.ts",
+    "diagnose-similar": "tsx scripts/diagnose-similar.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",

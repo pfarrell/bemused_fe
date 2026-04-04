@@ -1,6 +1,6 @@
 // src/components/Layout.jsx
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import SearchBar from './SearchBar';
 import MusicPlayerWrapper from './player/MusicPlayerWrapper';
@@ -8,6 +8,7 @@ import NowPlaying from './NowPlaying';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, isAdmin, logout } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -91,7 +92,7 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
-    navigate('/login');
+    navigate('/login', { state: { from: location.pathname + location.search } });
   };
 
   return (
@@ -275,7 +276,7 @@ const Layout = ({ children }) => {
                     <button
                       onClick={() => {
                         setShowDropdown(false);
-                        navigate('/login');
+                        navigate('/login', { state: { from: location.pathname + location.search } });
                       }}
                       style={{
                         width: '100%',

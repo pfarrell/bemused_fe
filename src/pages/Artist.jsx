@@ -16,6 +16,14 @@ const Artist = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showAllSimilar, setShowAllSimilar] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   useEffect(() => {
     const fetchArtistData = async () => {
@@ -76,7 +84,7 @@ const Artist = () => {
     );
   }
 
-  const { artist, summary, albums, appears_on, related_artists, members, member_of } = artistData;
+  const { artist, summary, albums, appears_on, related_artists, members, member_of, similar_artists } = artistData;
 
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -173,6 +181,48 @@ const Artist = () => {
               ))}
             </p>
           )}
+
+          {similar_artists && similar_artists.length > 0 && (() => {
+            const cap = isMobile ? 3 : 10;
+            const displayed = showAllSimilar ? similar_artists : similar_artists.slice(0, cap);
+            const hasMore = similar_artists.length > cap;
+            return (
+              <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+                Similar artists:{' '}
+                {displayed.map((sa, i) => (
+                  <span key={sa.id}>
+                    {i > 0 && ' · '}
+                    {sa.has_tracks ? (
+                      <span
+                        style={{ color: '#7c3aed', cursor: 'pointer' }}
+                        onClick={() => navigate(`/artist/${sa.id}`)}
+                      >
+                        {sa.name}
+                      </span>
+                    ) : (
+                      <span>{sa.name}</span>
+                    )}
+                  </span>
+                ))}
+                {hasMore && !showAllSimilar && (
+                  <span
+                    style={{ color: '#7c3aed', cursor: 'pointer', marginLeft: '0.5rem' }}
+                    onClick={() => setShowAllSimilar(true)}
+                  >
+                    {' '}+{similar_artists.length - cap} more
+                  </span>
+                )}
+                {showAllSimilar && (
+                  <span
+                    style={{ color: '#7c3aed', cursor: 'pointer', marginLeft: '0.5rem' }}
+                    onClick={() => setShowAllSimilar(false)}
+                  >
+                    {' '}show less
+                  </span>
+                )}
+              </p>
+            );
+          })()}
 
         </div>
       </div>

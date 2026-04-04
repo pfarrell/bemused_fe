@@ -296,8 +296,8 @@ const AdminArtist = () => {
 
   const handleAddRelation = async (item) => {
     try {
-      if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') {
-        const kind = relationTypeToAdd === 'member' ? 'member' : 'related';
+      if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member' || relationTypeToAdd === 'similar_artist') {
+        const kind = relationTypeToAdd === 'member' ? 'member' : relationTypeToAdd === 'similar_artist' ? 'similar' : 'related';
         await apiService.addRelatedArtist(id, item.id, kind);
         const response = await apiService.getRelatedArtists(id);
         setRelatedArtists(response.data);
@@ -528,6 +528,10 @@ const AdminArtist = () => {
                   setImages(res.data);
                   setNewImageUrl('');
                   setNewImageName('');
+                  toast.success('Image added');
+                } catch (err) {
+                  const msg = err?.response?.data?.error || err?.message || 'Failed to add image';
+                  toast.error(msg);
                 } finally {
                   setAddingImage(false);
                 }
@@ -659,9 +663,135 @@ const AdminArtist = () => {
         borderRadius: '4px',
         border: '1px solid #86efac'
       }}>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#166534' }}>
-          Relations
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, color: '#166534' }}>
+            Relations
+          </h3>
+          {!showAddRelationSection && (
+            <button
+              type="button"
+              onClick={() => setShowAddRelationSection(true)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#16a34a',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+              }}
+            >
+              + Add Relation
+            </button>
+          )}
+        </div>
+
+        {/* Add Relation Form */}
+        {showAddRelationSection && (
+          <div style={{ marginBottom: '0' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+              <select
+                value={relationTypeToAdd}
+                onChange={(e) => {
+                  setRelationTypeToAdd(e.target.value);
+                  setAddRelationResults([]);
+                  setAddRelationQuery('');
+                }}
+                style={{ padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}
+              >
+                <option value="similar_artist">Similar Artist (Manual)</option>
+                <option value="related_artist">Related Artist</option>
+                <option value="member">Member</option>
+                <option value="appears_on">Appears On Album</option>
+              </select>
+              {relationTypeToAdd === 'appears_on' && (
+                <select
+                  value={addRelationRole}
+                  onChange={(e) => setAddRelationRole(e.target.value)}
+                  style={{ padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}
+                >
+                  <option value="featured">Featured</option>
+                  <option value="collaborator">Collaborator</option>
+                  <option value="compilation">Compilation</option>
+                  <option value="guest">Guest</option>
+                </select>
+              )}
+              <button
+                type="button"
+                onClick={() => { setShowAddRelationSection(false); setAddRelationResults([]); setAddRelationQuery(''); }}
+                style={{ padding: '0.5rem', backgroundColor: '#6b7280', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.875rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+            <form onSubmit={handleAddRelationSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <input
+                type="text"
+                value={addRelationQuery}
+                onChange={(e) => setAddRelationQuery(e.target.value)}
+                placeholder={relationTypeToAdd === 'appears_on' ? 'Search album title...' : 'Search artist name...'}
+                autoFocus
+                style={{ flex: 1, padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px' }}
+              />
+              <button
+                type="submit"
+                disabled={addRelationSearching || addRelationQuery.length < 2}
+                style={{ padding: '0.5rem 1rem', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.875rem', cursor: 'pointer' }}
+              >
+                {addRelationSearching ? 'Searching...' : 'Search'}
+              </button>
+            </form>
+            {addRelationResults.length > 0 && (
+              <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white', marginBottom: '0.75rem' }}>
+                {addRelationResults.map(item => (
+                  <div key={item.id} style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontWeight: '500' }}>{item.name || item.title}</span>
+                      {item.artist && <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>by {item.artist.name}</span>}
+                      {(relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') && (
+                        <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>{item.album_count} album{item.album_count !== 1 ? 's' : ''} · ID {item.id}</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleAddRelation(item)}
+                      style={{ padding: '0.25rem 0.75rem', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <hr style={{ border: 'none', borderTop: '1px solid #86efac', margin: '0 0 0.75rem 0' }} />
+          </div>
+        )}
+
+        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+
+        {/* Similar Artists (manual) */}
+        {relatedArtists.filter(r => r.kind === 'similar').length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#166534', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              Similar Artists
+              <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', backgroundColor: '#bbf7d0', borderRadius: '9999px', fontWeight: '600', color: '#166534', textTransform: 'none', letterSpacing: 0 }}>manual</span>
+            </div>
+            {relatedArtists.filter(r => r.kind === 'similar').map(ra => (
+              <div key={ra.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #bbf7d0' }}>
+                <span style={{ fontWeight: '500', color: '#7c3aed', cursor: 'pointer' }} onClick={() => navigate(`/artist/${ra.id}`)}>
+                  {ra.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRelatedArtist(ra.id)}
+                  style={{ padding: '0.25rem 0.5rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Members */}
         {relatedArtists.filter(r => r.kind === 'member').length > 0 && (
@@ -793,155 +923,8 @@ const AdminArtist = () => {
           </div>
         )}
 
-        {/* Add Relation Form */}
-        {!showAddRelationSection ? (
-          <button
-            type="button"
-            onClick={() => setShowAddRelationSection(true)}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#16a34a',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-            }}
-          >
-            + Add Relation
-          </button>
-        ) : (
-          <div>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', alignItems: 'center' }}>
-              <select
-                value={relationTypeToAdd}
-                onChange={(e) => {
-                  setRelationTypeToAdd(e.target.value);
-                  setAddRelationResults([]);
-                  setAddRelationQuery('');
-                }}
-                style={{
-                  padding: '0.5rem',
-                  fontSize: '0.875rem',
-                  border: '1px solid #86efac',
-                  borderRadius: '4px',
-                  backgroundColor: 'white',
-                }}
-              >
-                <option value="related_artist">Related Artist</option>
-                <option value="member">Member</option>
-                <option value="appears_on">Appears On Album</option>
-              </select>
-              {relationTypeToAdd === 'appears_on' && (
-                <select
-                  value={addRelationRole}
-                  onChange={(e) => setAddRelationRole(e.target.value)}
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.875rem',
-                    border: '1px solid #86efac',
-                    borderRadius: '4px',
-                    backgroundColor: 'white',
-                  }}
-                >
-                  <option value="featured">Featured</option>
-                  <option value="collaborator">Collaborator</option>
-                  <option value="compilation">Compilation</option>
-                  <option value="guest">Guest</option>
-                </select>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddRelationSection(false);
-                  setAddRelationResults([]);
-                  setAddRelationQuery('');
-                }}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-            <form onSubmit={handleAddRelationSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <input
-                type="text"
-                value={addRelationQuery}
-                onChange={(e) => setAddRelationQuery(e.target.value)}
-                placeholder={relationTypeToAdd === 'appears_on' ? 'Search album title...' : 'Search artist name...'}
-                autoFocus
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '0.875rem',
-                  border: '1px solid #86efac',
-                  borderRadius: '4px',
-                }}
-              />
-              <button
-                type="submit"
-                disabled={addRelationSearching || addRelationQuery.length < 2}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                }}
-              >
-                {addRelationSearching ? 'Searching...' : 'Search'}
-              </button>
-            </form>
-            {addRelationResults.length > 0 && (
-              <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}>
-                {addRelationResults.map(item => (
-                  <div
-                    key={item.id}
-                    style={{
-                      padding: '0.6rem 0.75rem',
-                      borderBottom: '1px solid #e5e7eb',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: '500' }}>{item.name || item.title}</span>
-                      {item.artist && <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>by {item.artist.name}</span>}
-                      {(relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') && (
-                        <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>{item.album_count} album{item.album_count !== 1 ? 's' : ''} · ID {item.id}</span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleAddRelation(item)}
-                      style={{
-                        padding: '0.25rem 0.75rem',
-                        backgroundColor: '#16a34a',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Add
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        </div>
+
       </div>
 
       {/* Move Artifacts Section */}

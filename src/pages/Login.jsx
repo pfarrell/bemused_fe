@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
 const Login = () => {
@@ -9,6 +9,7 @@ const Login = () => {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loading } = useAuthStore();
 
   const handleSubmit = async (e) => {
@@ -18,7 +19,8 @@ const Login = () => {
     try {
       const result = await login(username, password);
       if (result.success) {
-        navigate('/');
+        const from = location.state?.from || '/';
+        navigate(from, { replace: true });
       } else {
         setError(result.error || 'Login failed');
       }

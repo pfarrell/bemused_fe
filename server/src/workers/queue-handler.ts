@@ -17,6 +17,7 @@ import path from 'path'
 import { parseFile } from 'music-metadata'
 import NodeID3 from 'node-id3'
 import { lookupAlbumMBID } from '../services/musicbrainz.js'
+import { fetchSimilarArtists } from '../services/lastfmSimilar.js'
 
 const POLL_INTERVAL_MS = 5000 // Poll every 5 seconds
 const UPLOAD_PATH = process.env.BEMUSED_UPLOAD_PATH
@@ -171,6 +172,12 @@ async function processQueueItem(item: any) {
           .values({ name: trackArtistName })
           .returningAll()
           .executeTakeFirst()
+
+        if (trackArtist) {
+          fetchSimilarArtists(trackArtist.id, trackArtist.name).catch(err =>
+            console.warn(`  ⚠️  Similar artists lookup failed for "${trackArtistName}":`, err.message)
+          )
+        }
       }
     }
 
@@ -202,6 +209,12 @@ async function processQueueItem(item: any) {
           .values({ name: albumArtistName })
           .returningAll()
           .executeTakeFirst()
+
+        if (albumArtist) {
+          fetchSimilarArtists(albumArtist.id, albumArtist.name).catch(err =>
+            console.warn(`  ⚠️  Similar artists lookup failed for "${albumArtistName}":`, err.message)
+          )
+        }
       }
     }
 

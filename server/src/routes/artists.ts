@@ -3,6 +3,10 @@ import { db } from '../db/database.js'
 import { getArtistSummary } from '../services/wikipedia.js'
 import { sql } from 'kysely'
 
+// Minimum similarity score to include in similar_artists response (0–1 scale).
+// Adjust this constant to tune how many similar artists appear on artist pages.
+const SIMILAR_ARTIST_MIN_SIMILARITY = 0.8
+
 const artists = new Hono()
 
 // GET /artists/random?size=N
@@ -94,12 +98,12 @@ artists.get('/:id', async (c) => {
   const relationRows = await db
     .selectFrom('artist_relations')
     .innerJoin('artists as ra', 'ra.id', 'artist_relations.related_artist_id')
-    .select(['ra.id', 'ra.name', 'artist_relations.kind'])
+    .select(['ra.id', 'ra.name', 'artist_relations.kind', 'artist_relations.source'])
     .where('artist_relations.artist_id', '=', id)
     .orderBy('ra.name', 'asc')
     .execute()
 
-  const related_artists = relationRows.filter(r => r.kind === 'related').map(r => ({ id: r.id, name: r.name }))
+  const related_artists = relationRows.filter(r => r.kind === 'related' && r.source === 'manual').map(r => ({ id: r.id, name: r.name }))
   const members = relationRows.filter(r => r.kind === 'member').map(r => ({ id: r.id, name: r.name }))
 
   const memberOfRows = await db
@@ -112,9 +116,35 @@ artists.get('/:id', async (c) => {
     .execute()
   const member_of = memberOfRows.map(r => ({ id: r.id, name: r.name }))
 
+  const similarRows = await db
+    .selectFrom('artist_relations as ar')
+    .innerJoin('artists as ra', 'ra.id', 'ar.related_artist_id')
+    .select([
+      'ra.id',
+      'ra.name',
+      'ar.similarity',
+      sql<boolean>`EXISTS(
+        SELECT 1 FROM tracks t
+        INNER JOIN albums al ON al.id = t.album_id
+        WHERE al.artist_id = ra.id
+      )`.as('has_tracks'),
+    ])
+    .where('ar.artist_id', '=', id)
+    .where('ar.kind', '=', 'similar')
+    .where('ar.similarity', '>=', SIMILAR_ARTIST_MIN_SIMILARITY)
+    .orderBy('ar.similarity', 'desc')
+    .execute()
+
+  const similar_artists = similarRows.map(r => ({
+    id: r.id,
+    name: r.name,
+    similarity: r.similarity,
+    has_tracks: r.has_tracks,
+  }))
+
   const summary = await getArtistSummary(artist.name, artist.wikipedia)
 
-  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums, appears_on, related_artists, members, member_of })
+  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums, appears_on, related_artists, members, member_of, similar_artists })
 })
 
 export default artists
