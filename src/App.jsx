@@ -24,6 +24,8 @@ import AdminUpload from './pages/AdminUpload';
 import AdminPlaylist from './pages/AdminPlaylist';
 import AdminLogs from './pages/AdminLogs';
 import ProtectedRoute from './components/ProtectedRoute';
+import MusicPlayerWrapper from './components/player/MusicPlayerWrapper';
+import NowPlaying from './components/NowPlaying';
 
 // Add this component to handle scroll to top on route changes
 function ScrollToTop() {
@@ -175,6 +177,12 @@ function App() {
           },
         }}
       />
+      {/* Player lives outside Routes so it is never unmounted during navigation */}
+      <div className="app-footer">
+        <NowPlaying />
+        <MusicPlayerWrapper />
+      </div>
+
       <div className="app h-screen overflow-hidden">
         <Routes>
           {/* Auth pages without layout */}

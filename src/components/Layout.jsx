@@ -3,8 +3,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import SearchBar from './SearchBar';
-import MusicPlayerWrapper from './player/MusicPlayerWrapper';
-import NowPlaying from './NowPlaying';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
@@ -92,7 +90,6 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
-    navigate('/login', { state: { from: location.pathname + location.search } });
   };
 
   return (
@@ -356,11 +353,6 @@ const Layout = ({ children }) => {
         </div>
       </div>
 
-      {/* Fixed Footer */}
-      <div className="app-footer">
-        <NowPlaying />
-        <MusicPlayerWrapper />
-      </div>
     </div>
   );
 };

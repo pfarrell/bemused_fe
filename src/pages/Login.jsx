@@ -31,7 +31,7 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#1a252f', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#1a252f', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem', paddingBottom: '6rem' }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: 0 }}>P·Share</h1>
