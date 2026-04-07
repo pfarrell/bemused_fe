@@ -472,6 +472,7 @@ const AdminArtist = () => {
                           await apiService.setArtistImagePrimary(id, img.id);
                           const res = await apiService.getArtistImages(id);
                           setImages(res.data);
+                          setImagePath(img.path);
                         }}
                         style={{ fontSize: '11px', padding: '2px 6px' }}
                       >

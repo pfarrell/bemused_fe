@@ -1,5 +1,6 @@
 // src/pages/Artist.jsx
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
@@ -21,6 +22,7 @@ const Artist = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAllSimilar, setShowAllSimilar] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  const [showArtistModal, setShowArtistModal] = useState(false);
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth <= 768);
@@ -107,11 +109,39 @@ const Artist = () => {
             src={apiService.getImageUrl(artist.image_path, 'artist_page')}
             alt={artist.name}
             className='full-image'
+            onClick={() => setShowArtistModal(true)}
+            style={{ cursor: 'zoom-in' }}
             onError={(e) => {
               console.log(`Failed to load artist image: ${e.target.src}`);
             }}
           />
         </div>
+        {showArtistModal && createPortal(
+          <div
+            onClick={() => setShowArtistModal(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1000,
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              cursor: 'zoom-out', padding: '1rem',
+            }}
+          >
+            <img
+              src={apiService.getImageUrl(artist.image_path, 'artist_page')}
+              alt={artist.name}
+              style={{
+                maxWidth: '90vw', maxHeight: '80vh',
+                objectFit: 'contain', borderRadius: '4px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+              }}
+            />
+            <div style={{ marginTop: '0.75rem', textAlign: 'center', color: 'white' }}>
+              <div style={{ fontWeight: '600', fontSize: '1rem' }}>{artist.name}</div>
+            </div>
+          </div>,
+          document.body
+        )}
         
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
@@ -244,12 +274,14 @@ const Artist = () => {
           <div className="artist-grid-container">
             {albums.map((album) => {
               const imageUrl = apiService.getImageUrl(album.image_path, 'album_small')
+              const fullImageUrl = apiService.getImageUrl(album.image_path, 'album_page')
               return (
                 <AlbumCard
                   key={album.id}
                   album={album}
                   artist={album.artist}
                   imageUrl={imageUrl}
+                  fullImageUrl={fullImageUrl}
                   onClick={handleAlbumClick}
                 />
               )
@@ -308,12 +340,14 @@ const Artist = () => {
           <div className="artist-grid-container">
             {appears_on.map((album) => {
               const imageUrl = apiService.getImageUrl(album.image_path, 'album_small')
+              const fullImageUrl = apiService.getImageUrl(album.image_path, 'album_page')
               return (
                 <AlbumCard
                   key={`appears-${album.id}`}
                   album={album}
                   artist={album.artist}
                   imageUrl={imageUrl}
+                  fullImageUrl={fullImageUrl}
                   onClick={handleAlbumClick}
                 />
               )

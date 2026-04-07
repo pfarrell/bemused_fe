@@ -616,6 +616,7 @@ const AdminAlbum = () => {
                           await apiService.setAlbumImagePrimary(id, img.id);
                           const res = await apiService.getAlbumImages(id);
                           setImages(res.data);
+                          setImagePath(img.path);
                         }}
                         style={{ fontSize: '11px', padding: '2px 6px' }}
                       >

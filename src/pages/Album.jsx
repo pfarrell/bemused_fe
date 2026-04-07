@@ -1,5 +1,6 @@
 // src/pages/Album.jsx
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
@@ -16,6 +17,7 @@ const Album = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showAlbumModal, setShowAlbumModal] = useState(false);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -143,11 +145,40 @@ const Album = () => {
             src={apiService.getImageUrl(album.image_path, 'album_page')}
             alt={`${album.title} by ${artist.name}`}
             className='full-image'
+            onClick={() => setShowAlbumModal(true)}
+            style={{ cursor: 'zoom-in' }}
             onError={(e) => {
               console.log(`Failed to load album image: ${e.target.src}`);
             }}
           />
         </div>
+        {showAlbumModal && createPortal(
+          <div
+            onClick={() => setShowAlbumModal(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1000,
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              cursor: 'zoom-out', padding: '1rem',
+            }}
+          >
+            <img
+              src={apiService.getImageUrl(album.image_path, 'album_page')}
+              alt={`${album.title} by ${artist.name}`}
+              style={{
+                maxWidth: '90vw', maxHeight: '80vh',
+                objectFit: 'contain', borderRadius: '4px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+              }}
+            />
+            <div style={{ marginTop: '0.75rem', textAlign: 'center', color: 'white' }}>
+              <div style={{ fontWeight: '600', fontSize: '1rem' }}>{album.title}</div>
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.25rem' }}>{artist.name}</div>
+            </div>
+          </div>,
+          document.body
+        )}
         
         {/* Album Info */}
         <div style={{ flex: 1 }}>

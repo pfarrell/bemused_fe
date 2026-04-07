@@ -1,5 +1,6 @@
 // src/pages/Playlists.jsx
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
@@ -10,6 +11,7 @@ export default function Playlists() {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [zoomedPlaylist, setZoomedPlaylist] = useState(null);
 
   useEffect(() => {
     loadPlaylists();
@@ -73,13 +75,15 @@ export default function Playlists() {
                   <img
                     src={apiService.getImageUrl(playlist.image_path, 'album_small')}
                     alt={playlist.name}
+                    onClick={(e) => { e.stopPropagation(); setZoomedPlaylist(playlist); }}
                     style={{
                       position: 'absolute',
                       top: 0,
                       left: 0,
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover'
+                      objectFit: 'cover',
+                      cursor: 'zoom-in'
                     }}
                   />
                 ) : (
@@ -116,6 +120,33 @@ export default function Playlists() {
             </div>
           ))}
         </div>
+      )}
+
+      {zoomedPlaylist && createPortal(
+        <div
+          onClick={() => setZoomedPlaylist(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            cursor: 'zoom-out', padding: '1rem',
+          }}
+        >
+          <img
+            src={apiService.getImageUrl(zoomedPlaylist.image_path, 'album_page')}
+            alt={zoomedPlaylist.name}
+            style={{
+              maxWidth: '90vw', maxHeight: '80vh',
+              objectFit: 'contain', borderRadius: '4px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            }}
+          />
+          <div style={{ marginTop: '0.75rem', textAlign: 'center', color: 'white' }}>
+            <div style={{ fontWeight: '600', fontSize: '1rem' }}>{zoomedPlaylist.name}</div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

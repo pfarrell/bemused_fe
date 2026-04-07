@@ -1,5 +1,6 @@
 // src/pages/Playlist.jsx
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
@@ -16,6 +17,7 @@ export default function Playlist() {
   const [playlistData, setPlaylistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
     loadPlaylist();
@@ -81,11 +83,13 @@ export default function Playlist() {
             <img
               src={apiService.getImageUrl(playlist.image_path, 'album_page')}
               alt={playlist.name}
+              onClick={() => setShowImageModal(true)}
               style={{
                 width: '200px',
                 height: '200px',
                 objectFit: 'cover',
-                borderRadius: '0.5rem'
+                borderRadius: '0.5rem',
+                cursor: 'zoom-in'
               }}
             />
           ) : (
@@ -172,6 +176,33 @@ export default function Playlist() {
           </div>
         </div>
       </div>
+
+      {showImageModal && playlist.image_path && createPortal(
+        <div
+          onClick={() => setShowImageModal(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            cursor: 'zoom-out', padding: '1rem',
+          }}
+        >
+          <img
+            src={apiService.getImageUrl(playlist.image_path, 'album_page')}
+            alt={playlist.name}
+            style={{
+              maxWidth: '90vw', maxHeight: '80vh',
+              objectFit: 'contain', borderRadius: '4px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            }}
+          />
+          <div style={{ marginTop: '0.75rem', textAlign: 'center', color: 'white' }}>
+            <div style={{ fontWeight: '600', fontSize: '1rem' }}>{playlist.name}</div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Tracks List */}
       <div style={{
