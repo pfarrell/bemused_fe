@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { usePlayerStore } from '../stores/playerStore';
 import AlbumCard from '../components/AlbumCard';
+import Track from '../components/Track';
 import Wikipedia from '../components/Wikipedia';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
@@ -12,6 +14,7 @@ const Artist = () => {
   const { id, name } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuthStore();
+  const { playerInstance, currentTrack } = usePlayerStore();
   const [artistData, setArtistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -84,7 +87,15 @@ const Artist = () => {
     );
   }
 
-  const { artist, summary, albums, appears_on, related_artists, members, member_of, similar_artists } = artistData;
+  const { artist, summary, albums, singles, appears_on, related_artists, members, member_of, similar_artists } = artistData;
+
+  const handlePlaySingles = () => {
+    if (playerInstance && singles?.length) {
+      playerInstance.clearPlaylist();
+      playerInstance.addTracks(singles);
+      playerInstance.loadAndPlayTrack(0);
+    }
+  };
 
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -243,6 +254,47 @@ const Artist = () => {
                 />
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Singles */}
+      {singles && singles.length > 0 && (
+        <div style={{ marginTop: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>
+              Singles
+            </h2>
+            <button
+              onClick={handlePlaySingles}
+              style={{
+                padding: '0.375rem 0.75rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
+              ▶ Play All
+            </button>
+          </div>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            overflowX: 'hidden',
+          }}>
+            {singles.map((track, index) => (
+              <Track
+                key={track.id}
+                track={track}
+                index={index}
+                trackCount={singles.length}
+                isPlaying={currentTrack?.id === track.id}
+              />
+            ))}
           </div>
         </div>
       )}

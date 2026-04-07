@@ -66,9 +66,42 @@ artists.get('/:id', async (c) => {
     .execute()
 
   const albumIdsWithTracks = new Set(albumsWithTracks.map((a) => a.id))
-  const filteredAlbums = albums
+  const allFilteredAlbums = albums
     .filter((a) => albumIdsWithTracks.has(a.id))
     .map((a) => ({ ...a, artist: { id: artist.id, name: artist.name } }))
+
+  const singlesAlbumIds = allFilteredAlbums.filter(a => a.title === '_Singles').map(a => a.id)
+  const filteredAlbums = allFilteredAlbums.filter(a => a.title !== '_Singles')
+
+  let singles: any[] = []
+  if (singlesAlbumIds.length > 0) {
+    const singlesRows = await db
+      .selectFrom('tracks')
+      .innerJoin('artists as ta', 'ta.id', 'tracks.artist_id')
+      .innerJoin('albums', 'albums.id', 'tracks.album_id')
+      .select([
+        'tracks.id',
+        'tracks.title',
+        'tracks.duration_sec',
+        'tracks.track_number',
+        'ta.id as artist_id',
+        'ta.name as artist_name',
+        'albums.id as album_id',
+        'albums.title as album_title',
+      ])
+      .where('tracks.album_id', 'in', singlesAlbumIds)
+      .orderBy('tracks.track_number', 'asc')
+      .execute()
+
+    singles = singlesRows.map(t => ({
+      id: t.id,
+      title: t.title,
+      duration: t.duration_sec,
+      track_number: t.track_number,
+      artist: { id: t.artist_id, name: t.artist_name },
+      album: { id: t.album_id, title: t.album_title, artist: { id: artist.id, name: artist.name } },
+    }))
+  }
 
   const appearsOnRows = await db
     .selectFrom('artist_albums')
@@ -144,7 +177,7 @@ artists.get('/:id', async (c) => {
 
   const summary = await getArtistSummary(artist.name, artist.wikipedia)
 
-  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums, appears_on, related_artists, members, member_of, similar_artists })
+  return c.json({ artist, summary: summary ?? {}, albums: filteredAlbums, singles, appears_on, related_artists, members, member_of, similar_artists })
 })
 
 export default artists
