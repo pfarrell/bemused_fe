@@ -109,11 +109,13 @@ upload.post('/', async (c) => {
       // Calculate MD5 hash
       const fileHash = await calculateFileHash(filePath)
 
-      // Check if file already exists in database
+      // Check if file already exists and is linked to an active track.
+      // An orphaned media_files row (no track pointing to it) should not block re-upload.
       const existingFile = await db
         .selectFrom('media_files')
-        .select('id')
-        .where('file_hash', '=', fileHash)
+        .innerJoin('tracks', 'tracks.media_file_id', 'media_files.id')
+        .select('media_files.id')
+        .where('media_files.file_hash', '=', fileHash)
         .executeTakeFirst()
 
       if (existingFile) {

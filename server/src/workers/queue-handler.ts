@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config'
 
 /**
  * Upload Queue Worker for Bemused
@@ -16,7 +17,7 @@ import fs from 'fs'
 import path from 'path'
 import { parseFile } from 'music-metadata'
 import NodeID3 from 'node-id3'
-import { lookupAlbumMBID } from '../services/musicbrainz.js'
+import { lookupAlbumMBID, lookupArtistMBID } from '../services/musicbrainz.js'
 import { fetchSimilarArtists } from '../services/lastfmSimilar.js'
 
 const POLL_INTERVAL_MS = 5000 // Poll every 5 seconds
@@ -174,6 +175,9 @@ async function processQueueItem(item: any) {
           .executeTakeFirst()
 
         if (trackArtist) {
+          lookupArtistMBID(trackArtist.id, trackArtist.name).catch(err =>
+            console.warn(`  ⚠️  Artist MBID lookup failed for "${trackArtistName}":`, err.message)
+          )
           fetchSimilarArtists(trackArtist.id, trackArtist.name).catch(err =>
             console.warn(`  ⚠️  Similar artists lookup failed for "${trackArtistName}":`, err.message)
           )
@@ -211,6 +215,9 @@ async function processQueueItem(item: any) {
           .executeTakeFirst()
 
         if (albumArtist) {
+          lookupArtistMBID(albumArtist.id, albumArtist.name).catch(err =>
+            console.warn(`  ⚠️  Artist MBID lookup failed for "${albumArtistName}":`, err.message)
+          )
           fetchSimilarArtists(albumArtist.id, albumArtist.name).catch(err =>
             console.warn(`  ⚠️  Similar artists lookup failed for "${albumArtistName}":`, err.message)
           )

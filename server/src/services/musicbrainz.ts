@@ -15,13 +15,14 @@ const MB_BASE = 'https://musicbrainz.org/ws/2'
 const USER_AGENT = 'Bemused/1.0 (https://patf.net)'
 const RATE_LIMIT_MS = 1100 // slightly over 1s to be safe
 
-let lastRequestTime = 0
+let nextAllowedTime = Date.now()
 
 async function rateLimitedFetch(url: string): Promise<any> {
   const now = Date.now()
-  const wait = RATE_LIMIT_MS - (now - lastRequestTime)
+  const scheduledTime = Math.max(now, nextAllowedTime)
+  nextAllowedTime = scheduledTime + RATE_LIMIT_MS
+  const wait = scheduledTime - now
   if (wait > 0) await new Promise(r => setTimeout(r, wait))
-  lastRequestTime = Date.now()
 
   const res = await fetch(url, {
     headers: {

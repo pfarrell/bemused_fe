@@ -100,9 +100,9 @@ export const apiService = {
   // Image URL helpers
   getImageUrl: (imagePath, context = 'base') => {
     if (!imagePath) return null;
-    
-    const baseUrl = 'https://patf.net/images';
-    
+
+    const baseUrl = import.meta.env.DEV ? '/images' : 'https://patf.net/images';
+
     switch (context) {
       case 'artist_search':
         return `${baseUrl}/artists/sm/${imagePath}`;

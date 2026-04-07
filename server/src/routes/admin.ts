@@ -2,9 +2,12 @@ import { Hono } from 'hono'
 import { db } from '../db/database.js'
 import { sql } from 'kysely'
 import { lookupAlbumMBID, lookupArtistMBID } from '../services/musicbrainz.js'
+import { fetchArtistImageFromFanart } from '../services/fanart.js'
+import { fetchSimilarArtists } from '../services/lastfmSimilar.js'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { createSmallVersion } from '../services/imageResize.js'
 
 const MBID_RETRYABLE = ['unmatched', 'not_found', 'low_confidence']
 
@@ -60,10 +63,15 @@ admin.put('/artist/:id', async (c) => {
       return c.json({ error: 'Artist not found' }, 404)
     }
 
-    // Re-trigger MBID lookup if name changed and status is retryable
+    // Re-trigger MBID → image → similar-artists chain if name changed and status is retryable
     if (current && current.name !== name && MBID_RETRYABLE.includes(current.mbid_status ?? 'unmatched')) {
-      lookupArtistMBID(id, name).catch(err =>
-        console.warn(`MBID re-lookup failed for artist ${id}:`, err.message)
+      const imagesDir = path.join(projectRoot, 'public', 'images')
+      lookupArtistMBID(id, name).then(async result => {
+        if (!result.mbid) return
+        await fetchArtistImageFromFanart(id, result.mbid, imagesDir)
+        await fetchSimilarArtists(id, name)
+      }).catch(err =>
+        console.warn(`Post-update lookup chain failed for artist ${id}:`, err.message)
       )
     }
 
@@ -140,21 +148,37 @@ admin.put('/album/:id', async (c) => {
   }
 })
 
-// DELETE /admin/artist/:id — delete an artist
+// DELETE /admin/artist/:id — delete an artist and cascade to albums, tracks, media_files
 admin.delete('/artist/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
 
   try {
-    const deleted = await db
-      .deleteFrom('artists')
-      .where('id', '=', id)
-      .returningAll()
-      .executeTakeFirst()
+    const artist = await db.selectFrom('artists').select('id').where('id', '=', id).executeTakeFirst()
+    if (!artist) return c.json({ error: 'Artist not found' }, 404)
 
-    if (!deleted) {
-      return c.json({ error: 'Artist not found' }, 404)
+    // Collect all albums for this artist
+    const albums = await db.selectFrom('albums').select('id').where('artist_id', '=', id).execute()
+    const albumIds = albums.map(a => a.id)
+
+    if (albumIds.length > 0) {
+      // Collect media_file IDs from tracks in those albums, then delete them
+      const tracks = await db
+        .selectFrom('tracks')
+        .select(['id', 'media_file_id'])
+        .where('album_id', 'in', albumIds)
+        .execute()
+      const mediaFileIds = tracks.map(t => t.media_file_id).filter((id): id is number => id != null)
+
+      if (tracks.length > 0) {
+        await db.deleteFrom('tracks').where('album_id', 'in', albumIds).execute()
+      }
+      if (mediaFileIds.length > 0) {
+        await db.deleteFrom('media_files').where('id', 'in', mediaFileIds).execute()
+      }
+      await db.deleteFrom('albums').where('id', 'in', albumIds).execute()
     }
 
+    const deleted = await db.deleteFrom('artists').where('id', '=', id).returningAll().executeTakeFirst()
     return c.json({ success: true, deleted })
   } catch (error) {
     console.error('Error deleting artist:', error)
@@ -162,21 +186,29 @@ admin.delete('/artist/:id', async (c) => {
   }
 })
 
-// DELETE /admin/album/:id — delete an album
+// DELETE /admin/album/:id — delete an album and cascade to tracks, media_files
 admin.delete('/album/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
 
   try {
-    const deleted = await db
-      .deleteFrom('albums')
-      .where('id', '=', id)
-      .returningAll()
-      .executeTakeFirst()
+    const album = await db.selectFrom('albums').select('id').where('id', '=', id).executeTakeFirst()
+    if (!album) return c.json({ error: 'Album not found' }, 404)
 
-    if (!deleted) {
-      return c.json({ error: 'Album not found' }, 404)
+    const tracks = await db
+      .selectFrom('tracks')
+      .select(['id', 'media_file_id'])
+      .where('album_id', '=', id)
+      .execute()
+    const mediaFileIds = tracks.map(t => t.media_file_id).filter((id): id is number => id != null)
+
+    if (tracks.length > 0) {
+      await db.deleteFrom('tracks').where('album_id', '=', id).execute()
+    }
+    if (mediaFileIds.length > 0) {
+      await db.deleteFrom('media_files').where('id', 'in', mediaFileIds).execute()
     }
 
+    const deleted = await db.deleteFrom('albums').where('id', '=', id).returningAll().executeTakeFirst()
     return c.json({ success: true, deleted })
   } catch (error) {
     console.error('Error deleting album:', error)
@@ -961,6 +993,7 @@ async function downloadAndSaveImage(
   if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir, { recursive: true })
   const imagePath = path.join(imageDir, imageName)
   fs.writeFileSync(imagePath, buffer)
+  await createSmallVersion(imagePath)
   return imageName
 }
 

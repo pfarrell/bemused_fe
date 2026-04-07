@@ -29,11 +29,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
 
   const handleTrackClick = () => {
     if (playerInstance) {
-      console.log('Playing track now (replacing playlist):', track.title);
-      // Clear playlist and play this track immediately
-      playerInstance.clearPlaylist();
-      playerInstance.addTrack(track);
-      playerInstance.loadAndPlayTrack(0);
+      const existingIndex = playerInstance.playlist.findIndex(t => t.id === track.id);
+      if (existingIndex !== -1) {
+        // Track is already in the playlist — jump to it instead of replacing
+        playerInstance.loadAndPlayTrack(existingIndex);
+      } else {
+        playerInstance.clearPlaylist();
+        playerInstance.addTrack(track);
+        playerInstance.loadAndPlayTrack(0);
+      }
     }
   };
 
@@ -43,12 +47,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       e.stopPropagation();
     }
     if (playerInstance) {
-      console.log('Playing track now:', track.title);
-      playerInstance.clearPlaylist();
-      playerInstance.addTrack(track);
-      playerInstance.loadAndPlayTrack(0);
+      const existingIndex = playerInstance.playlist.findIndex(t => t.id === track.id);
+      if (existingIndex !== -1) {
+        playerInstance.loadAndPlayTrack(existingIndex);
+      } else {
+        playerInstance.clearPlaylist();
+        playerInstance.addTrack(track);
+        playerInstance.loadAndPlayTrack(0);
+      }
     }
-    // Use timeout to ensure state updates properly
     setTimeout(() => setShowDropdown(false), 0);
   };
 

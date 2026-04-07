@@ -10,6 +10,7 @@
 import { db } from '../db/database.js'
 import fs from 'fs'
 import path from 'path'
+import { createSmallVersion } from './imageResize.js'
 
 const FANART_BASE = 'https://webservice.fanart.tv/v3/music'
 const USER_AGENT = 'Bemused/1.0 (https://patf.net)'
@@ -78,7 +79,8 @@ export interface FanartResult {
 export async function fetchArtistImageFromFanart(
   artistId: number,
   mbid: string,
-  imagesDir: string
+  imagesDir: string,
+  limit = 10
 ): Promise<FanartResult> {
   const apiKey = process.env.FANART_API_KEY
   if (!apiKey) {
@@ -103,13 +105,13 @@ export async function fetchArtistImageFromFanart(
     return { downloaded: 0, existing: 0 }
   }
 
-  const thumbs = (data.artistthumb ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes))
+  const thumbs = (data.artistthumb ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes)).slice(0, limit)
   const logos = [
     ...(data.hdmusiclogo ?? []).map(l => ({ ...l, type: 'hd' })),
     ...(data.musiclogo ?? []).map(l => ({ ...l, type: 'sd' })),
-  ].sort((a, b) => parseInt(b.likes) - parseInt(a.likes))
-  const backgrounds = (data.artistbackground ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes))
-  const banners = (data.artistbanner ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes))
+  ].sort((a, b) => parseInt(b.likes) - parseInt(a.likes)).slice(0, limit)
+  const backgrounds = (data.artistbackground ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes)).slice(0, limit)
+  const banners = (data.artistbanner ?? []).sort((a, b) => parseInt(b.likes) - parseInt(a.likes)).slice(0, limit)
 
   if (thumbs.length === 0 && logos.length === 0 && backgrounds.length === 0 && banners.length === 0) {
     await markNotFound(artistId)
@@ -138,6 +140,7 @@ export async function fetchArtistImageFromFanart(
     if (alreadyExists) { existing++; continue }
     try {
       await downloadImage(thumb.url, artistDir, filename)
+      await createSmallVersion(path.join(artistDir, filename))
       const isPrimary = !primarySet
       await saveImageRecord(artistId, filename, 'fanart', isPrimary)
       if (isPrimary) {

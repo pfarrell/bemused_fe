@@ -200,11 +200,18 @@ export interface Database {
 
 // ---- DB instance ----
 
-const dialect = new PostgresDialect({
-  pool: new pg.Pool({
-    connectionString: process.env.BEMUSED_DB,
-    max: 10,
-  }),
+const pool = new pg.Pool({
+  connectionString: process.env.BEMUSED_DB,
+  max: 10,
 })
+
+// Prevent unhandled 'error' events from crashing the process when Postgres
+// terminates an idle pooled connection (e.g. server restart, pg_terminate_backend).
+// The pool will establish a new connection on the next query.
+pool.on('error', (err) => {
+  console.warn('⚠️  Idle database connection terminated:', err.message)
+})
+
+const dialect = new PostgresDialect({ pool })
 
 export const db = new Kysely<Database>({ dialect })

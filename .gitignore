@@ -33,3 +33,7 @@ server/dist
 # Claude
 .superpowers
 docs/superpowers
+
+# Local DB snapshots
+server/snapshots/
+public/images

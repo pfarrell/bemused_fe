@@ -3,6 +3,7 @@
 import { db } from '../db/database.js'
 import fs from 'fs'
 import path from 'path'
+import { createSmallVersion } from './imageResize.js'
 
 const CAA_BASE = 'https://coverartarchive.org'
 const USER_AGENT = 'Bemused/1.0 (https://patf.net)'
@@ -77,6 +78,7 @@ export async function fetchAlbumArtFromCAA(
     const dir = path.join(imagesDir, 'albums')
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, filename), buffer)
+    await createSmallVersion(path.join(dir, filename))
 
     // Set as primary if the album has no existing primary image
     const existingPrimary = await db

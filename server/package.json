@@ -11,7 +11,12 @@
     "mbid-lookup": "tsx scripts/mbid-lookup.ts",
     "image-lookup": "tsx scripts/image-lookup.ts",
     "similar-artists": "tsx scripts/similar-artists.ts",
-    "diagnose-similar": "tsx scripts/diagnose-similar.ts"
+    "diagnose-similar": "tsx scripts/diagnose-similar.ts",
+    "worker": "tsx watch src/workers/queue-handler.ts",
+    "db:snapshot": "mkdir -p snapshots && pg_dump bemused_dev > snapshots/$(date +%Y%m%d_%H%M%S).sql && echo 'Snapshot saved to snapshots/'",
+    "db:restore": "bash scripts/db-restore.sh",
+    "db:schema:dump": "pg_dump --schema-only --no-owner --no-privileges $BEMUSED_DB > schema.sql && echo 'Schema dumped to schema.sql'",
+    "db:reset": "bash scripts/db-reset.sh"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
@@ -25,6 +30,7 @@
     "node-fetch": "^3.3.2",
     "node-id3": "^0.2.9",
     "pg": "^8.13.0",
+    "sharp": "^0.34.5",
     "tsx": "^4.19.0"
   },
   "devDependencies": {
