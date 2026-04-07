@@ -17,6 +17,7 @@ ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "mkdir -p ${SHARED_PUBLIC_DI
 echo "Deploying to shared public folder..."
 rsync -avz --delete \
   -e "ssh -p ${REMOTE_PORT}" \
+  --exclude 'images/' \
   ${BUILD_DIR}/ \
   ${REMOTE_USER}@${REMOTE_HOST}:${SHARED_PUBLIC_DIR}/
 
