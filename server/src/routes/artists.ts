@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/database.js'
 import { getArtistSummary } from '../services/wikipedia.js'
+import { streamBase } from '../db/streamUrl.js'
 import { sql } from 'kysely'
 
 // Minimum similarity score to include in similar_artists response (0–1 scale).
@@ -100,6 +101,7 @@ artists.get('/:id', async (c) => {
       track_number: t.track_number,
       artist: { id: t.artist_id, name: t.artist_name },
       album: { id: t.album_id, title: t.album_title, artist: { id: artist.id, name: artist.name } },
+      url: `${streamBase()}/stream/${t.id}`,
     }))
   }
 
