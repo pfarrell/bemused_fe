@@ -13,7 +13,7 @@
       "remoteHost": "patf.com",
       "remotePort": 10022,
       "remoteUser": "pfarrell",
-      "remotePath": "/var/www/bemused-node/current",
+      "remotePath": "/var/www/bemused-node/current/dist",
       "sourcePaths": ["server"]
     }
   ]
