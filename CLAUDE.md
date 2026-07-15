@@ -30,7 +30,7 @@ npm run db:reset     # Reset database
 
 **Deploy commands by change type**: `npm run deploy` (frontend changes only), `cd server && npm run deploy` (backend changes only), `npm run full-deploy` (both layers changed).
 
-**Deploying is a manual, per-layer step — committing to `main` does not make code live.** Frontend and backend are deployed independently and can drift out of sync with each other and with `main` by hours or days; a commit that's been on `main` for a while may simply never have been deployed. Before concluding a feature is "broken" in production, check whether the relevant layer was actually redeployed after the commit that introduced it (compare the deployed release timestamp — `ssh` in and check `/var/www/bemused-node/releases/` or the frontend asset file mtimes — against `git log` for the touched files) rather than assuming the code itself is at fault.
+**Deploying is a manual, per-layer step — committing to `main` does not make code live.** Frontend and backend are deployed independently and can drift out of sync with each other and with `main` by hours or days; a commit that's been on `main` for a while may simply never have been deployed. Before concluding a feature is "broken" in production, run `npm run deploy:status` (works from either `/home/pfarrell/proj/bemused` or `/home/pfarrell/proj/bemused/server` — it reports both layers) and read its per-layer output rather than assuming the code itself is at fault. See the `check-deploy` skill for details on what the output means.
 
 ## Specs and Plans
 
