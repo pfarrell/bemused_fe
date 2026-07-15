@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/authStore';
 import Track from '../components/Track';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
+import ShareButton from '../components/ShareButton';
 
 export default function Playlist() {
   const { id } = useParams();
@@ -163,6 +164,7 @@ export default function Playlist() {
             >
               + Add to Queue
             </button>
+            <ShareButton title={playlist.name} text={`${playlist.name} playlist`} />
           </div>
         </div>
       </div>
