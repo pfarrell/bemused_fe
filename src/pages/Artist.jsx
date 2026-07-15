@@ -11,6 +11,7 @@ import Wikipedia from '../components/Wikipedia';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import TagsSection from '../components/TagsSection';
+import ShareButton from '../components/ShareButton';
 
 const Artist = () => {
   const { id } = useParams();
@@ -167,6 +168,7 @@ const Artist = () => {
                 Edit
               </button>
             )}
+            <ShareButton title={artist.name} text={artist.name} />
           </div>
 
           {/* Wikipedia summary */}
