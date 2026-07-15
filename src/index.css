@@ -395,6 +395,10 @@
   opacity: 1;
 }
 
+.play-actions-mobile {
+  display: none;
+}
+
 .track-item:hover .track-ellipsis {
   opacity: 1;
 }
@@ -1302,6 +1306,31 @@
   .media-page-header div[style*="display: flex"][style*="gap: 0.5rem"] {
     justify-content: center !important;
     flex-wrap: wrap !important;
+  }
+
+  /* Play Now / Play Next / Add to Queue consolidation (issue #58) */
+  .play-actions-desktop {
+    display: none !important;
+  }
+
+  .play-actions-mobile {
+    display: flex !important;
+  }
+
+  .play-menu-toggle {
+    background: none;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    color: #374151;
+    font-size: 1rem;
+    line-height: 1;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Artist page overrides */
