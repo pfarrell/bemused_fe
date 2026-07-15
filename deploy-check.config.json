@@ -1,0 +1,20 @@
+{
+  "layers": [
+    {
+      "name": "frontend",
+      "remoteHost": "patf.com",
+      "remotePort": 10022,
+      "remoteUser": "pfarrell",
+      "remotePath": "/var/www/bemused/shared/public/frontend",
+      "sourcePaths": ["src", "index.html", "vite.config.js", "package.json"]
+    },
+    {
+      "name": "backend",
+      "remoteHost": "patf.com",
+      "remotePort": 10022,
+      "remoteUser": "pfarrell",
+      "remotePath": "/var/www/bemused-node/current",
+      "sourcePaths": ["server"]
+    }
+  ]
+}

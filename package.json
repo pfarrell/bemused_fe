@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node ~/.claude/skills/check-deploy/stamp-version.cjs dist/version.json",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "deploy": "NODE_ENV=production npm run build && ./scripts/deploy.sh",
-    "full-deploy": "./scripts/full-deploy.sh"
+    "full-deploy": "./scripts/full-deploy.sh",
+    "deploy:status": "node ~/.claude/skills/check-deploy/check-deploy.cjs"
   },
   "dependencies": {
     "axios": "^1.10.0",
