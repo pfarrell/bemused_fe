@@ -33,7 +33,7 @@ function escapeHtml(value: string): string {
 function resolveImageUrl(entity: ShareEntity, fallback: string): string {
   if (!entity.imagePath) return fallback
   const folder = entity.type === 'artist' ? 'artists' : 'albums'
-  return `${IMAGE_BASE}/${folder}/${entity.imagePath}`
+  return `${IMAGE_BASE}/${folder}/${encodeURIComponent(entity.imagePath)}`
 }
 
 export function buildShareTags(entity: ShareEntity, host: string, proto: string): ShareTags {
@@ -42,8 +42,8 @@ export function buildShareTags(entity: ShareEntity, host: string, proto: string)
   return {
     title: escapeHtml(entity.title),
     description: escapeHtml(entity.description),
-    imageUrl: resolveImageUrl(entity, fallbackImage),
-    url: `${proto}://${host}/bemused/app/${entity.type}/${entity.id}`,
+    imageUrl: escapeHtml(resolveImageUrl(entity, fallbackImage)),
+    url: escapeHtml(`${proto}://${host}/bemused/app/${entity.type}/${entity.id}`),
     siteName: 'P·Share',
   }
 }
@@ -62,6 +62,6 @@ export function injectMetaTags(html: string, tags: ShareTags): string {
   </head>`
 
   return html
-    .replace(/<title>.*?<\/title>/, `<title>${tags.title} · P·Share</title>`)
-    .replace('</head>', metaBlock)
+    .replace(/<title>.*?<\/title>/, () => `<title>${tags.title} · P·Share</title>`)
+    .replace('</head>', () => metaBlock)
 }
