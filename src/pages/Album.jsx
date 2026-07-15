@@ -10,6 +10,7 @@ import Track from '../components/Track';
 import TagsSection from '../components/TagsSection';
 import CompilationArtistLinks from '../components/CompilationArtistLinks';
 import ShareButton from '../components/ShareButton';
+import PlayActionsMenu from '../components/PlayActionsMenu';
 
 const Album = () => {
   const { id } = useParams();
@@ -173,14 +174,14 @@ const Album = () => {
         )}
         
         {/* Album Info */}
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#7c3aed', cursor: 'pointer' }}
+        <div className="album-info" style={{ flex: 1 }}>
+          <h1 className="album-header-title" style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#7c3aed', cursor: 'pointer' }}
             onClick = {reload}
           >
             {album.title}
           </h1>
-          
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
+
+          <h2 className="album-header-artist" style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
             <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${artist.id}`)}>
               {artist.name}
             </span>
@@ -194,32 +195,24 @@ const Album = () => {
             ))}
           </h2>
           {featuringArtists.length > 0 && (
-            <p style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
+            <p className="album-header-featuring" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
               Also featuring:{' '}
               <CompilationArtistLinks artists={featuringArtists} />
             </p>
           )}
           {summary && Object.keys(summary).length > 0 && (
-            <Wikipedia summary={summary} />
+            <div className="album-header-wikipedia">
+              <Wikipedia summary={summary} />
+            </div>
           )}
-          
+
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            <button
-              onClick={handlePlayNow}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500'
-              }}
-            >
-              ▶ Play Now
-            </button>
+          <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <PlayActionsMenu
+              onPlayNow={handlePlayNow}
+              onPlayNext={handlePlayNext}
+              onAddToQueue={handleAddToQueue}
+            />
             {isAdmin && (
               <button
                 onClick={() => navigate(`/admin/album/${id}`)}
@@ -236,38 +229,12 @@ const Album = () => {
                 Edit
               </button>
             )}
-            <button
-              onClick={handlePlayNext}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'white',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.875rem'
-              }}
-            >
-              Play Next
-            </button>
-            <button
-              onClick={handleAddToQueue}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'white',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.875rem'
-              }}
-            >
-              Add to Queue
-            </button>
             <ShareButton title={album.title} text={`${album.title} by ${artist.name}`} />
           </div>
-          
+
           {/* Album Description */}
           {album.description && (
-            <div>
+            <div className="album-header-description">
               <p style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}>
                 {album.description}
               </p>

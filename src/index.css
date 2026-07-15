@@ -396,7 +396,7 @@
 }
 
 .play-actions-mobile {
-  display: none;
+  display: none !important;
 }
 
 .track-item:hover .track-ellipsis {
@@ -1307,6 +1307,19 @@
     justify-content: center !important;
     flex-wrap: wrap !important;
   }
+
+  /* Album mobile reorder: actions block above Wikipedia (issue #58) */
+  .album-info {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .album-header-title { order: 1; }
+  .album-header-artist { order: 2; }
+  .album-header-featuring { order: 3; }
+  .album-header-actions { order: 4; }
+  .album-header-wikipedia { order: 5; }
+  .album-header-description { order: 6; }
 
   /* Play Now / Play Next / Add to Queue consolidation (issue #58) */
   .play-actions-desktop {
