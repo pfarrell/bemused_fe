@@ -9,6 +9,7 @@ import Wikipedia from '../components/Wikipedia';
 import Track from '../components/Track';
 import TagsSection from '../components/TagsSection';
 import CompilationArtistLinks from '../components/CompilationArtistLinks';
+import ShareButton from '../components/ShareButton';
 
 const Album = () => {
   const { id } = useParams();
@@ -261,6 +262,7 @@ const Album = () => {
             >
               Add to Queue
             </button>
+            <ShareButton title={album.title} text={`${album.title} by ${artist.name}`} />
           </div>
           
           {/* Album Description */}
