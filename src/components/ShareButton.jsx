@@ -32,8 +32,8 @@ const ShareButton = ({ title, text }) => {
   };
 
   return (
-    <button onClick={handleShare} style={buttonStyle}>
-      ⤴ Share
+    <button onClick={handleShare} style={buttonStyle} aria-label="Share">
+      📤
     </button>
   );
 };

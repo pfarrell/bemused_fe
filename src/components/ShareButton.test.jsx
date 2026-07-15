@@ -90,4 +90,11 @@ describe('ShareButton', () => {
     expect(writeTextMock).toHaveBeenCalledWith('https://patf.com/bemused/app/album/42');
     expect(toast.success).toHaveBeenCalledWith('Link copied');
   });
+
+  test('renders as an icon-only button with an accessible label', () => {
+    render(<ShareButton title="Abbey Road" text="Abbey Road by The Beatles" />);
+    const button = screen.getByRole('button', { name: 'Share' });
+    expect(button).toHaveTextContent('📤');
+    expect(button).not.toHaveTextContent('Share');
+  });
 });
