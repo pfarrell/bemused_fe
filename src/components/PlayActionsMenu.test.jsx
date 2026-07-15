@@ -84,4 +84,62 @@ describe('PlayActionsMenu', () => {
     expect(onPlayNext).not.toHaveBeenCalled();
     expect(onAddToQueue).not.toHaveBeenCalled();
   });
+
+  test('clamps dropdown menu to viewport bounds when toggle button is near right edge', async () => {
+    const user = userEvent.setup();
+    render(
+      <PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={vi.fn()} onAddToQueue={vi.fn()} />
+    );
+
+    // Save original values for restoration
+    const originalInnerWidth = window.innerWidth;
+
+    // Mock a narrow viewport (375px typical phone width)
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 375,
+    });
+
+    // Find the toggle button (▾) and mock its getBoundingClientRect
+    const toggleButton = screen.getByRole('button', { name: 'More play options' });
+    const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = vi.fn(function() {
+      // If this is the toggle button, return a rect positioned near the right edge
+      if (this === toggleButton) {
+        return {
+          top: 100,
+          left: 300, // Near right edge of 375px viewport
+          bottom: 150,
+          right: 350,
+          width: 50,
+          height: 50,
+          x: 300,
+          y: 100,
+        };
+      }
+      // For other elements, use the original implementation
+      return originalGetBoundingClientRect.call(this);
+    });
+
+    // Open the menu
+    await user.click(toggleButton);
+
+    // Get the dropdown menu container
+    const dropdownMenu = screen.getByRole('button', { name: '⏭ Play Next' }).closest('.track-dropdown');
+    const computedStyle = window.getComputedStyle(dropdownMenu);
+    const left = parseInt(computedStyle.left, 10);
+
+    // Menu should be clamped: left + 200 (menuWidth) <= 375 - 10 (margin)
+    // So left should be <= 165
+    expect(left).toBeLessThanOrEqual(165);
+
+    // Restore original values
+    Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: originalInnerWidth,
+    });
+  });
 });

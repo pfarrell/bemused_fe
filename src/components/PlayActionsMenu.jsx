@@ -38,7 +38,31 @@ const PlayActionsMenu = ({ onPlayNow, onPlayNext, onAddToQueue }) => {
   const menuPosition = () => {
     if (!toggleRef.current) return { top: 0, left: 0 };
     const rect = toggleRef.current.getBoundingClientRect();
-    return { top: rect.bottom + 4, left: rect.left };
+
+    // Estimate menu dimensions for clamping
+    const menuWidth = 200;  // matches mobile min-width: 200px !important from CSS
+    const menuHeight = 110; // ~2 buttons @ 48px each + padding
+
+    let left = rect.left;
+    let top = rect.bottom + 4;
+
+    // Keep menu on screen horizontally
+    if (left + menuWidth > window.innerWidth) {
+      left = window.innerWidth - menuWidth - 10;
+    }
+    if (left < 10) {
+      left = 10;
+    }
+
+    // Keep menu on screen vertically
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
+    }
+    if (top < 10) {
+      top = 10;
+    }
+
+    return { top, left };
   };
 
   return (
