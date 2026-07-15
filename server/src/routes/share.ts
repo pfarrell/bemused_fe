@@ -12,9 +12,12 @@ const share = new Hono()
 
 const FRONTEND_DIST_PATH = process.env.FRONTEND_DIST_PATH ?? '/var/www/bemused/shared/public/frontend'
 
-// Minimal shell so the SPA can still boot if index.html itself can't be read
+// Minimal static message for the rare case index.html itself can't be read
 // (bad path, permissions, mid-deploy race) — see design's error handling section.
-const FALLBACK_HTML = '<html><head><title>P·Share</title></head><body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body></html>'
+// This deliberately does NOT reference any JS bundle path: the production entry
+// script is content-hashed (e.g. /bemused/app/assets/index-BQU47q2r.js) and changes
+// every build, so if we could read that hash we could have just read index.html itself.
+const FALLBACK_HTML = '<!doctype html><html><head><title>P·Share</title></head><body><p>P·Share is temporarily unavailable. Please try again shortly.</p></body></html>'
 
 function resolveHostProto(c: Context): { host: string; proto: string } {
   if (isLanHost(c)) return { host: '172.16.1.10', proto: 'http' }
