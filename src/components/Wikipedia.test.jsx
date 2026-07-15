@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import Wikipedia from './Wikipedia';
 
 const summary = {
@@ -36,4 +37,22 @@ test('renders nothing when summary is empty', () => {
 test('renders nothing when summary.summary is blank', () => {
   const { container } = render(<Wikipedia summary={{ summary: '  ', url: summary.url }} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+test('applies the wikipedia-content class to the summary paragraph', () => {
+  const { container } = render(<Wikipedia summary={summary} />);
+  expect(container.querySelector('p.wikipedia-content')).toBeInTheDocument();
+});
+
+test('shows a "Show more" toggle that expands to "Show less"', async () => {
+  const user = userEvent.setup();
+  render(<Wikipedia summary={summary} />);
+
+  const toggle = screen.getByRole('button', { name: 'Show more' });
+  expect(toggle).toBeInTheDocument();
+
+  await user.click(toggle);
+
+  expect(screen.getByRole('button', { name: 'Show less' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
 });

@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { isMobileDevice } from '../utils/device';
 
 const toMobileUrl = (url) => url.replace('en.wikipedia.org', 'en.m.wikipedia.org');
 
 const Wikipedia = ({ summary }) => {
+  const [expanded, setExpanded] = useState(false);
 
   if(Object.keys(summary).length === 0){
     console.log("empty wikipedia data");
@@ -18,7 +20,10 @@ const Wikipedia = ({ summary }) => {
 
   return (
     <div>
-      <p style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}>
+      <p
+        className={`wikipedia-content${expanded ? '' : ' wikipedia-content-truncated'}`}
+        style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}
+      >
         {summary.summary}
         <a
           target="_blank"
@@ -26,6 +31,12 @@ const Wikipedia = ({ summary }) => {
           href={href}
         >...more at wikipedia </a>
       </p>
+      <button
+        className="wikipedia-toggle"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded ? 'Show less' : 'Show more'}
+      </button>
     </div>
   );
 };

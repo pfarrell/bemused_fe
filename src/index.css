@@ -399,6 +399,10 @@
   display: none !important;
 }
 
+.wikipedia-toggle {
+  display: none;
+}
+
 .track-item:hover .track-ellipsis {
   opacity: 1;
 }
@@ -1302,7 +1306,25 @@
     max-width: 100% !important;
     margin-top: 1rem !important;
   }
-  
+
+  .wikipedia-content-truncated {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .wikipedia-toggle {
+    display: inline-block !important;
+    background: none;
+    border: none;
+    color: #2563eb;
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 0.25rem;
+  }
+
   .media-page-header div[style*="display: flex"][style*="gap: 0.5rem"] {
     justify-content: center !important;
     flex-wrap: wrap !important;
