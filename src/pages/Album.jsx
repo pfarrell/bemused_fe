@@ -196,8 +196,11 @@ const Album = () => {
           </h2>
           {featuringArtists.length > 0 && (
             <p className="album-header-featuring" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
-              Also featuring:{' '}
-              <CompilationArtistLinks artists={featuringArtists} />
+              {album.is_compilation ? 'Featuring:' : 'Also featuring:'}{' '}
+              <CompilationArtistLinks
+                artists={featuringArtists}
+                mobileVisibleCount={album.is_compilation ? 5 : undefined}
+              />
             </p>
           )}
           {summary && Object.keys(summary).length > 0 && (

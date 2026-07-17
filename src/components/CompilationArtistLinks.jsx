@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isMobileDevice } from '../utils/device';
 
-const VISIBLE_COUNT = 15;
+const DEFAULT_VISIBLE_COUNT = 15;
 
-const CompilationArtistLinks = ({ artists = [] }) => {
+const CompilationArtistLinks = ({ artists = [], visibleCount = DEFAULT_VISIBLE_COUNT, mobileVisibleCount = DEFAULT_VISIBLE_COUNT }) => {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
 
-  const visible = expanded ? artists : artists.slice(0, VISIBLE_COUNT);
-  const hiddenCount = artists.length - VISIBLE_COUNT;
+  const limit = isMobileDevice() ? mobileVisibleCount : visibleCount;
+  const visible = expanded ? artists : artists.slice(0, limit);
+  const hiddenCount = artists.length - limit;
 
   return (
     <>

@@ -49,4 +49,46 @@ describe('CompilationArtistLinks', () => {
     await user.click(screen.getByText('Artist 2'));
     expect(screen.getByTestId('location')).toHaveTextContent('/artist/2');
   });
+
+  describe('on a mobile viewport', () => {
+    const originalInnerWidth = window.innerWidth;
+
+    beforeEach(() => {
+      window.innerWidth = 500;
+    });
+
+    afterEach(() => {
+      window.innerWidth = originalInnerWidth;
+    });
+
+    test('uses the default visible count when no mobileVisibleCount is given', () => {
+      renderLinks(manyArtists);
+      expect(screen.getByText('Artist 15')).toBeInTheDocument();
+      expect(screen.queryByText('Artist 16')).not.toBeInTheDocument();
+      expect(screen.getByText('+ 5 more')).toBeInTheDocument();
+    });
+
+    test('shows only mobileVisibleCount artists plus a "+ N more" toggle when given', () => {
+      render(
+        <MemoryRouter>
+          <CompilationArtistLinks artists={manyArtists} mobileVisibleCount={5} />
+        </MemoryRouter>
+      );
+      expect(screen.getByText('Artist 5')).toBeInTheDocument();
+      expect(screen.queryByText('Artist 6')).not.toBeInTheDocument();
+      expect(screen.getByText('+ 15 more')).toBeInTheDocument();
+    });
+
+    test('clicking "+ N more" on mobile expands to show every remaining artist', async () => {
+      const user = userEvent.setup();
+      render(
+        <MemoryRouter>
+          <CompilationArtistLinks artists={manyArtists} mobileVisibleCount={5} />
+        </MemoryRouter>
+      );
+      await user.click(screen.getByText('+ 15 more'));
+      expect(screen.getByText('Artist 20')).toBeInTheDocument();
+      expect(screen.queryByText(/more/)).not.toBeInTheDocument();
+    });
+  });
 });

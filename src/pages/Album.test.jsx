@@ -78,7 +78,7 @@ describe('Album page — compilation secondary-artist suppression', () => {
     expect(screen.queryByText(/Also featuring/)).not.toBeInTheDocument();
   });
 
-  test('shows "Also featuring" with track-level artists when album is a compilation', async () => {
+  test('shows "Featuring" (not "Also featuring") with track-level artists when album is a compilation', async () => {
     apiService.getAlbum.mockResolvedValue({
       data: {
         ...baseData,
@@ -88,7 +88,8 @@ describe('Album page — compilation secondary-artist suppression', () => {
     });
     renderAlbum();
     await screen.findByText('Test Album');
-    expect(screen.getByText(/Also featuring/)).toBeInTheDocument();
+    expect(screen.getByText('Featuring:')).toBeInTheDocument();
+    expect(screen.queryByText(/Also featuring/)).not.toBeInTheDocument();
     expect(screen.getByText('Steppenwolf')).toBeInTheDocument();
     expect(screen.getByText('The Byrds')).toBeInTheDocument();
   });
