@@ -13,7 +13,7 @@ import ShareButton from '../components/ShareButton';
 export default function Playlist() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addTracks, clearPlaylist, currentTrack } = usePlayerStore();
+  const { addTracks, clearPlaylist, currentTrack, setPageTracks } = usePlayerStore();
   const { user, isAdmin } = useAuthStore();
   const [playlistData, setPlaylistData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +23,13 @@ export default function Playlist() {
   useEffect(() => {
     loadPlaylist();
   }, [id]);
+
+  useEffect(() => {
+    // Lets the footer play button fall back to "Play Now" behavior when the playlist is
+    // empty, instead of trying to resume a track that was never loaded.
+    setPageTracks(playlistData?.tracks || []);
+    return () => setPageTracks([]);
+  }, [playlistData, setPageTracks]);
 
   const loadPlaylist = async () => {
     try {
