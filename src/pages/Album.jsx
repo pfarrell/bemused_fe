@@ -15,7 +15,7 @@ import PlayActionsMenu from '../components/PlayActionsMenu';
 const Album = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addTracks, clearPlaylist, currentTrack } = usePlayerStore();
+  const { addTracks, clearPlaylist, currentTrack, setPageTracks } = usePlayerStore();
   const { isAdmin, isAuthenticated } = useAuthStore();
   const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +42,13 @@ const Album = () => {
       fetchAlbumData();
     }
   }, [id, refreshKey]);
+
+  useEffect(() => {
+    // Lets the footer play button fall back to "Play Now" behavior when the playlist is
+    // empty, instead of trying to resume a track that was never loaded.
+    setPageTracks(albumData?.tracks || []);
+    return () => setPageTracks([]);
+  }, [albumData, setPageTracks]);
 
   const reload = () => {
     setRefreshKey(refreshKey + 1)

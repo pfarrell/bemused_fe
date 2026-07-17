@@ -37,6 +37,7 @@ beforeEach(() => {
     activityPulseToken: 0,
     recentlyAddedIndices: [],
     standbyUnlocked: false,
+    pageTracks: [],
   });
 });
 
@@ -464,5 +465,38 @@ describe('standby unlock', () => {
     });
     usePlayerStore.getState().playTrackAtIndex(1);
     expect(standby.play).not.toHaveBeenCalled();
+  });
+});
+
+describe('togglePlayPause with an empty playlist', () => {
+  test('enqueues and plays pageTracks, same as Play Now, when the playlist is empty', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, { playlist: [], currentTrackIndex: -1, pageTracks: [track(1), track(2)] });
+    usePlayerStore.getState().togglePlayPause();
+    const state = usePlayerStore.getState();
+    expect(state.playlist.map((t) => t.id)).toEqual([1, 2]);
+    expect(state.currentTrackIndex).toBe(0);
+    expect(audioElement.src).toBe('/stream/1');
+    expect(audioElement.play).toHaveBeenCalled();
+  });
+
+  test('does nothing when the playlist is empty and there are no pageTracks to fall back to', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, { playlist: [], currentTrackIndex: -1, pageTracks: [] });
+    usePlayerStore.getState().togglePlayPause();
+    const state = usePlayerStore.getState();
+    expect(state.playlist).toHaveLength(0);
+    expect(audioElement.play).not.toHaveBeenCalled();
+  });
+
+  test('resumes normally (ignoring pageTracks) when the playlist already has tracks', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, {
+      playlist: [track(1)], currentTrackIndex: 0, playlistFinished: false, pageTracks: [track(9)],
+    });
+    usePlayerStore.getState().togglePlayPause();
+    const state = usePlayerStore.getState();
+    expect(state.playlist).toHaveLength(1);
+    expect(audioElement.play).toHaveBeenCalled();
   });
 });

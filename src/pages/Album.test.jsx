@@ -50,6 +50,22 @@ describe('Album page', () => {
 
     expect(addTracks).toHaveBeenCalledWith(albumData.tracks, false, { flashActivity: true });
   });
+
+  test('registers the album tracks as pageTracks once loaded, so the footer play button can fall back to them', async () => {
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    expect(usePlayerStore.getState().pageTracks).toEqual(albumData.tracks);
+  });
+
+  test('clears pageTracks on unmount so a stale album cannot be played from elsewhere', async () => {
+    const { unmount } = renderAlbum();
+    await screen.findByText('Test Album');
+
+    unmount();
+
+    expect(usePlayerStore.getState().pageTracks).toEqual([]);
+  });
 });
 
 describe('Album page — compilation secondary-artist suppression', () => {

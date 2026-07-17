@@ -57,6 +57,12 @@ export const usePlayerStore = create((set, get) => ({
   // Whether the standby element has been unlocked for iOS. Set to true after the first playTrackAtIndex call.
   standbyUnlocked: false,
 
+  // Tracks belonging to whatever detail page (album, etc.) is currently mounted, kept in sync
+  // by that page's own effect. Lets togglePlayPause fall back to "Play Now" behavior when the
+  // playlist is empty, instead of trying to resume a track that was never loaded.
+  pageTracks: [],
+  setPageTracks: (tracks) => set({ pageTracks: tracks || [] }),
+
   // Shuffle state
   shuffle: false,
   shuffleHistory: [],
@@ -112,10 +118,16 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   togglePlayPause: () => {
-    const { playlistFinished } = get();
+    const { playlistFinished, playlist, pageTracks } = get();
     const audioElement = get().getActiveAudio();
     if (!audioElement) return;
     if (audioElement.paused) {
+      if (playlist.length === 0) {
+        if (pageTracks.length > 0) {
+          get().addTracks(pageTracks);
+        }
+        return;
+      }
       if (playlistFinished) {
         get().playTrackAtIndex(0);
       } else {
