@@ -9,69 +9,127 @@ import { countsService } from './countsService.js'
 // tracked in follow-up issue "Consolidate search.ts's standalone pg.Pool into the shared db instance"
 const pool = new pg.Pool({ connectionString: process.env.BEMUSED_DB })
 
+const EXACT_MATCH_SCORE = 2.0
+const FUZZY_SIMILARITY_THRESHOLD = 0.24
+const RESULT_LIMIT = 30
+
 export function createSearchService(db: Kysely<Database>) {
   return {
-    async runUnionSearch(likeParam: string, filteredQ: string) {
-      const searchSql = `
-        SELECT q.model_type, q.id, q.similarity_score FROM (
-          (SELECT DISTINCT ON (a.id) 'Album' AS model_type, a.id, 0.8 AS similarity_score
-            FROM albums a
-            INNER JOIN tracks t ON t.album_id = a.id AND t.approved = true
-            WHERE f_unaccent(lower(a.title)) ILIKE lower($1)
-            ORDER BY a.id)
-          UNION ALL
-          (SELECT model_type, id, similarity_score FROM (
-            SELECT 'Album' AS model_type, a.id,
-              similarity(f_unaccent(lower(a.title)), lower($2)) AS similarity_score,
-              ROW_NUMBER() OVER(PARTITION BY a.id ORDER BY similarity(f_unaccent(lower(a.title)), lower($2)) DESC) AS rn
-            FROM albums a
-            INNER JOIN tracks t ON t.album_id = a.id AND t.approved = true
-            WHERE similarity(f_unaccent(lower(a.title)), lower($2)) > 0.24
-          ) ranked WHERE rn = 1 ORDER BY similarity_score DESC)
-          UNION ALL
-          (SELECT DISTINCT ON (a.id) 'Artist' AS model_type, a.id, 0.8 AS similarity_score
-            FROM artists a
-            INNER JOIN albums al ON al.artist_id = a.id
-            INNER JOIN tracks t ON t.album_id = al.id AND t.approved = true
-            WHERE f_unaccent(lower(a.name)) ILIKE lower($1)
-            ORDER BY a.id)
-          UNION ALL
-          (SELECT DISTINCT ON (a.id) 'Artist' AS model_type, a.id, 0.8 AS similarity_score
-            FROM artists a
-            INNER JOIN tracks t ON t.artist_id = a.id AND t.approved = true
-            WHERE f_unaccent(lower(a.name)) ILIKE lower($1)
-            ORDER BY a.id)
-          UNION ALL
-          (SELECT model_type, id, similarity_score FROM (
-            SELECT 'Artist' AS model_type, a.id,
-              similarity(f_unaccent(lower(a.name)), lower($2)) AS similarity_score,
-              ROW_NUMBER() OVER(PARTITION BY a.id ORDER BY similarity(f_unaccent(lower(a.name)), lower($2)) DESC) AS rn
-            FROM artists a
-            INNER JOIN albums al ON al.artist_id = a.id
-            INNER JOIN tracks t ON t.album_id = al.id AND t.approved = true
-            WHERE similarity(f_unaccent(lower(a.name)), lower($2)) > 0.24
-          ) ranked WHERE rn = 1 ORDER BY similarity_score DESC LIMIT 50)
-          UNION ALL
-          (SELECT model_type, id, similarity_score FROM (
-            SELECT 'Artist' AS model_type, a.id,
-              similarity(f_unaccent(lower(a.name)), lower($2)) AS similarity_score,
-              ROW_NUMBER() OVER(PARTITION BY a.id ORDER BY similarity(f_unaccent(lower(a.name)), lower($2)) DESC) AS rn
-            FROM artists a
-            INNER JOIN tracks t ON t.artist_id = a.id AND t.approved = true
-            WHERE similarity(f_unaccent(lower(a.name)), lower($2)) > 0.24
-          ) ranked WHERE rn = 1 ORDER BY similarity_score DESC LIMIT 50)
-          UNION ALL
-          (SELECT 'Playlist' AS model_type, id, -1.0 FROM playlists WHERE f_unaccent(lower(name)) ILIKE lower($1))
-          UNION ALL
-          (SELECT 'Track' AS model_type, id, -1.0 FROM tracks WHERE f_unaccent(lower(title)) ILIKE lower($1) AND approved = true)
-        ) q ORDER BY q.similarity_score DESC
+    async runUnionSearch(likeParam: string, filteredQ: string, exactOnly: boolean) {
+      const exactClauses = `
+        (SELECT DISTINCT ON (a.id) 'Album' AS model_type, a.id, ${EXACT_MATCH_SCORE} AS similarity_score
+          FROM albums a
+          INNER JOIN tracks t ON t.album_id = a.id AND t.approved = true
+          WHERE f_unaccent(lower(a.title)) ILIKE f_unaccent(lower($1))
+          ORDER BY a.id)
+        UNION ALL
+        (SELECT DISTINCT ON (a.id) 'Artist' AS model_type, a.id, ${EXACT_MATCH_SCORE} AS similarity_score
+          FROM artists a
+          INNER JOIN albums al ON al.artist_id = a.id
+          INNER JOIN tracks t ON t.album_id = al.id AND t.approved = true
+          WHERE f_unaccent(lower(a.name)) ILIKE f_unaccent(lower($1))
+          ORDER BY a.id)
+        UNION ALL
+        (SELECT DISTINCT ON (a.id) 'Artist' AS model_type, a.id, ${EXACT_MATCH_SCORE} AS similarity_score
+          FROM artists a
+          INNER JOIN tracks t ON t.artist_id = a.id AND t.approved = true
+          WHERE f_unaccent(lower(a.name)) ILIKE f_unaccent(lower($1))
+          ORDER BY a.id)
+        UNION ALL
+        (SELECT DISTINCT ON (id) 'Playlist' AS model_type, id, ${EXACT_MATCH_SCORE} AS similarity_score
+          FROM playlists
+          WHERE f_unaccent(lower(name)) ILIKE f_unaccent(lower($1))
+          ORDER BY id)
+        UNION ALL
+        (SELECT DISTINCT ON (id) 'Collection' AS model_type, id, ${EXACT_MATCH_SCORE} AS similarity_score
+          FROM collections
+          WHERE f_unaccent(lower(name)) ILIKE f_unaccent(lower($1))
+          ORDER BY id)
       `
 
-      const { rows } = await pool.query<{ model_type: string; id: number; similarity_score: number }>(
-        searchSql,
-        [likeParam, filteredQ]
+      const fuzzyClauses = exactOnly
+        ? ''
+        : `
+        UNION ALL
+        (SELECT model_type, id, similarity_score FROM (
+          SELECT 'Album' AS model_type, a.id,
+            similarity(f_unaccent(lower(a.title)), f_unaccent(lower($2))) AS similarity_score,
+            ROW_NUMBER() OVER(PARTITION BY a.id ORDER BY similarity(f_unaccent(lower(a.title)), f_unaccent(lower($2))) DESC) AS rn
+          FROM albums a
+          INNER JOIN tracks t ON t.album_id = a.id AND t.approved = true
+          WHERE f_unaccent(lower(a.title)) % f_unaccent(lower($2))
+        ) ranked WHERE rn = 1)
+        UNION ALL
+        (SELECT model_type, id, similarity_score FROM (
+          SELECT 'Artist' AS model_type, a.id,
+            similarity(f_unaccent(lower(a.name)), f_unaccent(lower($2))) AS similarity_score,
+            ROW_NUMBER() OVER(PARTITION BY a.id ORDER BY similarity(f_unaccent(lower(a.name)), f_unaccent(lower($2))) DESC) AS rn
+          FROM artists a
+          INNER JOIN albums al ON al.artist_id = a.id
+          INNER JOIN tracks t ON t.album_id = al.id AND t.approved = true
+          WHERE f_unaccent(lower(a.name)) % f_unaccent(lower($2))
+        ) ranked WHERE rn = 1)
+        UNION ALL
+        (SELECT model_type, id, similarity_score FROM (
+          SELECT 'Artist' AS model_type, a.id,
+            similarity(f_unaccent(lower(a.name)), f_unaccent(lower($2))) AS similarity_score,
+            ROW_NUMBER() OVER(PARTITION BY a.id ORDER BY similarity(f_unaccent(lower(a.name)), f_unaccent(lower($2))) DESC) AS rn
+          FROM artists a
+          INNER JOIN tracks t ON t.artist_id = a.id AND t.approved = true
+          WHERE f_unaccent(lower(a.name)) % f_unaccent(lower($2))
+        ) ranked WHERE rn = 1)
+        UNION ALL
+        (SELECT model_type, id, similarity_score FROM (
+          SELECT 'Playlist' AS model_type, id,
+            similarity(f_unaccent(lower(name)), f_unaccent(lower($2))) AS similarity_score,
+            ROW_NUMBER() OVER(PARTITION BY id ORDER BY similarity(f_unaccent(lower(name)), f_unaccent(lower($2))) DESC) AS rn
+          FROM playlists
+          WHERE f_unaccent(lower(name)) % f_unaccent(lower($2))
+        ) ranked WHERE rn = 1)
+        UNION ALL
+        (SELECT model_type, id, similarity_score FROM (
+          SELECT 'Collection' AS model_type, id,
+            similarity(f_unaccent(lower(name)), f_unaccent(lower($2))) AS similarity_score,
+            ROW_NUMBER() OVER(PARTITION BY id ORDER BY similarity(f_unaccent(lower(name)), f_unaccent(lower($2))) DESC) AS rn
+          FROM collections
+          WHERE f_unaccent(lower(name)) % f_unaccent(lower($2))
+        ) ranked WHERE rn = 1)
+      `
+
+      const searchSql = `
+        SELECT q.model_type, q.id, q.similarity_score FROM (
+          ${exactClauses}
+          ${fuzzyClauses}
+        ) q ORDER BY q.similarity_score DESC LIMIT ${RESULT_LIMIT}
+      `
+
+      // A dedicated client (not pool.query) is required here: the fuzzy branch needs
+      // `pg_trgm.similarity_threshold` set on the SAME connection as the parameterized
+      // SELECT that follows, so the GIN index (built for that threshold's `%` operator)
+      // is actually used. `SET` isn't parameterizable, but the threshold is a fixed
+      // internal constant, never user input, so inlining it is safe.
+      const client = await pool.connect()
+      try {
+        if (!exactOnly) {
+          await client.query(`SET pg_trgm.similarity_threshold = ${FUZZY_SIMILARITY_THRESHOLD}`)
+        }
+        const params = exactOnly ? [likeParam] : [likeParam, filteredQ]
+        const { rows } = await client.query<{ model_type: string; id: number; similarity_score: number }>(
+          searchSql,
+          params
+        )
+        return rows
+      } finally {
+        client.release()
+      }
+    },
+
+    async findTrackIds(likeParam: string): Promise<number[]> {
+      const { rows } = await pool.query<{ id: number }>(
+        `SELECT id FROM tracks WHERE f_unaccent(lower(title)) ILIKE f_unaccent(lower($1)) AND approved = true`,
+        [likeParam]
       )
-      return rows
+      return rows.map((r) => r.id)
     },
 
     async fetchPlaylistsWithCounts(ids: number[]) {
@@ -83,10 +141,22 @@ export function createSearchService(db: Kysely<Database>) {
       return ids.map((id) => byId.get(id)).filter(Boolean)
     },
 
+    async fetchCollectionsByIds(ids: number[]) {
+      if (!ids?.length) return []
+
+      const rows = await db
+        .selectFrom('collections')
+        .select(['id', 'name', 'image_path', 'updated_at'])
+        .where('id', 'in', ids)
+        .execute()
+      const albumCounts = await countsService.albumCountsByCollectionIds(ids)
+      const byId = new Map(rows.map((r: any) => [r.id, { ...r, album_count: albumCounts.get(r.id) ?? 0 }]))
+      return ids.map((id) => byId.get(id)).filter(Boolean)
+    },
+
     async fetchArtistsWithCounts(ids: number[]) {
       if (!ids?.length) return []
 
-      // Get artists with album and track counts
       const rows = await db
         .selectFrom('artists')
         .leftJoin('albums', 'albums.artist_id', 'artists.id')
