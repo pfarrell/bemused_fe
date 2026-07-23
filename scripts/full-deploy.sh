@@ -7,7 +7,7 @@ echo ""
 # Deploy Backend
 echo "📦 Deploying Backend..."
 cd server
-./node_modules/.bin/tsc
+npm run build
 ./scripts/deploy.sh
 cd ..
 
