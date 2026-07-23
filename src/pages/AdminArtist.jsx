@@ -405,7 +405,7 @@ const AdminArtist = () => {
         setAddRelationResults(response.data || []);
       } else {
         const response = await apiService.search(addRelationQuery);
-        setAddRelationResults(response.data.albums || []);
+        setAddRelationResults((response.data.results || []).filter(r => r.type === 'album').map(r => r.data));
       }
     } catch (error) {
       console.error('Search failed:', error);

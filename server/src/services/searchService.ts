@@ -110,15 +110,20 @@ export function createSearchService(db: Kysely<Database>) {
       // internal constant, never user input, so inlining it is safe.
       const client = await pool.connect()
       try {
+        await client.query('BEGIN')
         if (!exactOnly) {
-          await client.query(`SET pg_trgm.similarity_threshold = ${FUZZY_SIMILARITY_THRESHOLD}`)
+          await client.query(`SET LOCAL pg_trgm.similarity_threshold = ${FUZZY_SIMILARITY_THRESHOLD}`)
         }
         const params = exactOnly ? [likeParam] : [likeParam, filteredQ]
         const { rows } = await client.query<{ model_type: string; id: number; similarity_score: number }>(
           searchSql,
           params
         )
+        await client.query('COMMIT')
         return rows
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => {})
+        throw err
       } finally {
         client.release()
       }

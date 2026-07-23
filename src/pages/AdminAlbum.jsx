@@ -379,7 +379,8 @@ const AdminAlbum = () => {
       } else {
         const response = await apiService.search(transferQuery);
         const currentArtistId = albumData?.album?.artist_id;
-        const filtered = (response.data.albums || []).filter(a => String(a.id) !== String(id));
+        const albumResults = (response.data.results || []).filter(r => r.type === 'album').map(r => r.data);
+        const filtered = albumResults.filter(a => String(a.id) !== String(id));
         filtered.sort((a, b) => {
           const aIsSame = a.artist_id === currentArtistId || a.artist?.id === currentArtistId;
           const bIsSame = b.artist_id === currentArtistId || b.artist?.id === currentArtistId;
@@ -437,7 +438,7 @@ const AdminAlbum = () => {
     setAddArtistSearching(true);
     try {
       const response = await apiService.search(addArtistQuery);
-      setAddArtistResults(response.data.artists || []);
+      setAddArtistResults((response.data.results || []).filter(r => r.type === 'artist').map(r => r.data));
     } catch (error) {
       console.error('Search failed:', error);
     } finally {

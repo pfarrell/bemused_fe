@@ -43,7 +43,7 @@ export default function AdminCollection() {
     if (!searchQuery.trim()) return;
     try {
       const response = await apiService.search(searchQuery);
-      setSearchResults(response.data.albums || []);
+      setSearchResults((response.data.results || []).filter(r => r.type === 'album').map(r => r.data));
     } catch (err) {
       console.error('Search failed:', err);
     }
