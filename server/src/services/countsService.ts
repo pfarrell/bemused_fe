@@ -42,6 +42,19 @@ export function createCountsService(db: Kysely<Database>) {
 
       return new Map(rows.map((r) => [r.playlist_id as number, parseInt(r.count, 10)]))
     },
+
+    async albumCountsByCollectionIds(collectionIds: number[]): Promise<Map<number, number>> {
+      if (collectionIds.length === 0) return new Map()
+
+      const rows = await db
+        .selectFrom('collection_albums')
+        .select(['collection_id', sql<string>`count(*)`.as('count')])
+        .where('collection_id', 'in', collectionIds)
+        .groupBy('collection_id')
+        .execute()
+
+      return new Map(rows.map((r) => [r.collection_id as number, parseInt(r.count, 10)]))
+    },
   }
 }
 
