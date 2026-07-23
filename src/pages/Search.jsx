@@ -4,6 +4,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import Track from '../components/Track';
+import AlbumCard from '../components/AlbumCard';
+import ArtistCard from '../components/ArtistCard';
 import { formatCount } from '../utils/formatters';
 
 const Search = () => {
@@ -83,29 +85,12 @@ const Search = () => {
           <div className="artist-grid" style={{ padding: '0' }}>
             <div className="artist-grid-container">
               {results.artists.map((artist) => (
-                <div
+                <ArtistCard
                   key={artist.id}
-                  className="artist-card"
-                  onClick={() => navigate(`/artist/${artist.id}`)}
-                >
-                  <div className="artist-card-image">
-                    <img
-                      src={apiService.getImageUrl(artist.image_path, 'artist_search')}
-                      alt={artist.name}
-                      onError={(e) => {
-                        console.log(`Failed to load artist image: ${e.target.src}`);
-                      }}
-                    />
-                  </div>
-                  <div className="artist-card-title">
-                    <h3>{artist.name}</h3>
-                    {formatCount(artist.album_count || null, 'album') && (
-                      <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
-                        {formatCount(artist.album_count || null, 'album')}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  artist={artist}
+                  imageUrl={apiService.getImageUrl(artist.image_path, 'artist_search')}
+                  onClick={(a) => navigate(`/artist/${a.id}`)}
+                />
               ))}
             </div>
           </div>
@@ -119,32 +104,13 @@ const Search = () => {
           <div className="artist-grid" style={{ padding: '0' }}>
             <div className="artist-grid-container">
               {results.albums.map((album) => (
-                <div
+                <AlbumCard
                   key={album.id}
-                  onClick={() => navigate(`/album/${album.id}`)}
-                  className="artist-card"
-                >
-                  <div className="artist-card-image">
-                    <img
-                      src={apiService.getImageUrl(album.image_path, 'album_small')}
-                      alt={`${album.title} by ${album.artist.name}`}
-                      onError={(e) => {
-                        console.log(`Failed to load album image: ${e.target.src}`);
-                      }}
-                    />
-                  </div>
-                  <div className="artist-card-title">
-                    <h3>{album.title}</h3>
-                    <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
-                      {album.artist.name}{album.has_collaborators && ' +'}
-                    </p>
-                    {formatCount(album.track_count || null, 'track') && (
-                      <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
-                        {formatCount(album.track_count || null, 'track')}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  album={album}
+                  artist={album.artist}
+                  imageUrl={apiService.getImageUrl(album.image_path, 'album_small')}
+                  onClick={(a) => navigate(`/album/${a.id}`)}
+                />
               ))}
             </div>
           </div>
