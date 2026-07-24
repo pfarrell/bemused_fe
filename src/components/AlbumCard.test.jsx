@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import AlbumCard from './AlbumCard';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
@@ -186,11 +186,14 @@ describe('mobile row layout', () => {
 
   test('a long-press starting on the play button does not open the "Add to Collection" dropdown', () => {
     usePlayerStore.setState({ clearPlaylist: vi.fn(), addTracks: vi.fn() });
+    vi.useFakeTimers();
     render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
 
     const playButton = screen.getByRole('button', { name: 'Play Test Album' });
     fireEvent.touchStart(playButton, { touches: [{ clientX: 10, clientY: 10 }] });
+    act(() => { vi.advanceTimersByTime(500); });
 
     expect(screen.queryByText('▣ Add to Collection')).toBeNull();
+    vi.useRealTimers();
   });
 });
