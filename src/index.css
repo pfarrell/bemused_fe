@@ -1118,10 +1118,13 @@
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    padding: 0 0.5rem;
   }
 
   .artist-grid {
     padding-bottom: 2rem !important;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   .result-row {
@@ -1136,8 +1139,8 @@
   }
 
   .result-row-image {
-    width: 44px;
-    height: 44px;
+    width: 51px;
+    height: 51px;
     flex-shrink: 0;
     overflow: hidden;
     background-color: #ddd;
