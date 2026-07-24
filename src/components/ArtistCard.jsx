@@ -1,19 +1,38 @@
 // src/components/ArtistCard.jsx
 import { formatCount } from '../utils/formatters';
+import ResultRow from './ResultRow';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const ArtistCard = ({ artist, onClick, imageUrl }) => {
+  const isMobile = useIsMobile();
+
+  const handleImageError = (e) => {
+    if (e.target.src.includes('/sm/')) {
+      e.target.src = e.target.src.replace('/sm/', '/');
+      e.target.onerror = null;
+    }
+  };
+
+  if (isMobile) {
+    return (
+      <ResultRow
+        imageUrl={imageUrl}
+        imageShape="circle"
+        title={artist.name}
+        subtitle="Artist"
+        onClick={() => onClick(artist)}
+        onImageError={handleImageError}
+      />
+    );
+  }
+
   return (
     <div className="artist-card" onClick={() => onClick(artist)}>
       <div className="artist-card-image">
         <img
           src={imageUrl}
           alt={artist.name}
-          onError={(e) => {
-            if (e.target.src.includes('/sm/')) {
-              e.target.src = e.target.src.replace('/sm/', '/');
-              e.target.onerror = null;
-            }
-          }}
+          onError={handleImageError}
         />
       </div>
 
