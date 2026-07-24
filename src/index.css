@@ -184,6 +184,33 @@
   padding: 0 1rem;
 }
 
+.search-type-pills {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0 1rem 0.75rem;
+}
+
+.search-type-pill {
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.search-type-pill.active {
+  background: #1f2937;
+  border-color: #1f2937;
+  color: white;
+  font-weight: 600;
+}
+
 .search-result-type-badge {
   position: absolute;
   top: 0.5rem;
@@ -1086,15 +1113,112 @@
     height: calc(-webkit-fill-available - 2 * var(--mb, 4.5em) - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)) !important;
   }
 
-  /* Artist grid */
+  /* Compact result rows (replaces the square 2-column card grid on mobile) */
   .artist-grid-container {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
   }
 
   .artist-grid {
     padding-bottom: 2rem !important;
-    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.6rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+  }
+
+  .result-row-image {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background-color: #ddd;
+  }
+
+  .result-row-image-square {
+    border-radius: 5px;
+  }
+
+  .result-row-image-circle {
+    border-radius: 50%;
+  }
+
+  .result-row-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .result-row-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .result-row-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-row-subtitle {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin: 0.1rem 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-row-play {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #374151;
+    border: none;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .result-row-play:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .result-row-play-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(55, 65, 81, 0.3);
+    border-top-color: #374151;
+    border-radius: 50%;
+    animation: result-row-spin 0.6s linear infinite;
+  }
+
+  @keyframes result-row-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* The search-result type badge duplicates the row subtitle's type label
+     on mobile (e.g. "Album · Fleetwood Mac"), so hide it there. */
+  .search-result-type-badge {
+    display: none;
   }
 
   /* Player bar mobile layout */
@@ -1505,10 +1629,6 @@
    ================================= */
 
 @media (max-width: 480px) {
-  .artist-grid-container {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
-  
   .player-controls-wrapper {
     gap: 0.5rem;
   }
