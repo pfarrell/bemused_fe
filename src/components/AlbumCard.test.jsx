@@ -151,6 +151,55 @@ describe('mobile row layout', () => {
     expect(screen.queryByText('Test Artist')).toBeNull();
   });
 
+  test('appends the track count in parentheses when present', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, track_count: 12 }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Album · Test Artist (12 tracks)')).toBeInTheDocument();
+  });
+
+  test('uses singular "track" in the parenthetical for a count of 1', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, track_count: 1 }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Album · Test Artist (1 track)')).toBeInTheDocument();
+  });
+
+  test('omits the parenthetical when track_count is absent', () => {
+    render(
+      <AlbumCard
+        album={album}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Album · Test Artist')).toBeInTheDocument();
+  });
+
+  test('shows the track count in the subtitle even when hideArtist is set', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, track_count: 8 }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+        hideArtist
+      />
+    );
+    expect(screen.getByText('Album (8 tracks)')).toBeInTheDocument();
+  });
+
   test('does not crash when artist is null (an orphaned album with no FK-enforced artist)', () => {
     render(
       <AlbumCard

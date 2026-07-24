@@ -98,9 +98,11 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
     }
   };
 
+  const trackCount = formatCount(album.track_count || null, 'track');
+  const trackCountSuffix = trackCount ? ` (${trackCount})` : '';
   const subtitle = hideArtist
-    ? 'Album'
-    : `Album · ${artist?.name || ''}${album.has_collaborators ? ' +' : ''}`;
+    ? `Album${trackCountSuffix}`
+    : `Album · ${artist?.name || ''}${album.has_collaborators ? ' +' : ''}${trackCountSuffix}`;
 
   return (
     <>
