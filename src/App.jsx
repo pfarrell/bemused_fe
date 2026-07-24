@@ -32,14 +32,19 @@ import ProtectedRoute from './components/ProtectedRoute';
 import MusicPlayerWrapper from './components/player/MusicPlayerWrapper';
 import NowPlaying from './components/NowPlaying';
 
-// Add this component to handle scroll to top on route changes
-function ScrollToTop() {
+// Handle scroll to top on route changes
+export function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
     // Scroll to top when route changes
     window.scrollTo(0, 0);
-    
+
+    // The home page owns its own scroll behavior (restoring a cached
+    // scroll position on back-navigation, or scrolling to top on a fresh
+    // load) — resetting .main-content here would race with that.
+    if (pathname === '/') return;
+
     // Also scroll the main content container if it exists
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
