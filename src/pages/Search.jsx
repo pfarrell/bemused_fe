@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import Track from '../components/Track';
 import SearchResultCard from '../components/SearchResultCard';
+import SearchTypeFilterPills from '../components/SearchTypeFilterPills';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,6 +13,7 @@ const Search = () => {
   const [results, setResults] = useState({ results: [], tracks: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTypes, setActiveTypes] = useState(new Set());
 
   const query = searchParams.get('q') || '';
 
@@ -25,6 +27,7 @@ const Search = () => {
     try {
       const response = await apiService.search(searchQuery);
       setResults(response.data);
+      setActiveTypes(new Set());
 
       if (searchQuery !== query) {
         setSearchParams({ q: searchQuery });
@@ -48,6 +51,18 @@ const Search = () => {
     }
   }, [query]);
 
+  const toggleType = (type) => {
+    setActiveTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
+
   if (loading) {
     return (
       <Loading message="Searching" />
@@ -70,15 +85,21 @@ const Search = () => {
     );
   }
 
+  const allResults = results.results || [];
+  const filteredResults = activeTypes.size === 0
+    ? allResults
+    : allResults.filter((r) => activeTypes.has(r.type));
+
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Ranked results: albums, artists, playlists, collections, interleaved by confidence */}
-      {results.results && results.results.length > 0 && (
+      {allResults.length > 0 && (
         <div className="search-section">
-          <h2 className="search-section-title">Results ({results.results.length})</h2>
+          <SearchTypeFilterPills results={allResults} activeTypes={activeTypes} onToggle={toggleType} />
+          <h2 className="search-section-title">Results ({filteredResults.length})</h2>
           <div className="artist-grid" style={{ padding: '0' }}>
             <div className="artist-grid-container">
-              {results.results.map((result) => (
+              {filteredResults.map((result) => (
                 <SearchResultCard
                   key={`${result.type}-${result.data.id}`}
                   type={result.type}
