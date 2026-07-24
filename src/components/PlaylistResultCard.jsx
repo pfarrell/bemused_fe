@@ -18,18 +18,30 @@ const PlaylistResultCard = ({ playlist, onClick, imageUrl }) => {
     }
   };
 
-  const handlePlayAll = async () => {
+  const withPlaylistTracks = async (dispatch) => {
     setPlayLoading(true);
     try {
       const response = await apiService.getPlaylist(playlist.id);
-      clearPlaylist();
-      addTracks(response.data.tracks);
+      dispatch(response.data.tracks);
     } catch (err) {
       console.error('Failed to play playlist', err);
     } finally {
       setPlayLoading(false);
     }
   };
+
+  const handlePlayAll = () => withPlaylistTracks((tracks) => {
+    clearPlaylist();
+    addTracks(tracks);
+  });
+
+  const handlePlayNext = () => withPlaylistTracks((tracks) => {
+    addTracks(tracks, true, { flashActivity: true });
+  });
+
+  const handleAddToQueue = () => withPlaylistTracks((tracks) => {
+    addTracks(tracks, false, { flashActivity: true });
+  });
 
   if (isMobile) {
     const trackCount = formatCount(playlist.track_count || null, 'track');
@@ -41,7 +53,13 @@ const PlaylistResultCard = ({ playlist, onClick, imageUrl }) => {
         subtitle={trackCount ? `Playlist · ${trackCount}` : 'Playlist'}
         onClick={() => onClick(playlist)}
         onImageError={handleImageError}
-        play={{ loading: playLoading, onPlay: handlePlayAll, label: `Play ${playlist.name}` }}
+        play={{
+          loading: playLoading,
+          onPlay: handlePlayAll,
+          onPlayNext: handlePlayNext,
+          onAddToQueue: handleAddToQueue,
+          label: `Play ${playlist.name}`,
+        }}
       />
     );
   }

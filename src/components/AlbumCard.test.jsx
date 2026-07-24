@@ -233,6 +233,52 @@ describe('mobile row layout', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  test('right-clicking play and choosing "Play Next" fetches the album and inserts it next in the queue', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Album' }), { clientX: 10, clientY: 10 });
+
+    fireEvent.click(screen.getByText('⏭ Play Next'));
+
+    await waitFor(() => expect(addTracks).toHaveBeenCalled());
+    expect(apiService.getAlbum).toHaveBeenCalledWith(7);
+    expect(clearPlaylist).not.toHaveBeenCalled();
+    expect(addTracks).toHaveBeenCalledWith(
+      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }],
+      true,
+      { flashActivity: true }
+    );
+  });
+
+  test('right-clicking play and choosing "Add to Queue" fetches the album and appends it to the queue', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Album' }), { clientX: 10, clientY: 10 });
+
+    fireEvent.click(screen.getByText('➕ Add to Queue'));
+
+    await waitFor(() => expect(addTracks).toHaveBeenCalled());
+    expect(apiService.getAlbum).toHaveBeenCalledWith(7);
+    expect(clearPlaylist).not.toHaveBeenCalled();
+    expect(addTracks).toHaveBeenCalledWith(
+      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }],
+      false,
+      { flashActivity: true }
+    );
+  });
+
   test('a failed play-all fetch clears the loading state without throwing', async () => {
     apiService.getAlbum.mockRejectedValue(new Error('network error'));
     usePlayerStore.setState({ clearPlaylist: vi.fn(), addTracks: vi.fn() });

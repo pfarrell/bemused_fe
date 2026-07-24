@@ -85,18 +85,30 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
     }
   };
 
-  const handlePlayAll = async () => {
+  const withAlbumTracks = async (dispatch) => {
     setPlayLoading(true);
     try {
       const response = await apiService.getAlbum(album.id);
-      clearPlaylist();
-      addTracks(response.data.tracks);
+      dispatch(response.data.tracks);
     } catch (err) {
       console.error('Failed to play album', err);
     } finally {
       setPlayLoading(false);
     }
   };
+
+  const handlePlayAll = () => withAlbumTracks((tracks) => {
+    clearPlaylist();
+    addTracks(tracks);
+  });
+
+  const handlePlayNext = () => withAlbumTracks((tracks) => {
+    addTracks(tracks, true, { flashActivity: true });
+  });
+
+  const handleAddToQueue = () => withAlbumTracks((tracks) => {
+    addTracks(tracks, false, { flashActivity: true });
+  });
 
   const trackCount = formatCount(album.track_count || null, 'track');
   const trackCountSuffix = trackCount ? ` (${trackCount})` : '';
@@ -118,7 +130,13 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          play={{ loading: playLoading, onPlay: handlePlayAll, label: `Play ${album.title}` }}
+          play={{
+            loading: playLoading,
+            onPlay: handlePlayAll,
+            onPlayNext: handlePlayNext,
+            onAddToQueue: handleAddToQueue,
+            label: `Play ${album.title}`,
+          }}
         />
       ) : (
         <div

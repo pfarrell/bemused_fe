@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import ResultRow from './ResultRow';
 
 test('renders the title and subtitle', () => {
@@ -71,4 +71,110 @@ test('the play button carries a data-result-row-play marker so callers can guard
     />
   );
   expect(screen.getByRole('button', { name: 'Play Test Title' })).toHaveAttribute('data-result-row-play', 'true');
+});
+
+describe('long-press / right-click play menu', () => {
+  const playWithMenu = (overrides = {}) => ({
+    loading: false,
+    onPlay: vi.fn(),
+    onPlayNext: vi.fn(),
+    onAddToQueue: vi.fn(),
+    label: 'Play Test Title',
+    ...overrides,
+  });
+
+  test('a long-press does nothing extra when onPlayNext/onAddToQueue are not provided', () => {
+    vi.useFakeTimers();
+    render(
+      <ResultRow
+        imageUrl="/x.jpg"
+        title="Test Title"
+        onClick={vi.fn()}
+        play={{ loading: false, onPlay: vi.fn(), label: 'Play Test Title' }}
+      />
+    );
+    const button = screen.getByRole('button', { name: 'Play Test Title' });
+    fireEvent.touchStart(button, { touches: [{ clientX: 50, clientY: 50 }] });
+    act(() => { vi.advanceTimersByTime(500); });
+
+    expect(screen.queryByText('▶ Play Now')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  test('long-pressing the play button opens a menu with Play Now / Play Next / Add to Queue', () => {
+    vi.useFakeTimers();
+    render(<ResultRow imageUrl="/x.jpg" title="Test Title" onClick={vi.fn()} play={playWithMenu()} />);
+    const button = screen.getByRole('button', { name: 'Play Test Title' });
+
+    fireEvent.touchStart(button, { touches: [{ clientX: 50, clientY: 50 }] });
+    act(() => { vi.advanceTimersByTime(500); });
+
+    expect(screen.getByText('▶ Play Now')).toBeInTheDocument();
+    expect(screen.getByText('⏭ Play Next')).toBeInTheDocument();
+    expect(screen.getByText('➕ Add to Queue')).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  test('right-clicking the play button opens the menu directly (desktop)', () => {
+    const play = playWithMenu();
+    render(<ResultRow imageUrl="/x.jpg" title="Test Title" onClick={vi.fn()} play={play} />);
+    const button = screen.getByRole('button', { name: 'Play Test Title' });
+
+    fireEvent.contextMenu(button, { clientX: 50, clientY: 50 });
+
+    expect(screen.getByText('▶ Play Now')).toBeInTheDocument();
+  });
+
+  test('choosing "Play Now" from the menu calls onPlay and closes the menu, without also firing the row onClick', () => {
+    const onRowClick = vi.fn();
+    const play = playWithMenu();
+    render(<ResultRow imageUrl="/x.jpg" title="Test Title" onClick={onRowClick} play={play} />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Title' }), { clientX: 50, clientY: 50 });
+
+    fireEvent.click(screen.getByText('▶ Play Now'));
+
+    expect(play.onPlay).toHaveBeenCalledTimes(1);
+    expect(play.onPlayNext).not.toHaveBeenCalled();
+    expect(play.onAddToQueue).not.toHaveBeenCalled();
+    expect(onRowClick).not.toHaveBeenCalled();
+    expect(screen.queryByText('▶ Play Now')).toBeNull();
+  });
+
+  test('choosing "Play Next" from the menu calls onPlayNext and closes the menu', () => {
+    const play = playWithMenu();
+    render(<ResultRow imageUrl="/x.jpg" title="Test Title" onClick={vi.fn()} play={play} />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Title' }), { clientX: 50, clientY: 50 });
+
+    fireEvent.click(screen.getByText('⏭ Play Next'));
+
+    expect(play.onPlayNext).toHaveBeenCalledTimes(1);
+    expect(play.onPlay).not.toHaveBeenCalled();
+    expect(screen.queryByText('⏭ Play Next')).toBeNull();
+  });
+
+  test('choosing "Add to Queue" from the menu calls onAddToQueue and closes the menu', () => {
+    const play = playWithMenu();
+    render(<ResultRow imageUrl="/x.jpg" title="Test Title" onClick={vi.fn()} play={play} />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Title' }), { clientX: 50, clientY: 50 });
+
+    fireEvent.click(screen.getByText('➕ Add to Queue'));
+
+    expect(play.onAddToQueue).toHaveBeenCalledTimes(1);
+    expect(play.onPlay).not.toHaveBeenCalled();
+    expect(screen.queryByText('➕ Add to Queue')).toBeNull();
+  });
+
+  test('clicking the backdrop closes the menu without calling any handler', () => {
+    const play = playWithMenu();
+    render(<ResultRow imageUrl="/x.jpg" title="Test Title" onClick={vi.fn()} play={play} />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Title' }), { clientX: 50, clientY: 50 });
+    expect(screen.getByText('▶ Play Now')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('result-row-play-menu-backdrop'));
+
+    expect(screen.queryByText('▶ Play Now')).toBeNull();
+    expect(play.onPlay).not.toHaveBeenCalled();
+    expect(play.onPlayNext).not.toHaveBeenCalled();
+    expect(play.onAddToQueue).not.toHaveBeenCalled();
+  });
 });

@@ -84,4 +84,50 @@ describe('mobile row layout', () => {
     expect(addTracks).toHaveBeenCalledWith([{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }]);
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  test('right-clicking play and choosing "Play Next" fetches the playlist and inserts it next in the queue', async () => {
+    apiService.getPlaylist.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Playlist' }), { clientX: 10, clientY: 10 });
+
+    fireEvent.click(screen.getByText('⏭ Play Next'));
+
+    await waitFor(() => expect(addTracks).toHaveBeenCalled());
+    expect(apiService.getPlaylist).toHaveBeenCalledWith(5);
+    expect(clearPlaylist).not.toHaveBeenCalled();
+    expect(addTracks).toHaveBeenCalledWith(
+      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }],
+      true,
+      { flashActivity: true }
+    );
+  });
+
+  test('right-clicking play and choosing "Add to Queue" fetches the playlist and appends it to the queue', async () => {
+    apiService.getPlaylist.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Play Test Playlist' }), { clientX: 10, clientY: 10 });
+
+    fireEvent.click(screen.getByText('➕ Add to Queue'));
+
+    await waitFor(() => expect(addTracks).toHaveBeenCalled());
+    expect(apiService.getPlaylist).toHaveBeenCalledWith(5);
+    expect(clearPlaylist).not.toHaveBeenCalled();
+    expect(addTracks).toHaveBeenCalledWith(
+      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }],
+      false,
+      { flashActivity: true }
+    );
+  });
 });
