@@ -20,7 +20,7 @@ export function useInfiniteItems(fetchFn, cacheKey) {
   // Only consult the cache once, at mount — later cache writes from this
   // same instance must not flip `hydrated` mid-life.
   const cached   = useRef(cacheKey ? getHomeFeedCache(cacheKey) : null).current;
-  const hydrated = cached !== null;
+  const hydrated = cached !== null && cached.items.length > 0;
 
   const [items,     setItems]     = useState(cached ? cached.items : []);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +49,7 @@ export function useInfiniteItems(fetchFn, cacheKey) {
   // instead of fetching a new random batch.
   useEffect(() => {
     if (!cacheKey) return;
-    useHomeFeedStore.getState().save(cacheKey, { items, hasMore, seenIds: seenIds.current });
+    useHomeFeedStore.getState().save(cacheKey, { items, hasMore, seenIds: new Set(seenIds.current) });
   }, [cacheKey, items, hasMore]);
 
   const loadMore = useCallback(async (gridRef) => {
