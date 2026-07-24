@@ -100,7 +100,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
 
   const subtitle = hideArtist
     ? 'Album'
-    : `Album · ${artist.name}${album.has_collaborators ? ' +' : ''}`;
+    : `Album · ${artist?.name || ''}${album.has_collaborators ? ' +' : ''}`;
 
   return (
     <>

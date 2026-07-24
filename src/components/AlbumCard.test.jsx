@@ -151,6 +151,18 @@ describe('mobile row layout', () => {
     expect(screen.queryByText('Test Artist')).toBeNull();
   });
 
+  test('does not crash when artist is null (an orphaned album with no FK-enforced artist)', () => {
+    render(
+      <AlbumCard
+        album={album}
+        artist={null}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Album ·')).toBeInTheDocument();
+  });
+
   test('tapping play fetches the album, replaces the queue, and does not navigate', async () => {
     apiService.getAlbum.mockResolvedValue({
       data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
