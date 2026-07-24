@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useInfiniteItems } from '../hooks/useInfiniteItems';
 import { useHomeModeStore } from '../stores/homeModeStore';
 import { useTagFilterStore } from '../stores/tagFilterStore';
+import { useHomeFeedStore } from '../stores/homeFeedStore';
 import { apiService } from '../services/api';
 import ArtistGrid from '../components/ArtistGrid';
 import AlbumGrid from '../components/AlbumGrid';
@@ -10,23 +11,33 @@ import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 
 const HomeFeed = ({ mode, activeTag }) => {
+  const cacheKey = `${mode}:${activeTag ?? ''}`;
   const fetchFn = mode === 'albums'
     ? (size) => apiService.getRandomAlbums(size, activeTag)
     : (size) => apiService.getRandomArtists(size, activeTag);
 
-  const { items, isLoading, error, loadMore } = useInfiniteItems(fetchFn);
+  const { items, isLoading, error, loadMore, hydrated } = useInfiniteItems(fetchFn, cacheKey);
   const gridRef     = useRef(null);
   const sentinelRef = useRef(null);
 
-  // Scroll to top when this feed mounts (i.e. on mode switch)
+  // Restore scroll position on a cache hit (browser back-navigation);
+  // scroll to top on a genuinely fresh load (mode/tag switch, or an
+  // explicit refresh that already invalidated the cache). Capture the
+  // final scroll position back into the cache on unmount so the next
+  // cache hit can restore it.
   useEffect(() => {
     const mainContent = document.querySelector('.main-content');
-    if (mainContent) mainContent.scrollTop = 0;
-  }, []);
+    if (!mainContent) return;
+    mainContent.scrollTop = hydrated ? useHomeFeedStore.getState().scrollTop : 0;
 
-  // Initial load
+    return () => {
+      useHomeFeedStore.getState().save(cacheKey, { scrollTop: mainContent.scrollTop });
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Initial load — skipped when hydrated from cache
   useEffect(() => {
-    loadMore(gridRef);
+    if (!hydrated) loadMore(gridRef);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Infinite scroll: re-run when items.length changes so the observer
