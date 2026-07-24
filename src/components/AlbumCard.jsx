@@ -1,24 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import AddToCollectionModal from './AddToCollectionModal';
+import ResultRow from './ResultRow';
+import { useIsMobile } from '../hooks/useIsMobile';
+import { apiService } from '../services/api';
+import { usePlayerStore } from '../stores/playerStore';
 import { formatCount } from '../utils/formatters';
 
 const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ x: 0, y: 0 });
   const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [playLoading, setPlayLoading] = useState(false);
   const longPressTimer = useRef(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
   const justOpenedByLongPress = useRef(false);
   const clearLongPressFlagTimer = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  const isMobile = useIsMobile();
+  const { clearPlaylist, addTracks } = usePlayerStore();
 
   useEffect(() => {
     return () => {
@@ -40,6 +39,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
   };
 
   const handleContextMenu = (e) => {
+    if (e.target.closest('[data-result-row-play]')) return;
     e.preventDefault();
     e.stopPropagation();
     openDropdown(e.clientX, e.clientY);
@@ -47,6 +47,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
 
   const handleTouchStart = (e) => {
     if (showDropdown) return;
+    if (e.target.closest('[data-result-row-play]')) return;
     touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     longPressTimer.current = setTimeout(() => {
       const x = isMobile
@@ -77,43 +78,78 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
     if (showDropdown) { e.preventDefault(); e.stopPropagation(); }
   };
 
+  const handleImageError = (e) => {
+    if (e.target.src.includes('/sm/')) {
+      e.target.src = e.target.src.replace('/sm/', '/');
+      e.target.onerror = null;
+    }
+  };
+
+  const handlePlayAll = async () => {
+    setPlayLoading(true);
+    try {
+      const response = await apiService.getAlbum(album.id);
+      clearPlaylist();
+      addTracks(response.data.tracks);
+    } catch (err) {
+      console.error('Failed to play album', err);
+    } finally {
+      setPlayLoading(false);
+    }
+  };
+
+  const subtitle = hideArtist
+    ? 'Album'
+    : `Album · ${artist.name}${album.has_collaborators ? ' +' : ''}`;
+
   return (
     <>
-      <div
-        className="artist-card"
-        onClick={() => !showDropdown && onClick(album)}
-        onContextMenu={handleContextMenu}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="artist-card-image">
-          <img
-            src={imageUrl}
-            alt={`${album.title}, ${artist.name}`}
-            style={{ cursor: 'pointer' }}
-            onError={(e) => {
-              if (e.target.src.includes('/sm/')) {
-                e.target.src = e.target.src.replace('/sm/', '/');
-                e.target.onerror = null;
-              }
-            }}
-          />
+      {isMobile ? (
+        <ResultRow
+          imageUrl={imageUrl}
+          imageShape="square"
+          title={album.title}
+          subtitle={subtitle}
+          onClick={() => !showDropdown && onClick(album)}
+          onImageError={handleImageError}
+          onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          play={{ loading: playLoading, onPlay: handlePlayAll, label: `Play ${album.title}` }}
+        />
+      ) : (
+        <div
+          className="artist-card"
+          onClick={() => !showDropdown && onClick(album)}
+          onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="artist-card-image">
+            <img
+              src={imageUrl}
+              alt={`${album.title}, ${artist.name}`}
+              style={{ cursor: 'pointer' }}
+              onError={handleImageError}
+            />
+          </div>
+          <div className="artist-card-title">
+            <h3>{album.title}</h3>
+            {!hideArtist && (
+              <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0', cursor: 'pointer' }}>
+                {artist.name}{album.has_collaborators && ' +'}
+              </p>
+            )}
+            {formatCount(album.track_count || null, 'track') && (
+              <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
+                {formatCount(album.track_count || null, 'track')}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="artist-card-title">
-          <h3>{album.title}</h3>
-          {!hideArtist && (
-            <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0', cursor: 'pointer' }}>
-              {artist.name}{album.has_collaborators && ' +'}
-            </p>
-          )}
-          {formatCount(album.track_count || null, 'track') && (
-            <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
-              {formatCount(album.track_count || null, 'track')}
-            </p>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Right-click / long-press dropdown */}
       {showDropdown && createPortal(

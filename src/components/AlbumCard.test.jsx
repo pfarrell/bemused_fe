@@ -1,10 +1,21 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AlbumCard from './AlbumCard';
+import { apiService } from '../services/api';
+import { usePlayerStore } from '../stores/playerStore';
 
 vi.mock('./AddToCollectionModal', () => ({ default: () => null }));
+vi.mock('../services/api', () => ({
+  apiService: {
+    getAlbum: vi.fn(),
+  },
+}));
 
 const album = { id: 7, title: 'Test Album', image_path: 'x.jpg' };
 const artist = { id: 3, name: 'Test Artist' };
+
+afterEach(() => {
+  Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+});
 
 test('shows a "+" after the artist name when the album has collaborators', () => {
   render(
@@ -45,7 +56,6 @@ test('tapping the cover image navigates via onClick, not an expand modal, even w
   fireEvent.click(screen.getByRole('img', { name: /Test Album/ }));
 
   expect(onClick).toHaveBeenCalledWith(album);
-  // No full-screen zoom overlay should exist, even though a fullImageUrl was provided
   expect(document.querySelector('[style*="zoom-out"]')).toBeNull();
 });
 
@@ -108,4 +118,79 @@ test('shows the artist name by default', () => {
     />
   );
   expect(screen.getByText('Test Artist')).toBeInTheDocument();
+});
+
+describe('mobile row layout', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true });
+  });
+
+  test('shows a single "Album · {artist}" subtitle, including the collaborator "+"', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, has_collaborators: true }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Album · Test Artist +')).toBeInTheDocument();
+  });
+
+  test('shows just "Album" as the subtitle when hideArtist is set', () => {
+    render(
+      <AlbumCard
+        album={album}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+        hideArtist
+      />
+    );
+    expect(screen.getByText('Album')).toBeInTheDocument();
+    expect(screen.queryByText('Test Artist')).toBeNull();
+  });
+
+  test('tapping play fetches the album, replaces the queue, and does not navigate', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+    const onClick = vi.fn();
+
+    render(<AlbumCard album={album} artist={artist} onClick={onClick} imageUrl="/img/sm/x.jpg" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play Test Album' }));
+
+    await waitFor(() => expect(addTracks).toHaveBeenCalled());
+
+    expect(apiService.getAlbum).toHaveBeenCalledWith(7);
+    expect(clearPlaylist).toHaveBeenCalled();
+    expect(addTracks).toHaveBeenCalledWith([{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }]);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  test('a failed play-all fetch clears the loading state without throwing', async () => {
+    apiService.getAlbum.mockRejectedValue(new Error('network error'));
+    usePlayerStore.setState({ clearPlaylist: vi.fn(), addTracks: vi.fn() });
+
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+
+    const playButton = screen.getByRole('button', { name: 'Play Test Album' });
+    fireEvent.click(playButton);
+
+    await waitFor(() => expect(playButton).not.toBeDisabled());
+  });
+
+  test('a long-press starting on the play button does not open the "Add to Collection" dropdown', () => {
+    usePlayerStore.setState({ clearPlaylist: vi.fn(), addTracks: vi.fn() });
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+
+    const playButton = screen.getByRole('button', { name: 'Play Test Album' });
+    fireEvent.touchStart(playButton, { touches: [{ clientX: 10, clientY: 10 }] });
+
+    expect(screen.queryByText('▣ Add to Collection')).toBeNull();
+  });
 });
