@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Playlist from './Playlist';
 import { usePlayerStore } from '../stores/playerStore';
@@ -39,7 +39,13 @@ describe('Playlist page', () => {
     renderPlaylist();
     await screen.findByText('Test Playlist');
 
-    expect(usePlayerStore.getState().pageTracks).toEqual(playlistData.tracks);
+    // The name-render and the pageTracks-setting effect are two separate renders
+    // (playlistData lands first, the passive effect that calls setPageTracks follows
+    // asynchronously after paint) — waitFor avoids a race where this assertion runs
+    // before that effect has flushed, most visible under heavy parallel test load.
+    await waitFor(() => {
+      expect(usePlayerStore.getState().pageTracks).toEqual(playlistData.tracks);
+    });
   });
 
   test('clears pageTracks on unmount so a stale playlist cannot be played from elsewhere', async () => {
