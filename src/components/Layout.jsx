@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useHomeModeStore } from '../stores/homeModeStore';
 import { useTagFilterStore } from '../stores/tagFilterStore';
+import { useHomeFeedStore } from '../stores/homeFeedStore';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 import SearchBar from './SearchBar';
@@ -87,6 +88,7 @@ const Layout = ({ children }) => {
     const handleTouchEnd = () => {
       if (isPulling && pullDistance > 60) {
         // Remount the current page to re-fetch data without reloading the app
+        useHomeFeedStore.getState().invalidate();
         setRefreshKey(k => k + 1);
       }
       setIsPulling(false);
@@ -109,12 +111,22 @@ const Layout = ({ children }) => {
     setShowDropdown(false);
   };
 
+  // Shared by the "P·Share" logo and both "Home" menu buttons: always
+  // forces a fresh random feed and a remount, even if already on '/'
+  // (where navigate('/') alone would be a no-op).
+  const goHome = () => {
+    useHomeFeedStore.getState().invalidate();
+    setRefreshKey(k => k + 1);
+    setShowDropdown(false);
+    navigate('/');
+  };
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#3a4853' }}>
       {/* Fixed Header */}
       <div className="app-header">
         <div className="header-content">
-          <h1 className="app-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+          <h1 className="app-logo" onClick={goHome} style={{ cursor: 'pointer' }}>
             P·Share
           </h1>
           
@@ -319,10 +331,7 @@ const Layout = ({ children }) => {
 
                     <div style={{ padding: '0.5rem 0' }}>
                       <button
-                        onClick={() => {
-                          setShowDropdown(false);
-                          navigate('/');
-                        }}
+                        onClick={goHome}
                         style={{
                           width: '100%',
                           textAlign: 'left',
@@ -578,10 +587,7 @@ const Layout = ({ children }) => {
 
                     <div style={{ padding: '0.5rem 0' }}>
                       <button
-                        onClick={() => {
-                          setShowDropdown(false);
-                          navigate('/');
-                        }}
+                        onClick={goHome}
                         style={{
                           width: '100%',
                           textAlign: 'left',
