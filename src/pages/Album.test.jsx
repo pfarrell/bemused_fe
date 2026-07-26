@@ -153,3 +153,57 @@ describe('Album page — collaborators in the artist heading', () => {
     expect(screen.queryByText(/Also featuring/)).not.toBeInTheDocument();
   });
 });
+
+describe('Album page — collection links', () => {
+  test('shows a link for each collection the album belongs to', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: {
+        ...albumData,
+        collections: [
+          { id: 3, name: 'Road Trip Mix' },
+          { id: 7, name: 'Desert Island Discs' },
+        ],
+      },
+    });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    expect(screen.getByText('Road Trip Mix')).toBeInTheDocument();
+    expect(screen.getByText('Desert Island Discs')).toBeInTheDocument();
+  });
+
+  test('navigates to the collection page when a collection link is clicked', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: { ...albumData, collections: [{ id: 3, name: 'Road Trip Mix' }] },
+    });
+    render(
+      <MemoryRouter initialEntries={['/album/10']}>
+        <Routes>
+          <Route path="/album/:id" element={<Album />} />
+          <Route path="/collection/:id" element={<div>Collection Page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await screen.findByText('Test Album');
+
+    fireEvent.click(screen.getByText('Road Trip Mix'));
+
+    expect(await screen.findByText('Collection Page')).toBeInTheDocument();
+  });
+
+  test('renders nothing when the album has no collections', async () => {
+    apiService.getAlbum.mockResolvedValue({ data: { ...albumData, collections: [] } });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    expect(screen.queryByText(/In collections/)).not.toBeInTheDocument();
+  });
+
+  test('renders nothing when collections is omitted entirely', async () => {
+    apiService.getAlbum.mockResolvedValue({ data: albumData });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    expect(screen.queryByText(/In collections/)).not.toBeInTheDocument();
+  });
+});

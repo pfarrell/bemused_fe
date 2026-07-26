@@ -125,7 +125,7 @@ const Album = () => {
     );
   }
 
-  const { artist, album, tracks, summary, secondary_artists, compilation_artists } = albumData;
+  const { artist, album, tracks, summary, secondary_artists, compilation_artists, collections } = albumData;
 
   // Collaborators are folded into the primary artist heading itself
   // ("Elton John, Ray Charles"); every other non-primary role (featured,
@@ -208,6 +208,19 @@ const Album = () => {
                 artists={featuringArtists}
                 mobileVisibleCount={album.is_compilation ? 5 : undefined}
               />
+            </p>
+          )}
+          {collections?.length > 0 && (
+            <p className="album-header-collections" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
+              In collections:{' '}
+              {collections.map((c, i) => (
+                <span key={c.id}>
+                  {i > 0 && ', '}
+                  <span style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/collection/${c.id}`)}>
+                    {c.name}
+                  </span>
+                </span>
+              ))}
             </p>
           )}
           {summary && Object.keys(summary).length > 0 && (
