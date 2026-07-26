@@ -1481,6 +1481,7 @@
   .album-header-title { order: 1; }
   .album-header-artist { order: 2; }
   .album-header-featuring { order: 3; }
+  .album-header-collections { order: 3; }
   .album-header-actions { order: 4; }
   .album-header-wikipedia { order: 5; }
   .album-header-description { order: 6; }
