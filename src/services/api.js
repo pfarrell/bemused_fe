@@ -46,7 +46,7 @@ export const apiService = {
   setDefaultTag: (tag) => api.put('/auth/default-tag', { tag }),
 
   // Search
-  search: (query) => api.get(`/search?q=${encodeURIComponent(query)}`),
+  search: (query, offset) => api.get(`/search?q=${encodeURIComponent(query)}${offset ? `&offset=${offset}` : ''}`),
 
   // log
   log: (id) => api.get(`/log/${id}`),
