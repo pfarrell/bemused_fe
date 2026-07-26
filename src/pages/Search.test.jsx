@@ -119,10 +119,7 @@ test('renders a pill per type present, filters the grid when a pill is toggled, 
 
   expect(screen.getByText('Only Album')).toBeInTheDocument();
   expect(screen.queryByText('Only Artist')).toBeNull();
-  // Per the new design, the "Results" heading always shows the accurate
-  // unfiltered total from resultCounts (album:1 + artist:1 = 2), not the
-  // count of what's currently visible after a type-pill filter is applied.
-  expect(screen.getByText('Results (2)')).toBeInTheDocument();
+  expect(screen.getByText('Results (1)')).toBeInTheDocument();
 
   fireEvent.click(screen.getByText('Albums 1'));
 

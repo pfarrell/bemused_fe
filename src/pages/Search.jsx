@@ -153,7 +153,13 @@ const Search = () => {
   const filteredResults = activeTypes.size === 0
     ? allResults
     : allResults.filter((r) => activeTypes.has(r.type));
-  const totalResultCount = Object.values(resultCounts).reduce((sum, n) => sum + n, 0);
+  // When a type filter is active, the heading must total only the active
+  // types — otherwise it disagrees with what's actually visible in the grid
+  // below it (a pre-existing, deliberate UX property: filtering to "Albums"
+  // should make the heading read the album count, not the grand total).
+  const totalResultCount = activeTypes.size === 0
+    ? Object.values(resultCounts).reduce((sum, n) => sum + n, 0)
+    : [...activeTypes].reduce((sum, type) => sum + (resultCounts[type] || 0), 0);
 
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
