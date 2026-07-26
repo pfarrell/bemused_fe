@@ -98,6 +98,19 @@ export function createAlbumsService(db: Kysely<Database>) {
         .orderBy('artist_albums.order', 'asc')
         .execute()
     },
+
+    async findCollectionsByAlbumId(albumId: number) {
+      return db
+        .selectFrom('collection_albums')
+        .innerJoin('collections', 'collections.id', 'collection_albums.collection_id')
+        .select([
+          'collections.id as id',
+          'collections.name as name',
+        ])
+        .where('collection_albums.album_id', '=', albumId)
+        .orderBy('collections.name', 'asc')
+        .execute()
+    },
   }
 }
 

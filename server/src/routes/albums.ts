@@ -61,6 +61,8 @@ albums.get('/:id', async (c) => {
 
   const secondary_artists = secondaryArtistRows.map(r => ({ id: r.id, name: r.name, role: r.role }))
 
+  const collections = await albumsService.findCollectionsByAlbumId(id)
+
   // For various-artists albums, list every distinct artist credited on a
   // track (deduplicated, first-occurrence/track order) so the frontend can
   // show them in place of a single owning artist.
@@ -89,7 +91,7 @@ albums.get('/:id', async (c) => {
     album.wikipedia
   )
 
-  return c.json({ album, artist, secondary_artists, compilation_artists, tracks, summary: summary ?? {} })
+  return c.json({ album, artist, secondary_artists, compilation_artists, tracks, collections, summary: summary ?? {} })
 })
 
 export default albums
