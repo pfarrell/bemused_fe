@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Search from './Search';
 import { apiService } from '../services/api';
@@ -11,6 +11,32 @@ vi.mock('../services/api', () => ({
 }));
 
 vi.mock('../components/AddToCollectionModal', () => ({ default: () => null }));
+
+// jsdom doesn't implement IntersectionObserver. This fake captures the
+// callback passed by Search.jsx so a test can invoke it directly to
+// simulate the sentinel scrolling into view.
+let intersectionCallback;
+beforeEach(() => {
+  intersectionCallback = null;
+  // Vitest 4's vi.fn() requires a `function`/`class` implementation (not an
+  // arrow function) to support being invoked with `new`, which is how
+  // Search.jsx constructs this — see IntersectionObserver usage below.
+  global.IntersectionObserver = vi.fn(function (callback) {
+    intersectionCallback = callback;
+    return { observe: vi.fn(), disconnect: vi.fn() };
+  });
+  // apiService.search is a single module-scoped mock shared by every test in
+  // this file (created once by the vi.mock factory above). Without clearing
+  // call history between tests, the new pagination tests' exact-call-count
+  // assertions (toHaveBeenCalledTimes(2)) would accumulate calls left over
+  // from earlier tests in the file and fail spuriously when run together,
+  // even though each test still sets its own fresh mockResolvedValue(Once).
+  apiService.search.mockClear();
+});
+
+function triggerIntersection() {
+  intersectionCallback([{ isIntersecting: true }]);
+}
 
 const renderSearch = (q) =>
   render(
@@ -76,6 +102,8 @@ test('renders a pill per type present, filters the grid when a pill is toggled, 
         { type: 'artist', data: { id: 1, name: 'Only Artist', image_path: 'a.jpg' } },
         { type: 'album', data: { id: 2, title: 'Only Album', image_path: 'b.jpg', artist: { id: 3, name: 'Other Artist' } } },
       ],
+      hasMore: false,
+      resultCounts: { album: 1, artist: 1, playlist: 0, collection: 0 },
       tracks: [],
       count: 2,
     },
@@ -91,7 +119,10 @@ test('renders a pill per type present, filters the grid when a pill is toggled, 
 
   expect(screen.getByText('Only Album')).toBeInTheDocument();
   expect(screen.queryByText('Only Artist')).toBeNull();
-  expect(screen.getByText('Results (1)')).toBeInTheDocument();
+  // Per the new design, the "Results" heading always shows the accurate
+  // unfiltered total from resultCounts (album:1 + artist:1 = 2), not the
+  // count of what's currently visible after a type-pill filter is applied.
+  expect(screen.getByText('Results (2)')).toBeInTheDocument();
 
   fireEvent.click(screen.getByText('Albums 1'));
 
@@ -106,6 +137,8 @@ test('resets the active type filter when a new search query is submitted', async
         { type: 'artist', data: { id: 1, name: 'First Artist', image_path: 'a.jpg' } },
         { type: 'album', data: { id: 2, title: 'First Album', image_path: 'b.jpg', artist: { id: 3, name: 'Other Artist' } } },
       ],
+      hasMore: false,
+      resultCounts: { album: 1, artist: 1, playlist: 0, collection: 0 },
       tracks: [],
       count: 2,
     },
@@ -138,6 +171,8 @@ test('resets the active type filter when a new search query is submitted', async
       results: [
         { type: 'artist', data: { id: 4, name: 'Second Artist', image_path: 'a.jpg' } },
       ],
+      hasMore: false,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
       tracks: [],
       count: 1,
     },
@@ -146,4 +181,230 @@ test('resets the active type filter when a new search query is submitted', async
   fireEvent.click(screen.getByText('go to second search'));
 
   expect(await screen.findByText('Second Artist')).toBeInTheDocument();
+});
+
+test('loads and appends the next page when the sentinel intersects', async () => {
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 1, name: 'Page One Artist', image_path: 'a.jpg' } }],
+      hasMore: true,
+      resultCounts: { album: 0, artist: 2, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  renderSearch('paged');
+  await screen.findByText('Page One Artist');
+
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 2, name: 'Page Two Artist', image_path: 'a.jpg' } }],
+      hasMore: false,
+      resultCounts: { album: 0, artist: 2, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  // The IntersectionObserver is constructed in a useEffect that fires after
+  // the commit that shows 'Page One Artist' — under load, that effect can
+  // still be pending here, so wait for it rather than assuming it has
+  // already run by the time findByText above resolved.
+  await waitFor(() => expect(intersectionCallback).not.toBeNull());
+  triggerIntersection();
+
+  await screen.findByText('Page Two Artist');
+  expect(screen.getByText('Page One Artist')).toBeInTheDocument();
+  expect(apiService.search).toHaveBeenLastCalledWith('paged', 30);
+});
+
+test('does not duplicate an entity that reappears on a later page', async () => {
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 1, name: 'Repeat Artist', image_path: 'a.jpg' } }],
+      hasMore: true,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  renderSearch('dupe');
+  await screen.findByText('Repeat Artist');
+
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      // Same (type, id) as page 1 — simulates the raw exact/fuzzy duplicate
+      // edge case landing on a different page.
+      results: [{ type: 'artist', data: { id: 1, name: 'Repeat Artist', image_path: 'a.jpg' } }],
+      hasMore: false,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  await waitFor(() => expect(intersectionCallback).not.toBeNull());
+  triggerIntersection();
+
+  await waitFor(() => expect(apiService.search).toHaveBeenCalledTimes(2));
+  expect(screen.getAllByText('Repeat Artist')).toHaveLength(1);
+});
+
+test('does not render a sentinel once hasMore is false', async () => {
+  apiService.search.mockResolvedValue({
+    data: {
+      results: [{ type: 'artist', data: { id: 1, name: 'Only Artist', image_path: 'a.jpg' } }],
+      hasMore: false,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  renderSearch('done');
+  await screen.findByText('Only Artist');
+
+  expect(global.IntersectionObserver).not.toHaveBeenCalled();
+});
+
+test('shows the heading and pill counts from resultCounts, not the loaded page size', async () => {
+  apiService.search.mockResolvedValue({
+    data: {
+      results: [{ type: 'artist', data: { id: 1, name: 'Solo Artist', image_path: 'a.jpg' } }],
+      hasMore: true,
+      resultCounts: { album: 5, artist: 40, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  renderSearch('many');
+  await screen.findByText('Solo Artist');
+
+  expect(screen.getByText('Results (45)')).toBeInTheDocument();
+  expect(screen.getByText('Artists 40')).toBeInTheDocument();
+});
+
+test('resets pagination state when a new search query is submitted', async () => {
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 1, name: 'First Page Artist', image_path: 'a.jpg' } }],
+      hasMore: true,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  const SearchWithNavHelper = () => {
+    const navigate = useNavigate();
+    return (
+      <>
+        <button onClick={() => navigate('/search?q=second')}>go to second search</button>
+        <Search />
+      </>
+    );
+  };
+
+  render(
+    <MemoryRouter initialEntries={['/search?q=first']}>
+      <Routes>
+        <Route path="/search" element={<SearchWithNavHelper />} />
+      </Routes>
+    </MemoryRouter>
+  );
+
+  await screen.findByText('First Page Artist');
+
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 9, name: 'Second Search Artist', image_path: 'a.jpg' } }],
+      hasMore: false,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  fireEvent.click(screen.getByText('go to second search'));
+
+  await screen.findByText('Second Search Artist');
+  expect(screen.queryByText('First Page Artist')).toBeNull();
+  // performSearch calls apiService.search with a single argument (no offset) —
+  // asserting the single-arg form here, not a trailing explicit `undefined`,
+  // since toHaveBeenCalledWith compares argument arrays by length too.
+  expect(apiService.search).toHaveBeenLastCalledWith('second');
+});
+
+test('discards a loadMore response that resolves after a new search has already started', async () => {
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 1, name: 'Race First Page', image_path: 'a.jpg' } }],
+      hasMore: true,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+
+  const SearchWithNavHelper = () => {
+    const navigate = useNavigate();
+    return (
+      <>
+        <button onClick={() => navigate('/search?q=racenew')}>go to new search</button>
+        <Search />
+      </>
+    );
+  };
+
+  render(
+    <MemoryRouter initialEntries={['/search?q=raceold']}>
+      <Routes>
+        <Route path="/search" element={<SearchWithNavHelper />} />
+      </Routes>
+    </MemoryRouter>
+  );
+
+  await screen.findByText('Race First Page');
+
+  // loadMore's fetch is held open deliberately, to resolve it only after a
+  // new search has already completed below.
+  let resolveLoadMore;
+  apiService.search.mockImplementationOnce(
+    () => new Promise((resolve) => { resolveLoadMore = resolve; })
+  );
+  await waitFor(() => expect(intersectionCallback).not.toBeNull());
+  triggerIntersection();
+  await waitFor(() => expect(apiService.search).toHaveBeenCalledTimes(2));
+
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 2, name: 'Race New Query Artist', image_path: 'a.jpg' } }],
+      hasMore: false,
+      resultCounts: { album: 0, artist: 1, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+    },
+  });
+  fireEvent.click(screen.getByText('go to new search'));
+  await screen.findByText('Race New Query Artist');
+
+  // The stale loadMore fetch (started before the new search) finally
+  // resolves now, well after the new search's own results are showing.
+  await act(async () => {
+    resolveLoadMore({
+      data: {
+        results: [{ type: 'artist', data: { id: 3, name: 'Stale Page Two Artist', image_path: 'a.jpg' } }],
+        hasMore: false,
+        resultCounts: { album: 0, artist: 99, playlist: 0, collection: 0 },
+        tracks: [],
+        count: 1,
+      },
+    });
+  });
+
+  expect(screen.queryByText('Stale Page Two Artist')).toBeNull();
+  expect(screen.getByText('Results (1)')).toBeInTheDocument();
 });
