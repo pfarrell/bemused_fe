@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { searchService } from '../services/searchService.js'
+import { searchService, RESULT_LIMIT } from '../services/searchService.js'
 
 const search = new Hono()
 
@@ -35,6 +35,11 @@ export function parseQuoted(rawQuery: string): { query: string; exactOnly: boole
   return { query: trimmed, exactOnly: false }
 }
 
+function parseOffset(raw: string | undefined): number {
+  const n = parseInt(raw ?? '0', 10)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
+
 const TYPE_KEY_MAP: Record<string, 'album' | 'artist' | 'playlist' | 'collection'> = {
   Album: 'album',
   Artist: 'artist',
@@ -42,15 +47,21 @@ const TYPE_KEY_MAP: Record<string, 'album' | 'artist' | 'playlist' | 'collection
   Collection: 'collection',
 }
 
-async function buildRankedResults(likeParam: string, filteredQ: string, exactOnly: boolean) {
-  const searchRows = await searchService.runUnionSearch(likeParam, filteredQ, exactOnly, 30, 0)
+const EMPTY_RESULT_COUNTS = { album: 0, artist: 0, playlist: 0, collection: 0 }
 
-  // Dedup by (type, id), keeping the first occurrence — since searchRows is already
+async function buildRankedResults(likeParam: string, filteredQ: string, exactOnly: boolean, offset: number) {
+  // Fetch one extra row beyond the page size so we can tell whether another
+  // page exists without a separate existence-check query.
+  const searchRows = await searchService.runUnionSearch(likeParam, filteredQ, exactOnly, RESULT_LIMIT + 1, offset)
+  const hasMore = searchRows.length > RESULT_LIMIT
+  const pageRows = searchRows.slice(0, RESULT_LIMIT)
+
+  // Dedup by (type, id), keeping the first occurrence — since pageRows is already
   // ordered by score DESC and an exact-branch row (score 2.0) always sorts before a
   // fuzzy-branch row for the same entity, this keeps the exact-match row.
   const orderedRefs: { type: string; id: number }[] = []
   const seen = new Set<string>()
-  for (const row of searchRows) {
+  for (const row of pageRows) {
     const key = `${row.model_type}:${row.id}`
     if (!seen.has(key)) {
       seen.add(key)
@@ -77,38 +88,49 @@ async function buildRankedResults(likeParam: string, filteredQ: string, exactOnl
     Collection: new Map(collections.map((c: any) => [c.id, c])),
   }
 
-  return orderedRefs
+  const results = orderedRefs
     .map((ref) => {
       const data = byType[ref.type].get(ref.id)
       return data ? { type: TYPE_KEY_MAP[ref.type], data } : null
     })
     .filter((r): r is { type: 'album' | 'artist' | 'playlist' | 'collection'; data: any } => r !== null)
+
+  return { results, hasMore }
 }
 
-// GET /search?q=query
+// GET /search?q=query&offset=0
 search.get('/', async (c) => {
   const rawQuery = c.req.query('q') ?? ''
   const { query, exactOnly } = parseQuoted(rawQuery)
+  const offset = parseOffset(c.req.query('offset'))
 
   if (exactOnly ? query.length < 1 : query.length < 3) {
-    return c.json({ results: [], tracks: [], count: 0 })
+    return c.json({ results: [], hasMore: false, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: 0 })
   }
 
   const filteredQ = exactOnly ? '' : filterQuery(query)
   if (!exactOnly && filteredQ.length < 3) {
-    return c.json({ results: [], tracks: [], count: 0 })
+    return c.json({ results: [], hasMore: false, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: 0 })
   }
 
   const likeParam = `%${query}%`
 
-  const [results, trackIds] = await Promise.all([
-    buildRankedResults(likeParam, filteredQ, exactOnly),
+  const [{ results, hasMore }, trackIds, rawCounts] = await Promise.all([
+    buildRankedResults(likeParam, filteredQ, exactOnly, offset),
     searchService.findTrackIds(likeParam),
+    searchService.countRankedResults(likeParam, filteredQ, exactOnly),
   ])
+
+  const resultCounts = {
+    album: rawCounts.Album,
+    artist: rawCounts.Artist,
+    playlist: rawCounts.Playlist,
+    collection: rawCounts.Collection,
+  }
 
   const tracks = await searchService.fetchTracksByIds(trackIds, c)
 
-  return c.json({ results, tracks, count: results.length + tracks.length })
+  return c.json({ results, hasMore, resultCounts, tracks, count: results.length + tracks.length })
 })
 
 export default search

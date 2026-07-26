@@ -11,7 +11,7 @@
 import 'dotenv/config'
 import { db } from '../src/db/database.js'
 import { searchService } from '../src/services/searchService.js'
-import { parseQuoted } from '../src/routes/search.js'
+import searchApp, { parseQuoted } from '../src/routes/search.js'
 
 let failures = 0
 
@@ -239,6 +239,29 @@ async function main() {
     assert(
       playlistRows.some((r) => r.model_type === 'Playlist' && r.id === playlist.id),
       'playlist name match found in the ranked union'
+    )
+
+    console.log('\nRoute: offset parsing, hasMore, and resultCounts shape')
+    const res1 = await searchApp.request('/?q=verify+search&offset=not-a-number')
+    const body1 = await res1.json()
+    assert(res1.status === 200, 'a non-numeric offset does not error the route')
+    assert(Array.isArray(body1.results), 'response has a results array even with a garbage offset')
+    assert(typeof body1.hasMore === 'boolean', 'response includes a boolean hasMore')
+    assert(
+      ['album', 'artist', 'playlist', 'collection'].every((k) => typeof body1.resultCounts[k] === 'number'),
+      'resultCounts has all four lowercase keys, each a number'
+    )
+
+    const res2 = await searchApp.request('/?q=verify+search&offset=-5')
+    const body2 = await res2.json()
+    assert(res2.status === 200, 'a negative offset does not error the route (clamped to 0)')
+    assert(JSON.stringify(body2.results) === JSON.stringify(body1.results), 'a negative offset behaves identically to offset=0')
+
+    const res3 = await searchApp.request('/?q=nonexistentxyz123')
+    const body3 = await res3.json()
+    assert(
+      body3.hasMore === false && Object.values(body3.resultCounts).every((n) => n === 0),
+      'a query matching nothing reports hasMore=false and all-zero resultCounts'
     )
   } finally {
     console.log('\nFixture cleanup')
