@@ -188,6 +188,7 @@ test('loads and appends the next page when the sentinel intersects', async () =>
       resultCounts: { album: 0, artist: 2, playlist: 0, collection: 0 },
       tracks: [],
       count: 1,
+      pageSize: 30,
     },
   });
 
@@ -404,4 +405,34 @@ test('discards a loadMore response that resolves after a new search has already 
 
   expect(screen.queryByText('Stale Page Two Artist')).toBeNull();
   expect(screen.getByText('Results (1)')).toBeInTheDocument();
+});
+
+test('a failed loadMore keeps existing results in place and shows an inline error, not the full-page error view', async () => {
+  apiService.search.mockResolvedValueOnce({
+    data: {
+      results: [{ type: 'artist', data: { id: 1, name: 'Kept Page One Artist', image_path: 'a.jpg' } }],
+      hasMore: true,
+      resultCounts: { album: 0, artist: 2, playlist: 0, collection: 0 },
+      tracks: [],
+      count: 1,
+      pageSize: 30,
+    },
+  });
+
+  renderSearch('flaky');
+  await screen.findByText('Kept Page One Artist');
+
+  apiService.search.mockRejectedValueOnce(new Error('network blip'));
+
+  await waitFor(() => expect(intersectionCallback).not.toBeNull());
+  triggerIntersection();
+
+  await screen.findByText('Failed to load more results.');
+
+  // The first page's results, heading, and pills must still be mounted —
+  // a loadMore failure must not trigger the full-page error takeover that
+  // performSearch failures use, which would unmount all of this.
+  expect(screen.getByText('Kept Page One Artist')).toBeInTheDocument();
+  expect(screen.getByText('Results (2)')).toBeInTheDocument();
+  expect(screen.getByText('Artists 2')).toBeInTheDocument();
 });

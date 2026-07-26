@@ -105,15 +105,27 @@ search.get('/', async (c) => {
   const offset = parseOffset(c.req.query('offset'))
 
   if (exactOnly ? query.length < 1 : query.length < 3) {
-    return c.json({ results: [], hasMore: false, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: 0 })
+    return c.json({ results: [], hasMore: false, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: 0, pageSize: RESULT_LIMIT })
   }
 
   const filteredQ = exactOnly ? '' : filterQuery(query)
   if (!exactOnly && filteredQ.length < 3) {
-    return c.json({ results: [], hasMore: false, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: 0 })
+    return c.json({ results: [], hasMore: false, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: 0, pageSize: RESULT_LIMIT })
   }
 
   const likeParam = `%${query}%`
+
+  // Tracks are unpaginated and unlimited by design (the full match list is
+  // fetched on page 1), and resultCounts reflects the query's total, which
+  // doesn't change page to page. Neither is used by the frontend on a
+  // loadMore (offset > 0) request, so both the full-track-list fetch and the
+  // count query are skipped past page 1 — otherwise every scroll page would
+  // redundantly re-run and re-serialize an ever-more-wasteful pair of queries
+  // whose results are simply discarded by the caller.
+  if (offset > 0) {
+    const { results, hasMore } = await buildRankedResults(likeParam, filteredQ, exactOnly, offset)
+    return c.json({ results, hasMore, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: results.length, pageSize: RESULT_LIMIT })
+  }
 
   const [{ results, hasMore }, trackIds, rawCounts] = await Promise.all([
     buildRankedResults(likeParam, filteredQ, exactOnly, offset),
@@ -130,7 +142,7 @@ search.get('/', async (c) => {
 
   const tracks = await searchService.fetchTracksByIds(trackIds, c)
 
-  return c.json({ results, hasMore, resultCounts, tracks, count: results.length + tracks.length })
+  return c.json({ results, hasMore, resultCounts, tracks, count: results.length + tracks.length, pageSize: RESULT_LIMIT })
 })
 
 export default search

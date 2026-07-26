@@ -19,11 +19,17 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [loadMoreError, setLoadMoreError] = useState(null);
   const [activeTypes, setActiveTypes] = useState(new Set());
 
   const query = searchParams.get('q') || '';
   const seenRef = useRef(new Set());
   const offsetRef = useRef(0);
+  // The page size the backend actually used for this query, read from the
+  // initial response's `pageSize` field so the frontend never has to keep
+  // its own PAGE_SIZE constant in lockstep with the backend's RESULT_LIMIT —
+  // falls back to the local PAGE_SIZE constant only if the field is missing.
+  const pageSizeRef = useRef(PAGE_SIZE);
   const sentinelRef = useRef(null);
   // Bumped at the start of every performSearch call. loadMore captures the
   // current value before its fetch and checks it again after — if a new
@@ -39,6 +45,7 @@ const Search = () => {
     searchGenerationRef.current += 1;
     setLoading(true);
     setError(null);
+    setLoadMoreError(null);
 
     try {
       const response = await apiService.search(searchQuery);
@@ -49,7 +56,8 @@ const Search = () => {
       setActiveTypes(new Set());
 
       seenRef.current = new Set((data.results || []).map((r) => `${r.type}:${r.data.id}`));
-      offsetRef.current = PAGE_SIZE;
+      pageSizeRef.current = data.pageSize || PAGE_SIZE;
+      offsetRef.current = pageSizeRef.current;
 
       if (searchQuery !== query) {
         setSearchParams({ q: searchQuery });
@@ -77,6 +85,7 @@ const Search = () => {
     if (loadingMore || !hasMore || !query) return;
     const generation = searchGenerationRef.current;
     setLoadingMore(true);
+    setLoadMoreError(null);
 
     try {
       const response = await apiService.search(query, offsetRef.current);
@@ -86,12 +95,21 @@ const Search = () => {
       fresh.forEach((r) => seenRef.current.add(`${r.type}:${r.data.id}`));
 
       setResults((prev) => ({ ...prev, results: [...prev.results, ...fresh] }));
-      setResultCounts(data.resultCounts || EMPTY_COUNTS);
+      // resultCounts is not re-read here: the initial performSearch response
+      // is already the source of truth, and the total doesn't change from
+      // page to page of the same query — re-setting it from a loadMore
+      // response would just be redundant (and the backend doesn't bother
+      // recomputing it for offset > 0 requests either, see search.ts).
       setHasMore(!!data.hasMore);
-      offsetRef.current += PAGE_SIZE;
+      offsetRef.current += pageSizeRef.current;
     } catch (err) {
       console.error('Load more search results error:', err);
-      setError('Failed to load more results.');
+      // Deliberately a separate error state from `error`: `error` drives a
+      // full-page takeover that unmounts the results grid, which would wipe
+      // out everything already loaded over a single flaky page-2 fetch and
+      // leave no sentinel to retry with. loadMoreError renders inline instead
+      // so the existing results, pills, and sentinel all stay in place.
+      setLoadMoreError('Failed to load more results.');
     } finally {
       setLoadingMore(false);
     }
@@ -186,6 +204,9 @@ const Search = () => {
             <div style={{ display: 'flex', justifyContent: 'center', padding: '1.5rem' }}>
               <div className="loading-spinner" />
             </div>
+          )}
+          {loadMoreError && (
+            <p style={{ textAlign: 'center', color: '#ef4444', padding: '1rem' }}>{loadMoreError}</p>
           )}
         </div>
       )}

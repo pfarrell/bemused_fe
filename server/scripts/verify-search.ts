@@ -10,7 +10,7 @@
 
 import 'dotenv/config'
 import { db } from '../src/db/database.js'
-import { searchService } from '../src/services/searchService.js'
+import { searchService, RESULT_LIMIT } from '../src/services/searchService.js'
 import searchApp, { parseQuoted } from '../src/routes/search.js'
 
 let failures = 0
@@ -342,6 +342,63 @@ async function main() {
     const bulkRes2 = await searchApp.request('/?q=verify+bulk+artist&offset=30')
     const bulkBody2 = await bulkRes2.json()
     assert(bulkBody2.results.length >= 1, 'a later offset still returns rows from the same broad match')
+
+    console.log('\nRoute: pageSize is included so the frontend never has to hardcode RESULT_LIMIT')
+    assert(bulkBody.pageSize === RESULT_LIMIT, 'a page-1 (offset=0) response includes pageSize === RESULT_LIMIT')
+    assert(bulkBody2.pageSize === RESULT_LIMIT, 'a page-2 (offset>0) response includes pageSize === RESULT_LIMIT')
+
+    console.log('\nRoute: offset > 0 skips the count query and the full unlimited track query entirely')
+    // Monkey-patches the shared searchService singleton's methods (plain
+    // object properties, not readonly) to detect whether they were called,
+    // then always restores the originals — even a page-1 request further
+    // below must keep exercising the real implementations.
+    const originalCountRankedResults = searchService.countRankedResults
+    const originalFindTrackIds = searchService.findTrackIds
+    let countCalled = false
+    let findTrackIdsCalled = false
+    searchService.countRankedResults = (...args: Parameters<typeof originalCountRankedResults>) => {
+      countCalled = true
+      return originalCountRankedResults(...args)
+    }
+    searchService.findTrackIds = (...args: Parameters<typeof originalFindTrackIds>) => {
+      findTrackIdsCalled = true
+      return originalFindTrackIds(...args)
+    }
+    try {
+      const offsetRes = await searchApp.request('/?q=verify+bulk+artist&offset=30')
+      const offsetBody = await offsetRes.json()
+      assert(!countCalled, 'a page-2 (offset>0) request never calls countRankedResults')
+      assert(!findTrackIdsCalled, 'a page-2 (offset>0) request never calls findTrackIds (skips the full track query)')
+      assert(
+        Array.isArray(offsetBody.tracks) && offsetBody.tracks.length === 0,
+        'a page-2 (offset>0) response returns tracks: []'
+      )
+    } finally {
+      searchService.countRankedResults = originalCountRankedResults
+      searchService.findTrackIds = originalFindTrackIds
+    }
+
+    console.log('\nRoute: offset === 0 still runs the count query and the full track query')
+    let countCalledOnFirstPage = false
+    let findTrackIdsCalledOnFirstPage = false
+    const originalCountRankedResults2 = searchService.countRankedResults
+    const originalFindTrackIds2 = searchService.findTrackIds
+    searchService.countRankedResults = (...args: Parameters<typeof originalCountRankedResults2>) => {
+      countCalledOnFirstPage = true
+      return originalCountRankedResults2(...args)
+    }
+    searchService.findTrackIds = (...args: Parameters<typeof originalFindTrackIds2>) => {
+      findTrackIdsCalledOnFirstPage = true
+      return originalFindTrackIds2(...args)
+    }
+    try {
+      await searchApp.request('/?q=verify+bulk+artist')
+      assert(countCalledOnFirstPage, 'a page-1 (offset=0) request still calls countRankedResults')
+      assert(findTrackIdsCalledOnFirstPage, 'a page-1 (offset=0) request still calls findTrackIds')
+    } finally {
+      searchService.countRankedResults = originalCountRankedResults2
+      searchService.findTrackIds = originalFindTrackIds2
+    }
   } finally {
     console.log('\nFixture cleanup')
     // Name/title-pattern deletes (not ID-based) so cleanup runs correctly
