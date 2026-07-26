@@ -7,12 +7,7 @@ const TYPE_LABELS = {
   collection: 'Collections',
 };
 
-const SearchTypeFilterPills = ({ results, activeTypes, onToggle }) => {
-  const counts = TYPE_ORDER.reduce((acc, type) => {
-    acc[type] = results.filter((r) => r.type === type).length;
-    return acc;
-  }, {});
-
+const SearchTypeFilterPills = ({ counts, activeTypes, onToggle }) => {
   const visibleTypes = TYPE_ORDER.filter((type) => counts[type] > 0);
   if (visibleTypes.length === 0) return null;
 
