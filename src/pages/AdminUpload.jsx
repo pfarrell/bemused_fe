@@ -570,7 +570,8 @@ const AdminUpload = () => {
                   </div>
                 )}
                 <small style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                  Optional. Leave blank to use ID3 tags, or type to search existing albums.
+                  Optional. Leave blank to use ID3 tags, search to reuse an existing album, or type a
+                  title without picking a result to override the tags and create a new album with that title.
                 </small>
               </div>
             )}
