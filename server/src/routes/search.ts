@@ -43,7 +43,7 @@ const TYPE_KEY_MAP: Record<string, 'album' | 'artist' | 'playlist' | 'collection
 }
 
 async function buildRankedResults(likeParam: string, filteredQ: string, exactOnly: boolean) {
-  const searchRows = await searchService.runUnionSearch(likeParam, filteredQ, exactOnly)
+  const searchRows = await searchService.runUnionSearch(likeParam, filteredQ, exactOnly, 30, 0)
 
   // Dedup by (type, id), keeping the first occurrence — since searchRows is already
   // ordered by score DESC and an exact-branch row (score 2.0) always sorts before a
