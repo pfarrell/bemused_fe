@@ -163,6 +163,19 @@ async function main() {
     }
     assert(threw, 'negative offset throws instead of silently querying with it')
 
+    console.log('\ncountRankedResults counts unique entities, not raw rows')
+    const counts = await searchService.countRankedResults('%verify cafe artist%', 'verify cafe artist', false)
+    assert(
+      counts.Artist >= 2,
+      'both the exact-match artist fixture and the fuzzy-match artist fixture are counted'
+    )
+    const exactOnlyCounts = await searchService.countRankedResults('%verify cafe artist%', '', true)
+    assert(
+      exactOnlyCounts.Artist === 1,
+      'exact-only count excludes the fuzzy-only match, counting just the exact substring match'
+    )
+    assert(exactOnlyCounts.Album === 0, 'a query with no matching albums reports zero, not undefined/missing')
+
     console.log('\nQuoted exact-only mode skips the fuzzy branch')
     const exactOnlyRows = await searchService.runUnionSearch('%verify search album%', '', true, 30, 0)
     assert(

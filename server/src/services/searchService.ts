@@ -159,6 +159,35 @@ export function createSearchService(db: Kysely<Database>) {
       )
     },
 
+    // Counts unique entities per type, not raw rows — the union's exact and
+    // fuzzy branches can both match the same entity (UNION ALL, not UNION),
+    // so a plain GROUP BY over the raw rows would overcount anything that
+    // matched both branches.
+    async countRankedResults(likeParam: string, filteredQ: string, exactOnly: boolean) {
+      const { exactClauses, fuzzyClauses } = buildSearchClauses(exactOnly)
+
+      const countSql = `
+        SELECT model_type, COUNT(*) AS count FROM (
+          SELECT DISTINCT model_type, id FROM (
+            ${exactClauses}
+            ${fuzzyClauses}
+          ) u
+        ) deduped
+        GROUP BY model_type
+      `
+
+      const params = exactOnly ? [likeParam] : [likeParam, filteredQ]
+      const rows = await runSearchQuery<{ model_type: string; count: string }>(countSql, params, exactOnly)
+
+      const counts = { Album: 0, Artist: 0, Playlist: 0, Collection: 0 }
+      for (const row of rows) {
+        if (row.model_type in counts) {
+          counts[row.model_type as keyof typeof counts] = parseInt(row.count, 10)
+        }
+      }
+      return counts
+    },
+
     async findTrackIds(likeParam: string): Promise<number[]> {
       const { rows } = await pool.query<{ id: number }>(
         `SELECT id FROM tracks WHERE f_unaccent(lower(title)) ILIKE f_unaccent(lower($1)) AND approved = true`,
