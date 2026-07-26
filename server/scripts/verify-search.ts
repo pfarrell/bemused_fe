@@ -263,6 +263,85 @@ async function main() {
       body3.hasMore === false && Object.values(body3.resultCounts).every((n) => n === 0),
       'a query matching nothing reports hasMore=false and all-zero resultCounts'
     )
+
+    console.log('\nBulk fixture setup for hasMore pagination test')
+    // 35 throwaway artists sharing a distinctive substring, each with its own
+    // approved track (required for the exact-match Artist branch's
+    // "INNER JOIN tracks t ON t.artist_id = a.id AND t.approved = true"),
+    // so a query for that substring matches more than RESULT_LIMIT (30)
+    // entities — the only way to actually exercise the route's hasMore=true
+    // path rather than just the row-overcount mechanism at the
+    // runUnionSearch level (already covered above).
+    const bulkArtists: { id: number }[] = []
+    for (let i = 1; i <= 35; i++) {
+      const bulkArtist = await db
+        .insertInto('artists')
+        .values({ name: `Verify Bulk ${i} Artist`, created_at: new Date(), updated_at: new Date() })
+        .returningAll()
+        .executeTakeFirstOrThrow()
+      bulkArtists.push(bulkArtist)
+    }
+    // TrackTable.album_id is non-null in the Kysely type even though the DB
+    // column allows NULL, so every track needs some album_id — a single
+    // shared throwaway album is enough since the exact-match Artist branch
+    // that matters here joins tracks directly by artist_id, not via albums.
+    //
+    // The album's owner deliberately is NOT one of the 35 bulk artists and
+    // is NOT allowed to fuzzy-match the query itself. Two failed approaches
+    // ruled out during development:
+    //   - Pointing artist_id at one of the 35 bulk artists lets that one
+    //     artist satisfy BOTH the "artist joins tracks via its own albums"
+    //     branch AND the "artist joins tracks directly" branch in the union,
+    //     producing two raw rows for the same entity — which collapses to
+    //     one after this file's (type, id) dedup and silently shrinks the
+    //     page below RESULT_LIMIT (empirically: 29 instead of 30).
+    //   - A sentinel non-existent id (e.g. -1) fails outright: a DB trigger
+    //     (sync_artist_albums_on_insert) inserts a mirroring artist_albums
+    //     row on every album insert, and THAT row's artist_id has a real FK
+    //     constraint (unlike albums.artist_id itself, which has none).
+    // So this uses a real, freshly-inserted artist whose name is unrelated
+    // enough to "verify bulk artist" to stay below the 0.24 pg_trgm
+    // similarity threshold (empirically ~0.17, confirmed via similarity()) —
+    // it must never itself appear as a match for the bulk query.
+    const bulkAlbumOwner = await db
+      .insertInto('artists')
+      .values({ name: 'Verify Zzqx Nonmatching Owner', created_at: new Date(), updated_at: new Date() })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+    const bulkAlbum = await db
+      .insertInto('albums')
+      .values({
+        title: 'Verify Bulk Album',
+        artist_id: bulkAlbumOwner.id,
+        is_compilation: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+    for (const bulkArtist of bulkArtists) {
+      await db
+        .insertInto('tracks')
+        .values({
+          title: `Verify Bulk Track for Artist ${bulkArtist.id}`,
+          album_id: bulkAlbum.id,
+          artist_id: bulkArtist.id,
+          approved: true,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .execute()
+    }
+
+    console.log('\nRoute: hasMore is true when more than one page of results exists')
+    const bulkRes = await searchApp.request('/?q=verify+bulk+artist')
+    const bulkBody = await bulkRes.json()
+    assert(bulkBody.hasMore === true, 'a query matching more than RESULT_LIMIT entities reports hasMore=true')
+    assert(bulkBody.results.length === 30, 'the first page is capped at RESULT_LIMIT even though more match')
+
+    const bulkRes2 = await searchApp.request('/?q=verify+bulk+artist&offset=30')
+    const bulkBody2 = await bulkRes2.json()
+    assert(bulkBody2.results.length >= 1, 'a later offset still returns rows from the same broad match')
   } finally {
     console.log('\nFixture cleanup')
     // Name/title-pattern deletes (not ID-based) so cleanup runs correctly
