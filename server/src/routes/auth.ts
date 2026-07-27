@@ -7,7 +7,7 @@ import type { Variables } from '../types.js'
 import { authService } from '../services/authService.js'
 import { isLanHost } from '../db/streamUrl.js'
 import { recallAuthUrl, signRecallState, verifyRecallState, encryptRecallToken } from '../services/recallService.js'
-import { albumNotesService } from '../services/albumNotesService.js'
+import { notesService } from '../services/notesService.js'
 
 const auth = new Hono<{ Variables: Variables }>()
 
@@ -94,7 +94,7 @@ auth.post('/signup', async (c) => {
     })
 
     // Return user data (without password)
-    const recallConnection = await albumNotesService.getConnection(user.id)
+    const recallConnection = await notesService.getConnection(user.id)
     return c.json({
       user: {
         id: user.id,
@@ -150,7 +150,7 @@ auth.post('/login', async (c) => {
     })
 
     // Return user data (without password)
-    const recallConnection = await albumNotesService.getConnection(user.id)
+    const recallConnection = await notesService.getConnection(user.id)
     return c.json({
       user: {
         id: user.id,
@@ -189,7 +189,7 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Not authenticated' }, 401)
     }
 
-    const recallConnection = await albumNotesService.getConnection(user.id)
+    const recallConnection = await notesService.getConnection(user.id)
     return c.json({
       user: {
         id: user.id,
@@ -260,7 +260,7 @@ auth.get('/recall/callback', async (c) => {
     return c.json({ error: 'State does not match current session' }, 400)
   }
 
-  await albumNotesService.saveConnection(user.id, encryptRecallToken(token))
+  await notesService.saveConnection(user.id, encryptRecallToken(token))
 
   const redirectBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/bemused/app' : 'http://localhost:5173'
   return c.redirect(`${redirectBase}${parsed.returnTo}`)
@@ -271,7 +271,7 @@ auth.delete('/recall/connect', async (c) => {
   const user = c.get('user')
   if (!user) return c.json({ error: 'Authentication required' }, 401)
 
-  await albumNotesService.deleteConnection(user.id)
+  await notesService.deleteConnection(user.id)
   return c.json({ ok: true })
 })
 

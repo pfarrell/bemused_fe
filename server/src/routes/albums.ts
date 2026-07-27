@@ -4,7 +4,7 @@ import { getAlbumSummary } from '../services/wikipedia.js'
 import { streamBase } from '../db/streamUrl.js'
 import { albumsService } from '../services/albumsService.js'
 import { countsService } from '../services/countsService.js'
-import { albumNotesService } from '../services/albumNotesService.js'
+import { notesService } from '../services/notesService.js'
 import { createRecallNote, getRecallItem, decryptRecallToken, appendBacklink, stripBacklink } from '../services/recallService.js'
 
 const albums = new Hono<{ Variables: Variables }>()
@@ -94,11 +94,11 @@ albums.get('/:id', async (c) => {
     album.wikipedia
   )
 
-  const noteRows = await albumNotesService.listNotesByAlbumId(id)
+  const noteRows = await notesService.listNotesByTarget('album', id)
   const authorTokens = new Map<number, string>()
   for (const row of noteRows) {
     if (!authorTokens.has(row.author_id)) {
-      const conn = await albumNotesService.getConnection(row.author_id)
+      const conn = await notesService.getConnection(row.author_id)
       if (conn) {
         try {
           authorTokens.set(row.author_id, decryptRecallToken(conn.recall_token))
@@ -135,7 +135,7 @@ albums.post('/:id/notes', async (c) => {
   if (!user) return c.json({ error: 'Authentication required' }, 401)
 
   const albumId = parseInt(c.req.param('id'))
-  const connection = await albumNotesService.getConnection(user.id)
+  const connection = await notesService.getConnection(user.id)
   if (!connection) return c.json({ error: 'Recall not connected' }, 403)
 
   const body = await c.req.json()
@@ -151,7 +151,7 @@ albums.post('/:id/notes', async (c) => {
   try {
     item = await createRecallNote(token, {
       title: `${album.title} — ${artist?.name ?? 'Unknown Artist'}`,
-      contentText: appendBacklink(content, albumId),
+      contentText: appendBacklink(content, `/album/${albumId}`),
       tags: ['bemused'],
     })
   } catch (err) {
@@ -159,7 +159,7 @@ albums.post('/:id/notes', async (c) => {
     return c.json({ error: 'Failed to save note to Recall' }, 502)
   }
 
-  const note = await albumNotesService.createNote(albumId, user.id, item.id)
+  const note = await notesService.createNote('album', albumId, user.id, item.id)
   return c.json({ id: note.id, recall_item_id: item.id }, 201)
 })
 
@@ -169,14 +169,14 @@ albums.delete('/:id/notes/:noteId', async (c) => {
   if (!user) return c.json({ error: 'Authentication required' }, 401)
 
   const noteId = parseInt(c.req.param('noteId'))
-  const note = await albumNotesService.findNoteById(noteId)
+  const note = await notesService.findNoteById(noteId)
   if (!note) return c.json({ error: 'Not found' }, 404)
 
   if (note.author_user_id !== user.id && !user.admin) {
     return c.json({ error: 'Not permitted' }, 403)
   }
 
-  await albumNotesService.deleteNote(noteId)
+  await notesService.deleteNote(noteId)
   return c.json({ ok: true })
 })
 
