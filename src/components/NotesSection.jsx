@@ -63,7 +63,7 @@ const NotesSection = ({ albumId, notes, isLoggedIn, onChange }) => {
       {notes.map((note) => (
         <div key={note.id} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.35rem' }}>
-            {note.author.username} · {new Date(note.created_at).toLocaleDateString()}
+            {note.author?.username || 'Unknown'} · {new Date(note.created_at).toLocaleDateString()}
             {!note.error && (
               <>
                 {' · '}
@@ -72,7 +72,7 @@ const NotesSection = ({ albumId, notes, isLoggedIn, onChange }) => {
                 </a>
               </>
             )}
-            {isLoggedIn && !note.error && (user?.id === note.author.id || user?.admin) && (
+            {isLoggedIn && !note.error && (user?.id === note.author?.id || user?.admin) && (
               <>
                 {' · '}
                 <button

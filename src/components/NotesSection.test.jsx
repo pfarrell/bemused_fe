@@ -65,6 +65,13 @@ describe('NotesSection', () => {
     expect(screen.getByText('Note unavailable')).toBeInTheDocument();
   });
 
+  test('renders without throwing when a note has a missing author', () => {
+    renderNotes({
+      notes: [{ id: 1, recall_item_id: 'abc', author: null, created_at: '2026-07-27T00:00:00Z', title: 't', content: 'hi' }],
+    });
+    expect(screen.getByText(/Unknown/)).toBeInTheDocument();
+  });
+
   test('shows a remove link only for the note author or an admin', () => {
     renderNotes({
       notes: [{ id: 1, recall_item_id: 'abc', author: { id: 999, username: 'other' }, created_at: '2026-07-27T00:00:00Z', title: 't', content: 'hi' }],
