@@ -38,6 +38,11 @@ export const apiService = {
   getRecallConnectUrl: () => `${getBaseURL()}/auth/recall/connect`,
   addAlbumNote: (albumId, content) => api.post(`/album/${albumId}/notes`, { content }),
   deleteAlbumNote: (albumId, noteId) => api.delete(`/album/${albumId}/notes/${noteId}`),
+  addCollectionNote: (collectionId, content) => api.post(`/collection/${collectionId}/notes`, { content }),
+  deleteCollectionNote: (collectionId, noteId) => api.delete(`/collection/${collectionId}/notes/${noteId}`),
+  addTrackNote: (trackId, content) => api.post(`/track/${trackId}/notes`, { content }),
+  deleteTrackNote: (trackId, noteId) => api.delete(`/track/${trackId}/notes/${noteId}`),
+  getTrackNotes: (trackId) => api.get(`/track/${trackId}/notes`),
   getRecallItemUrl: (itemId) => `https://patf.com/recall/items/${itemId}`,
 
   // Tags
