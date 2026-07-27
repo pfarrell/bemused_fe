@@ -245,6 +245,20 @@ interface TrackTagTable {
   updated_at: ColumnType<Date, string | undefined, string | Date>
 }
 
+interface UserRecallTokenTable {
+  user_id: number
+  recall_token: string
+  connected_at: ColumnType<Date, string | Date | undefined, never>
+}
+
+interface AlbumNoteTable {
+  id: Generated<number>
+  album_id: number
+  recall_item_id: string
+  author_user_id: number
+  created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
 export interface Database {
   artists: ArtistTable
   albums: AlbumTable
@@ -268,6 +282,8 @@ export interface Database {
   artists_tags: ArtistTagTable
   tags_tracks: TrackTagTable
   discovery_sources: DiscoverySourceTable
+  user_recall_tokens: UserRecallTokenTable
+  album_notes: AlbumNoteTable
 }
 
 // ---- DB instance ----
