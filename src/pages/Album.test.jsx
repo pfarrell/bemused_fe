@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
 
 vi.mock('../components/TagsSection', () => ({ default: () => null }));
+vi.mock('../components/NotesSection', () => ({ default: () => null }));
 vi.mock('../services/api', () => ({
   apiService: {
     getAlbum: vi.fn(),

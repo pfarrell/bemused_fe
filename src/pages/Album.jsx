@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/authStore';
 import Wikipedia from '../components/Wikipedia';
 import Track from '../components/Track';
 import TagsSection from '../components/TagsSection';
+import NotesSection from '../components/NotesSection';
 import CompilationArtistLinks from '../components/CompilationArtistLinks';
 import ShareButton from '../components/ShareButton';
 import PlayActionsMenu from '../components/PlayActionsMenu';
@@ -125,7 +126,7 @@ const Album = () => {
     );
   }
 
-  const { artist, album, tracks, summary, secondary_artists, compilation_artists, collections } = albumData;
+  const { artist, album, tracks, summary, secondary_artists, compilation_artists, collections, notes } = albumData;
 
   // Collaborators are folded into the primary artist heading itself
   // ("Elton John, Ray Charles"); every other non-primary role (featured,
@@ -286,6 +287,7 @@ const Album = () => {
       </div>
 
       <TagsSection entityType="album" entityId={parseInt(id)} isLoggedIn={isAuthenticated} />
+      <NotesSection albumId={parseInt(id)} notes={notes || []} isLoggedIn={isAuthenticated} onChange={reload} />
     </div>
   );
 };
