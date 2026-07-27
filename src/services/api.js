@@ -34,6 +34,12 @@ export const apiService = {
   getAlbum: (id) => api.get(`/album/${id}`), // Returns { artist, album, tracks }
   getRandomAlbums: (size = 30, tag = null) => api.get(`/albums/random?size=${size}${tag ? `&tag=${encodeURIComponent(tag)}` : ''}`),
 
+  // Recall notes
+  getRecallConnectUrl: () => `${getBaseURL()}/auth/recall/connect`,
+  addAlbumNote: (albumId, content) => api.post(`/album/${albumId}/notes`, { content }),
+  deleteAlbumNote: (albumId, noteId) => api.delete(`/album/${albumId}/notes/${noteId}`),
+  getRecallItemUrl: (itemId) => `https://patf.com/recall/items/${itemId}`,
+
   // Tags
   getTags: () => api.get('/tags'),
   getAlbumTags: (id) => api.get(`/tags/album/${id}`),
