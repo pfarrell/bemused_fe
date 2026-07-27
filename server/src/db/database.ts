@@ -251,9 +251,10 @@ interface UserRecallTokenTable {
   connected_at: ColumnType<Date, string | Date | undefined, never>
 }
 
-interface AlbumNoteTable {
+interface NoteTable {
   id: Generated<number>
-  album_id: number
+  target_id: number
+  kind: string
   recall_item_id: string
   author_user_id: number
   created_at: ColumnType<Date, string | Date | undefined, never>
@@ -283,7 +284,7 @@ export interface Database {
   tags_tracks: TrackTagTable
   discovery_sources: DiscoverySourceTable
   user_recall_tokens: UserRecallTokenTable
-  album_notes: AlbumNoteTable
+  notes: NoteTable
 }
 
 // ---- DB instance ----
