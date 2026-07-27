@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 import { db } from '../db/database.js'
 import type { Variables } from '../types.js'
+import { notesService } from '../services/notesService.js'
+import { createRecallNote, getRecallItem, decryptRecallToken, appendBacklink, stripBacklink } from '../services/recallService.js'
 
 const collections = new Hono<{ Variables: Variables }>()
 
@@ -50,7 +52,39 @@ collections.get('/:id', async (c) => {
   const byId = new Map(albums.map((a) => [a.id, a]))
   const orderedAlbums = albumIds.map((id) => byId.get(id)).filter(Boolean)
 
-  return c.json({ collection, albums: orderedAlbums })
+  const noteRows = await notesService.listNotesByTarget('collection', id)
+  const authorTokens = new Map<number, string>()
+  for (const row of noteRows) {
+    if (!authorTokens.has(row.author_id)) {
+      const conn = await notesService.getConnection(row.author_id)
+      if (conn) {
+        try {
+          authorTokens.set(row.author_id, decryptRecallToken(conn.recall_token))
+        } catch {
+          // leave unset — this author's notes fall through to error: true below
+        }
+      }
+    }
+  }
+  const notes = await Promise.all(noteRows.map(async (row) => {
+    const base = { id: row.id, author: { id: row.author_id, username: row.author_username }, created_at: row.created_at }
+    const token = authorTokens.get(row.author_id)
+    if (!token) return { ...base, error: true as const }
+    try {
+      const item = await getRecallItem(token, row.recall_item_id)
+      if (!item) return { ...base, error: true as const }
+      return {
+        ...base,
+        recall_item_id: row.recall_item_id,
+        title: item.title,
+        content: stripBacklink(item.contentText ?? ''),
+      }
+    } catch {
+      return { ...base, error: true as const }
+    }
+  }))
+
+  return c.json({ collection, albums: orderedAlbums, notes })
 })
 
 // POST /collections
@@ -111,6 +145,56 @@ collections.delete('/:id/albums/:albumId', async (c) => {
     .execute()
 
   return c.json({ success: true })
+})
+
+// POST /collection/:id/notes — requires a connected Recall account; creates a new journal-style note
+collections.post('/:id/notes', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const collectionId = parseInt(c.req.param('id'))
+  const connection = await notesService.getConnection(user.id)
+  if (!connection) return c.json({ error: 'Recall not connected' }, 403)
+
+  const body = await c.req.json()
+  const content = typeof body.content === 'string' ? body.content.trim() : ''
+  if (!content) return c.json({ error: 'content is required' }, 400)
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', collectionId).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Collection not found' }, 404)
+
+  const token = decryptRecallToken(connection.recall_token)
+  let item
+  try {
+    item = await createRecallNote(token, {
+      title: `${collection.name} (collection)`,
+      contentText: appendBacklink(content, `/collection/${collectionId}`),
+      tags: ['bemused'],
+    })
+  } catch (err) {
+    console.error('Failed to create Recall note:', err)
+    return c.json({ error: 'Failed to save note to Recall' }, 502)
+  }
+
+  const note = await notesService.createNote('collection', collectionId, user.id, item.id)
+  return c.json({ id: note.id, recall_item_id: item.id }, 201)
+})
+
+// DELETE /collection/:id/notes/:noteId — unlinks only; the Recall item itself is untouched
+collections.delete('/:id/notes/:noteId', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const noteId = parseInt(c.req.param('noteId'))
+  const note = await notesService.findNoteById(noteId)
+  if (!note) return c.json({ error: 'Not found' }, 404)
+
+  if (note.author_user_id !== user.id && !user.admin) {
+    return c.json({ error: 'Not permitted' }, 403)
+  }
+
+  await notesService.deleteNote(noteId)
+  return c.json({ ok: true })
 })
 
 // PATCH /collection/:id/albums/reorder
