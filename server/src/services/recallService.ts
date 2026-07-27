@@ -65,8 +65,11 @@ function bemusedPublicUrl(): string {
 // Appended to content before it's sent to Recall — visible and clickable in
 // Recall's own UI/search, but always stripped by stripBacklink() before
 // bemused renders the note back on the album page.
-export function appendBacklink(content: string, albumId: number): string {
-  return `${content}\n\n${BACKLINK_SENTINEL}\n[Originally written in bemused](${bemusedPublicUrl()}/album/${albumId})`
+// path is a full relative path from BEMUSED_PUBLIC_URL, e.g. "/album/123" or
+// "/collection/45" — callers build the entity-appropriate path themselves,
+// since not every entity kind has its own detail page (see tracks.ts).
+export function appendBacklink(content: string, path: string): string {
+  return `${content}\n\n${BACKLINK_SENTINEL}\n[Originally written in bemused](${bemusedPublicUrl()}${path})`
 }
 
 export function stripBacklink(content: string): string {
