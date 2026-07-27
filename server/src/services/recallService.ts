@@ -42,11 +42,11 @@ interface RecallStatePayload {
 // URL if the callback itself already has a query string.
 export function signRecallState(userId: number, returnTo: string): string {
   const payload: RecallStatePayload = { userId, returnTo }
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: STATE_EXPIRES_IN })
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: STATE_EXPIRES_IN, audience: 'recall-state' })
 }
 
 export function verifyRecallState(state: string): RecallStatePayload {
-  return jwt.verify(state, JWT_SECRET) as RecallStatePayload
+  return jwt.verify(state, JWT_SECRET, { audience: 'recall-state', algorithms: ['HS256'] }) as RecallStatePayload
 }
 
 export function recallAuthUrl(callbackUrl: string, state: string): string {
@@ -70,9 +70,9 @@ export function appendBacklink(content: string, albumId: number): string {
 }
 
 export function stripBacklink(content: string): string {
-  const marker = `\n\n${BACKLINK_SENTINEL}`
-  const idx = content.indexOf(marker)
-  return idx === -1 ? content : content.slice(0, idx)
+  const idx = content.indexOf(BACKLINK_SENTINEL)
+  if (idx === -1) return content
+  return content.slice(0, idx).replace(/\r?\n\s*\r?\n?$/, '')
 }
 
 interface RecallItem {
@@ -97,6 +97,7 @@ export async function createRecallNote(
       contentText: params.contentText,
       tags: params.tags,
     }),
+    signal: AbortSignal.timeout(5000),
   })
   if (!res.ok) throw new Error(`Recall item creation failed: ${res.status}`)
   const body = await res.json()
@@ -106,6 +107,7 @@ export async function createRecallNote(
 export async function getRecallItem(token: string, itemId: string): Promise<RecallItem | null> {
   const res = await fetch(`${RECALL_BASE_URL}/api/items/${itemId}`, {
     headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(5000),
   })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`Recall item fetch failed: ${res.status}`)

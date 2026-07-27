@@ -78,4 +78,28 @@ describe('NotesSection', () => {
     });
     expect(screen.queryByText('remove')).not.toBeInTheDocument();
   });
+
+  test('shows a remove link for the note\'s own author', () => {
+    useAuthStore.setState({ user: { id: 1, admin: false, recall_connected: false } });
+    renderNotes({
+      notes: [{ id: 1, recall_item_id: 'abc', author: { id: 1, username: 'pat' }, created_at: '2026-07-27T00:00:00Z', title: 't', content: 'hi' }],
+    });
+    expect(screen.getByText('remove')).toBeInTheDocument();
+  });
+
+  test('shows a remove link for an admin viewing someone else\'s note', () => {
+    useAuthStore.setState({ user: { id: 1, admin: true, recall_connected: false } });
+    renderNotes({
+      notes: [{ id: 1, recall_item_id: 'abc', author: { id: 999, username: 'other' }, created_at: '2026-07-27T00:00:00Z', title: 't', content: 'hi' }],
+    });
+    expect(screen.getByText('remove')).toBeInTheDocument();
+  });
+
+  test('shows a remove link for an error note owned by the current user', () => {
+    useAuthStore.setState({ user: { id: 1, admin: false, recall_connected: false } });
+    renderNotes({
+      notes: [{ id: 1, author: { id: 1, username: 'pat' }, created_at: '2026-07-27T00:00:00Z', error: true }],
+    });
+    expect(screen.getByText('remove')).toBeInTheDocument();
+  });
 });

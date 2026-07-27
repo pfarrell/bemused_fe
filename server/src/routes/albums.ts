@@ -139,7 +139,7 @@ albums.post('/:id/notes', async (c) => {
   if (!connection) return c.json({ error: 'Recall not connected' }, 403)
 
   const body = await c.req.json()
-  const content = (body.content ?? '').trim()
+  const content = typeof body.content === 'string' ? body.content.trim() : ''
   if (!content) return c.json({ error: 'content is required' }, 400)
 
   const album = await albumsService.findAlbumById(albumId)
@@ -147,11 +147,17 @@ albums.post('/:id/notes', async (c) => {
   const artist = await albumsService.findArtistById(album.artist_id)
 
   const token = decryptRecallToken(connection.recall_token)
-  const item = await createRecallNote(token, {
-    title: `${album.title} — ${artist?.name ?? 'Unknown Artist'}`,
-    contentText: appendBacklink(content, albumId),
-    tags: ['bemused'],
-  })
+  let item
+  try {
+    item = await createRecallNote(token, {
+      title: `${album.title} — ${artist?.name ?? 'Unknown Artist'}`,
+      contentText: appendBacklink(content, albumId),
+      tags: ['bemused'],
+    })
+  } catch (err) {
+    console.error('Failed to create Recall note:', err)
+    return c.json({ error: 'Failed to save note to Recall' }, 502)
+  }
 
   const note = await albumNotesService.createNote(albumId, user.id, item.id)
   return c.json({ id: note.id, recall_item_id: item.id }, 201)

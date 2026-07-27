@@ -72,7 +72,7 @@ const NotesSection = ({ albumId, notes, isLoggedIn, onChange }) => {
                 </a>
               </>
             )}
-            {isLoggedIn && !note.error && (user?.id === note.author?.id || user?.admin) && (
+            {isLoggedIn && (user?.id === note.author?.id || user?.admin) && (
               <>
                 {' · '}
                 <button

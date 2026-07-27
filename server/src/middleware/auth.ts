@@ -25,7 +25,7 @@ export async function authMiddleware(c: AppContext, next: Next) {
 
   let decoded: JWTPayload
   try {
-    decoded = jwt.verify(token, JWT_SECRET) as JWTPayload
+    decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as JWTPayload
   } catch {
     // Invalid or expired token — proceed without user
     await next()

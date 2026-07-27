@@ -240,7 +240,10 @@ auth.get('/recall/connect', async (c) => {
 // GET /auth/recall/callback — completes the Recall handshake, stores the encrypted token
 auth.get('/recall/callback', async (c) => {
   const user = c.get('user')
-  if (!user) return c.json({ error: 'Authentication required' }, 401)
+  if (!user) {
+    const loginBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/bemused/app' : 'http://localhost:5173'
+    return c.redirect(`${loginBase}/login`)
+  }
 
   const token = c.req.query('token')
   const state = c.req.query('state')
