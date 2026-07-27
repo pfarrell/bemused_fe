@@ -99,7 +99,13 @@ albums.get('/:id', async (c) => {
   for (const row of noteRows) {
     if (!authorTokens.has(row.author_id)) {
       const conn = await albumNotesService.getConnection(row.author_id)
-      if (conn) authorTokens.set(row.author_id, decryptRecallToken(conn.recall_token))
+      if (conn) {
+        try {
+          authorTokens.set(row.author_id, decryptRecallToken(conn.recall_token))
+        } catch {
+          // leave unset — this author's notes fall through to error: true below
+        }
+      }
     }
   }
   const notes = await Promise.all(noteRows.map(async (row) => {
