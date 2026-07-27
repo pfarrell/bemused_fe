@@ -5,6 +5,7 @@ import { cors } from 'hono/cors'
 import type { Variables } from './types.js'
 import artists from './routes/artists.js'
 import albums from './routes/albums.js'
+import tracks from './routes/tracks.js'
 import search from './routes/search.js'
 import streams, { downloads } from './routes/streams.js'
 import logs from './routes/logs.js'
@@ -61,6 +62,7 @@ app.route('/artists', artists)
 app.route('/artist', artists)   // singular alias used by frontend (/artist/:id)
 app.route('/albums', albums)
 app.route('/album', albums)     // singular alias
+app.route('/track', tracks)
 app.route('/search', search)
 app.route('/stream', streams)
 app.route('/download', downloads)
