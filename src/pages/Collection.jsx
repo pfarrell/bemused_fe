@@ -7,11 +7,12 @@ import { useAuthStore } from '../stores/authStore';
 import AlbumCard from '../components/AlbumCard';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
+import NotesSection from '../components/NotesSection';
 
 export default function Collection() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuthStore();
+  const { user, isAdmin, isAuthenticated } = useAuthStore();
   const [collectionData, setCollectionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,7 +39,7 @@ export default function Collection() {
   if (error) return <Retry message={error} onRetry={loadCollection} />;
   if (!collectionData) return <div>Collection not found</div>;
 
-  const { collection, albums } = collectionData;
+  const { collection, albums, notes } = collectionData;
   const canEdit = isAdmin || (user && collection.user_id === user.id);
 
   return (
@@ -169,6 +170,8 @@ export default function Collection() {
           This collection is empty
         </div>
       )}
+
+      <NotesSection entityType="collection" entityId={parseInt(id)} notes={notes || []} isLoggedIn={isAuthenticated} onChange={loadCollection} />
     </div>
   );
 }
