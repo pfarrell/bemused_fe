@@ -139,20 +139,12 @@ const TrackNotesModal = ({ track, onClose }) => {
               {error && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.25rem' }}>{error}</div>}
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
-                  onClick={onClose}
-                  style={{
-                    padding: '0.5rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '500',
-                  }}
-                >
-                  Close
-                </button>
-                <button
                   onClick={handlePost}
                   disabled={posting || !content.trim()}
                   style={{
                     flex: 1, padding: '0.5rem 1rem', backgroundColor: '#7c3aed', color: 'white',
                     border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '500',
+                    minHeight: '44px',
                   }}
                 >
                   {posting ? 'Posting…' : 'Post'}
@@ -165,12 +157,26 @@ const TrackNotesModal = ({ track, onClose }) => {
               style={{
                 display: 'inline-block', padding: '0.5rem 1rem', backgroundColor: '#6b7280',
                 color: 'white', borderRadius: '4px', textDecoration: 'none', fontSize: '0.875rem',
+                marginBottom: '0.75rem',
               }}
             >
               Connect Recall to write notes
             </a>
           )
         )}
+
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: isAuthenticated ? '0.5rem' : 0 }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '0.5rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
+              border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '500',
+              minHeight: '44px',
+            }}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>,
     document.body
