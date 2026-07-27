@@ -5,6 +5,7 @@ import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
 
 vi.mock('./AddToPlaylistModal', () => ({ default: () => null }));
+vi.mock('./TrackNotesModal', () => ({ default: () => null }));
 
 const mockTrack = {
   id: 1,
@@ -105,6 +106,15 @@ describe('Track component', () => {
     expect(screen.queryByText('▶ Play Now')).not.toBeInTheDocument();
 
     vi.useRealTimers();
+  });
+
+  test('Notes menu item closes the dropdown when clicked', () => {
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.getByText('📝 Notes')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('📝 Notes'));
+    expect(screen.queryByText('▶ Play Now')).not.toBeInTheDocument();
   });
 
   const renderWithPlayer = () => {

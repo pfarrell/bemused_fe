@@ -6,11 +6,13 @@ import { useAuthStore } from '../stores/authStore';
 import { formatDuration } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 import AddToPlaylistModal from './AddToPlaylistModal';
+import TrackNotesModal from './TrackNotesModal';
 
 const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ x: 0, y: 0 });
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   const [pressedButton, setPressedButton] = useState(null);
   const { playlist, addTrack, addTracks, clearPlaylist, playTrackAtIndex } = usePlayerStore();
   const { isAuthenticated } = useAuthStore();
@@ -91,6 +93,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     }
     setShowDropdown(false);
     setShowPlaylistModal(true);
+  };
+
+  const handleShowNotes = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setShowDropdown(false);
+    setShowNotesModal(true);
   };
 
   const handleDownload = (e) => {
@@ -421,6 +432,20 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
               📋 Add to Playlist
             </button>
 
+            <button
+              onClick={handleShowNotes}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleShowNotes();
+              }}
+            >
+              📝 Notes
+            </button>
+
             {downloadsEnabled && isAuthenticated && track.download_url && (
               <button
                 onClick={handleDownload}
@@ -446,6 +471,14 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
         <AddToPlaylistModal
           track={track}
           onClose={() => setShowPlaylistModal(false)}
+        />
+      )}
+
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <TrackNotesModal
+          track={track}
+          onClose={() => setShowNotesModal(false)}
         />
       )}
     </div>
