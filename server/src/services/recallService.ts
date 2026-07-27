@@ -70,8 +70,9 @@ export function appendBacklink(content: string, albumId: number): string {
 }
 
 export function stripBacklink(content: string): string {
-  const idx = content.indexOf(BACKLINK_SENTINEL)
-  return idx === -1 ? content : content.slice(0, idx).trimEnd()
+  const marker = `\n\n${BACKLINK_SENTINEL}`
+  const idx = content.indexOf(marker)
+  return idx === -1 ? content : content.slice(0, idx)
 }
 
 interface RecallItem {
