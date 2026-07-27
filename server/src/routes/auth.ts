@@ -6,6 +6,8 @@ import { setCookie, deleteCookie } from 'hono/cookie'
 import type { Variables } from '../types.js'
 import { authService } from '../services/authService.js'
 import { isLanHost } from '../db/streamUrl.js'
+import { recallAuthUrl, signRecallState, verifyRecallState, encryptRecallToken } from '../services/recallService.js'
+import { albumNotesService } from '../services/albumNotesService.js'
 
 const auth = new Hono<{ Variables: Variables }>()
 
@@ -92,6 +94,7 @@ auth.post('/signup', async (c) => {
     })
 
     // Return user data (without password)
+    const recallConnection = await albumNotesService.getConnection(user.id)
     return c.json({
       user: {
         id: user.id,
@@ -99,6 +102,7 @@ auth.post('/signup', async (c) => {
         email: user.email,
         admin: user.admin,
         default_tag: user.default_tag ?? null,
+        recall_connected: Boolean(recallConnection),
       },
     })
   } catch (error: any) {
@@ -146,6 +150,7 @@ auth.post('/login', async (c) => {
     })
 
     // Return user data (without password)
+    const recallConnection = await albumNotesService.getConnection(user.id)
     return c.json({
       user: {
         id: user.id,
@@ -153,6 +158,7 @@ auth.post('/login', async (c) => {
         email: user.email,
         admin: user.admin,
         default_tag: user.default_tag ?? null,
+        recall_connected: Boolean(recallConnection),
       },
     })
   } catch (error: any) {
@@ -183,6 +189,7 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Not authenticated' }, 401)
     }
 
+    const recallConnection = await albumNotesService.getConnection(user.id)
     return c.json({
       user: {
         id: user.id,
@@ -190,6 +197,7 @@ auth.get('/me', async (c) => {
         email: user.email,
         admin: user.admin,
         default_tag: user.default_tag ?? null,
+        recall_connected: Boolean(recallConnection),
       },
     })
   } catch (error: any) {
@@ -212,6 +220,56 @@ auth.put('/default-tag', async (c) => {
   await authService.updateDefaultTag(user.id, tag)
 
   return c.json({ default_tag: tag })
+})
+
+// GET /auth/recall/connect — redirect to Recall's authorize page
+auth.get('/recall/connect', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const callbackUrl = process.env.RECALL_CALLBACK_URL
+  if (!callbackUrl) return c.json({ error: 'RECALL_CALLBACK_URL not configured' }, 500)
+
+  const returnToRaw = c.req.query('return_to') ?? '/library'
+  const returnTo = returnToRaw.startsWith('/') && !returnToRaw.startsWith('//') ? returnToRaw : '/library'
+
+  const state = signRecallState(user.id, returnTo)
+  return c.redirect(recallAuthUrl(callbackUrl, state))
+})
+
+// GET /auth/recall/callback — completes the Recall handshake, stores the encrypted token
+auth.get('/recall/callback', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const token = c.req.query('token')
+  const state = c.req.query('state')
+  if (!token || !state) return c.json({ error: 'Missing token or state' }, 400)
+
+  let parsed: { userId: number; returnTo: string }
+  try {
+    parsed = verifyRecallState(state)
+  } catch {
+    return c.json({ error: 'Invalid or expired state' }, 400)
+  }
+
+  if (parsed.userId !== user.id) {
+    return c.json({ error: 'State does not match current session' }, 400)
+  }
+
+  await albumNotesService.saveConnection(user.id, encryptRecallToken(token))
+
+  const redirectBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/bemused/app' : 'http://localhost:5173'
+  return c.redirect(`${redirectBase}${parsed.returnTo}`)
+})
+
+// DELETE /auth/recall/connect — disconnect locally; does not revoke the token on Recall's side
+auth.delete('/recall/connect', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  await albumNotesService.deleteConnection(user.id)
+  return c.json({ ok: true })
 })
 
 export default auth
