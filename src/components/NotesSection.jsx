@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 
-const NotesSection = ({ albumId, notes, isLoggedIn, onChange }) => {
+const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => {
   const location = useLocation();
   const { user } = useAuthStore();
   const [content, setContent] = useState('');
@@ -13,6 +13,8 @@ const NotesSection = ({ albumId, notes, isLoggedIn, onChange }) => {
   const [error, setError] = useState(null);
 
   const isConnected = Boolean(user?.recall_connected);
+  const addNoteFn = entityType === 'collection' ? apiService.addCollectionNote : apiService.addAlbumNote;
+  const deleteNoteFn = entityType === 'collection' ? apiService.deleteCollectionNote : apiService.deleteAlbumNote;
 
   const handlePost = async () => {
     const trimmed = content.trim();
@@ -20,7 +22,7 @@ const NotesSection = ({ albumId, notes, isLoggedIn, onChange }) => {
     setPosting(true);
     setError(null);
     try {
-      await apiService.addAlbumNote(albumId, trimmed);
+      await addNoteFn(entityId, trimmed);
       setContent('');
       onChange();
     } catch (err) {
@@ -32,7 +34,7 @@ const NotesSection = ({ albumId, notes, isLoggedIn, onChange }) => {
 
   const handleDelete = async (noteId) => {
     try {
-      await apiService.deleteAlbumNote(albumId, noteId);
+      await deleteNoteFn(entityId, noteId);
       onChange();
     } catch (err) {
       console.error('Failed to delete note', err);

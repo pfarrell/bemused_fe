@@ -10,6 +10,8 @@ vi.mock('../services/api', () => ({
     getRecallConnectUrl: () => '/api/auth/recall/connect',
     addAlbumNote: vi.fn(),
     deleteAlbumNote: vi.fn(),
+    addCollectionNote: vi.fn(),
+    deleteCollectionNote: vi.fn(),
     getRecallItemUrl: (id) => `https://patf.com/recall/items/${id}`,
   },
 }));
@@ -17,7 +19,7 @@ vi.mock('../services/api', () => ({
 const renderNotes = (props) =>
   render(
     <MemoryRouter initialEntries={['/album/10']}>
-      <NotesSection albumId={10} notes={[]} isLoggedIn={true} onChange={vi.fn()} {...props} />
+      <NotesSection entityType="album" entityId={10} notes={[]} isLoggedIn={true} onChange={vi.fn()} {...props} />
     </MemoryRouter>
   );
 
@@ -48,6 +50,19 @@ describe('NotesSection', () => {
     fireEvent.click(screen.getByText('Post'));
 
     await waitFor(() => expect(apiService.addAlbumNote).toHaveBeenCalledWith(10, 'Great record'));
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+  });
+
+  test('posts a note via addCollectionNote when entityType is collection', async () => {
+    useAuthStore.setState({ user: { id: 1, admin: false, recall_connected: true } });
+    apiService.addCollectionNote.mockResolvedValue({ data: { id: 6, recall_item_id: 'def' } });
+    const onChange = vi.fn();
+
+    renderNotes({ entityType: 'collection', entityId: 20, onChange });
+    fireEvent.change(screen.getByPlaceholderText(/Write a note/), { target: { value: 'Great collection' } });
+    fireEvent.click(screen.getByText('Post'));
+
+    await waitFor(() => expect(apiService.addCollectionNote).toHaveBeenCalledWith(20, 'Great collection'));
     await waitFor(() => expect(onChange).toHaveBeenCalled());
   });
 
