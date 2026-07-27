@@ -1,10 +1,13 @@
 import { Hono } from 'hono'
+import type { Variables } from '../types.js'
 import { getAlbumSummary } from '../services/wikipedia.js'
 import { streamBase } from '../db/streamUrl.js'
 import { albumsService } from '../services/albumsService.js'
 import { countsService } from '../services/countsService.js'
+import { albumNotesService } from '../services/albumNotesService.js'
+import { createRecallNote, getRecallItem, decryptRecallToken, appendBacklink, stripBacklink } from '../services/recallService.js'
 
-const albums = new Hono()
+const albums = new Hono<{ Variables: Variables }>()
 
 // GET /albums/random?size=N&tag=slug
 albums.get('/random', async (c) => {
@@ -91,7 +94,78 @@ albums.get('/:id', async (c) => {
     album.wikipedia
   )
 
-  return c.json({ album, artist, secondary_artists, compilation_artists, tracks, collections, summary: summary ?? {} })
+  const noteRows = await albumNotesService.listNotesByAlbumId(id)
+  const authorTokens = new Map<number, string>()
+  for (const row of noteRows) {
+    if (!authorTokens.has(row.author_id)) {
+      const conn = await albumNotesService.getConnection(row.author_id)
+      if (conn) authorTokens.set(row.author_id, decryptRecallToken(conn.recall_token))
+    }
+  }
+  const notes = await Promise.all(noteRows.map(async (row) => {
+    const base = { id: row.id, author: { id: row.author_id, username: row.author_username }, created_at: row.created_at }
+    const token = authorTokens.get(row.author_id)
+    if (!token) return { ...base, error: true as const }
+    try {
+      const item = await getRecallItem(token, row.recall_item_id)
+      if (!item) return { ...base, error: true as const }
+      return {
+        ...base,
+        recall_item_id: row.recall_item_id,
+        title: item.title,
+        content: stripBacklink(item.contentText ?? ''),
+      }
+    } catch {
+      return { ...base, error: true as const }
+    }
+  }))
+
+  return c.json({ album, artist, secondary_artists, compilation_artists, tracks, collections, notes, summary: summary ?? {} })
+})
+
+// POST /album/:id/notes — requires a connected Recall account; creates a new journal-style note
+albums.post('/:id/notes', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const albumId = parseInt(c.req.param('id'))
+  const connection = await albumNotesService.getConnection(user.id)
+  if (!connection) return c.json({ error: 'Recall not connected' }, 403)
+
+  const body = await c.req.json()
+  const content = (body.content ?? '').trim()
+  if (!content) return c.json({ error: 'content is required' }, 400)
+
+  const album = await albumsService.findAlbumById(albumId)
+  if (!album) return c.json({ error: 'Album not found' }, 404)
+  const artist = await albumsService.findArtistById(album.artist_id)
+
+  const token = decryptRecallToken(connection.recall_token)
+  const item = await createRecallNote(token, {
+    title: `${album.title} — ${artist?.name ?? 'Unknown Artist'}`,
+    contentText: appendBacklink(content, albumId),
+    tags: ['bemused'],
+  })
+
+  const note = await albumNotesService.createNote(albumId, user.id, item.id)
+  return c.json({ id: note.id, recall_item_id: item.id }, 201)
+})
+
+// DELETE /album/:id/notes/:noteId — unlinks only; the Recall item itself is untouched
+albums.delete('/:id/notes/:noteId', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const noteId = parseInt(c.req.param('noteId'))
+  const note = await albumNotesService.findNoteById(noteId)
+  if (!note) return c.json({ error: 'Not found' }, 404)
+
+  if (note.author_user_id !== user.id && !user.admin) {
+    return c.json({ error: 'Not permitted' }, 403)
+  }
+
+  await albumNotesService.deleteNote(noteId)
+  return c.json({ ok: true })
 })
 
 export default albums
