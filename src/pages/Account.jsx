@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
+import { isLanAccess } from '../utils/device';
 import toast from 'react-hot-toast';
 
 const cardStyle = {
@@ -120,14 +121,14 @@ const Account = () => {
               <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>Set a password to disconnect</span>
             )}
           </div>
-        ) : (
+        ) : !isLanAccess() ? (
           <a
-            href={apiService.getGoogleStartUrl('/account')}
+            href={apiService.getGoogleStartUrl('/account', 'link')}
             style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}
           >
             Connect Google Account
           </a>
-        )}
+        ) : null}
       </div>
 
       {!user?.has_password && (

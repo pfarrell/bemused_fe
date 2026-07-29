@@ -25,7 +25,13 @@ export const apiService = {
   login: (username, password) => api.post('/auth/login', { username, password }),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
-  getGoogleStartUrl: (returnTo = null) => `${getBaseURL()}/auth/google/start${returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : ''}`,
+  getGoogleStartUrl: (returnTo = null, intent = null) => {
+    const params = new URLSearchParams();
+    if (returnTo) params.set('return_to', returnTo);
+    if (intent) params.set('intent', intent);
+    const qs = params.toString();
+    return `${getBaseURL()}/auth/google/start${qs ? `?${qs}` : ''}`;
+  },
   disconnectGoogle: () => api.delete('/auth/google/disconnect'),
   setPassword: (password) => api.put('/auth/set-password', { password }),
 

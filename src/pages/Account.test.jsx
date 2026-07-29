@@ -6,7 +6,13 @@ import { apiService } from '../services/api';
 
 vi.mock('../services/api', () => ({
   apiService: {
-    getGoogleStartUrl: (returnTo) => `/api/auth/google/start${returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : ''}`,
+    getGoogleStartUrl: (returnTo, intent) => {
+      const params = new URLSearchParams();
+      if (returnTo) params.set('return_to', returnTo);
+      if (intent) params.set('intent', intent);
+      const qs = params.toString();
+      return `/api/auth/google/start${qs ? `?${qs}` : ''}`;
+    },
     disconnectGoogle: vi.fn(),
     setPassword: vi.fn(),
   },
@@ -28,7 +34,7 @@ describe('Account', () => {
     useAuthStore.setState({ user: { id: 1, username: 'pat', admin: false, google_connected: false, has_password: true } });
     renderAccount();
     const link = screen.getByText('Connect Google Account');
-    expect(link).toHaveAttribute('href', '/api/auth/google/start?return_to=%2Faccount');
+    expect(link).toHaveAttribute('href', '/api/auth/google/start?return_to=%2Faccount&intent=link');
   });
 
   test('shows a Disconnect button when connected and a password is set', async () => {

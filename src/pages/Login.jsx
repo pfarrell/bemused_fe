@@ -1,8 +1,27 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
+import { isLanAccess } from '../utils/device';
+
+// Error codes the backend's Google OAuth callback redirects here with. Anything
+// unrecognized renders nothing rather than echoing a query-string value.
+const OAUTH_ERROR_MESSAGES = {
+  google_failed: 'Something went wrong connecting to Google. Please try again.',
+  google_email_unverified: "Your Google account's email isn't verified. Please verify it with Google and try again.",
+  google_email_in_use: 'An account with this email already exists — sign in with your password, then connect Google from your Account page.',
+  access_denied: 'Google sign-in was cancelled.',
+};
+
+const errorBannerStyle = {
+  backgroundColor: '#7f1d1d',
+  border: '1px solid #991b1b',
+  borderRadius: '6px',
+  padding: '0.75rem 1rem',
+  color: '#fca5a5',
+  fontSize: '0.875rem',
+};
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -11,7 +30,17 @@ const Login = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { login, loading } = useAuthStore();
+
+  // Own-property check matters: a bare lookup for ?error=constructor returns an
+  // inherited function, which is truthy — that renders an empty red banner (React
+  // drops a function child with a warning rather than printing it).
+  const oauthErrorCode = searchParams.get('error');
+  const oauthError =
+    oauthErrorCode && Object.hasOwn(OAUTH_ERROR_MESSAGES, oauthErrorCode)
+      ? OAUTH_ERROR_MESSAGES[oauthErrorCode]
+      : null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,9 +67,15 @@ const Login = () => {
           <p style={{ color: '#9ca3af', marginTop: '0.5rem' }}>Sign in to your account</p>
         </div>
 
+        {oauthError && (
+          <div data-testid="oauth-error" style={{ ...errorBannerStyle, marginBottom: '1rem' }}>
+            {oauthError}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {error && (
-            <div style={{ backgroundColor: '#7f1d1d', border: '1px solid #991b1b', borderRadius: '6px', padding: '0.75rem 1rem', color: '#fca5a5', fontSize: '0.875rem' }}>
+            <div style={errorBannerStyle}>
               {error}
             </div>
           )}
@@ -87,17 +122,21 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
-          <div style={{ flex: 1, height: '1px', backgroundColor: '#d1d5db' }} />
-          <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>or</span>
-          <div style={{ flex: 1, height: '1px', backgroundColor: '#d1d5db' }} />
-        </div>
-        <a
-          href={apiService.getGoogleStartUrl()}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '1rem', fontWeight: '500', textDecoration: 'none' }}
-        >
-          Continue with Google
-        </a>
+        {!isLanAccess() && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#d1d5db' }} />
+              <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>or</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#d1d5db' }} />
+            </div>
+            <a
+              href={apiService.getGoogleStartUrl()}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '1rem', fontWeight: '500', textDecoration: 'none' }}
+            >
+              Continue with Google
+            </a>
+          </>
+        )}
         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
           <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
             Don't have an account?{' '}

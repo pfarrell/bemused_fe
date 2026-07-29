@@ -62,7 +62,7 @@ function cookieOptionsForRequest(c: Context): { secure: boolean; domain: string 
 const GOOGLE_OAUTH_COOKIE_PATH = '/'
 
 function clearGoogleOAuthCookies(c: Context, domain: string | undefined) {
-  for (const name of ['google_oauth_state', 'google_oauth_verifier', 'google_oauth_from']) {
+  for (const name of ['google_oauth_state', 'google_oauth_verifier', 'google_oauth_from', 'google_oauth_intent']) {
     deleteCookie(c, name, { path: GOOGLE_OAUTH_COOKIE_PATH, domain })
   }
 }
@@ -105,19 +105,37 @@ auth.get('/google/start', async (c) => {
   setCookie(c, 'google_oauth_verifier', codeVerifier, cookieOpts)
   if (returnTo) setCookie(c, 'google_oauth_from', returnTo, cookieOpts)
 
+  // Linking Google to an existing session requires *explicit* intent, set only
+  // by the Account page's "Connect Google Account" link. Without this, any
+  // "Continue with Google" click on /login in a browser where someone else is
+  // still signed in would silently link the new Google account to that session's
+  // user (same-device session hijack).
+  const intentRaw = c.req.query('intent')
+  if (intentRaw === 'link') setCookie(c, 'google_oauth_intent', 'link', cookieOpts)
+
   return c.redirect(url)
 })
 
 // GET /auth/google/callback — validate the code, apply the login/signup/link decision
 auth.get('/google/callback', async (c) => {
   const { domain } = cookieOptionsForRequest(c)
-  const spaBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/bemused/app' : 'http://localhost:5173'
+  const spaBase = process.env.BEMUSED_PUBLIC_URL || 'http://localhost:5173'
+
+  // Google sends ?error=access_denied (and no code/state) when the user declines
+  // consent. Only this one value is allowlisted for its own message — anything
+  // else falls through to the generic google_failed path below.
+  const providerError = c.req.query('error')
+  if (providerError === 'access_denied') {
+    clearGoogleOAuthCookies(c, domain)
+    return c.redirect(`${spaBase}/login?error=access_denied`)
+  }
 
   const code = c.req.query('code')
   const state = c.req.query('state')
   const storedState = getCookie(c, 'google_oauth_state')
   const codeVerifier = getCookie(c, 'google_oauth_verifier')
   const returnTo = getCookie(c, 'google_oauth_from') || null
+  const intent = getCookie(c, 'google_oauth_intent')
 
   if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
     clearGoogleOAuthCookies(c, domain)
@@ -141,7 +159,11 @@ auth.get('/google/callback', async (c) => {
 
   const currentUser = c.get('user')
   const identity = await getIdentity('google', profile.sub)
-  const decision = decideOAuthAction(currentUser?.id ?? null, identity?.user_id ?? null)
+  // Only an explicitly link-intended flow may act on the current session; a
+  // sign-in started from /login or /signup always resolves to login/signup
+  // regardless of whatever session cookie happens to be present.
+  const sessionUserId = intent === 'link' ? (currentUser?.id ?? null) : null
+  const decision = decideOAuthAction(sessionUserId, identity?.user_id ?? null)
 
   let redirectPath = returnTo || '/'
   let loggedInUser: { id: number; username: string; admin: boolean } | undefined
@@ -157,6 +179,14 @@ auth.get('/google/callback', async (c) => {
       break
     }
     case 'signup': {
+      // users.email has no uniqueness constraint, so without this check a Google
+      // signup for an email that already belongs to a password account would
+      // silently create an unmergeable duplicate.
+      const existingByEmail = await authService.findUserByEmail(profile.email)
+      if (existingByEmail) {
+        clearGoogleOAuthCookies(c, domain)
+        return c.redirect(`${spaBase}/login?error=google_email_in_use`)
+      }
       const created = await authService.createUserFromGoogle({ email: profile.email })
       if (!created) {
         clearGoogleOAuthCookies(c, domain)
@@ -269,7 +299,10 @@ auth.post('/login', async (c) => {
     // Find user (case-insensitive username)
     const user = await authService.findUserForLogin(username)
 
-    if (!user) {
+    // A Google-only account has password === null; bcrypt.compare throws on a
+    // null hash, so it must be treated as a failed login (same response, so we
+    // don't leak that the account exists without a password).
+    if (!user || !user.password) {
       return c.json({ error: 'Invalid username or password' }, 401)
     }
 
