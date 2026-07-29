@@ -480,7 +480,7 @@ const AdminArtist = () => {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="admin-page" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '1rem' }}>
         <a
           href={`/artist/${id}`}
@@ -613,14 +613,14 @@ const AdminArtist = () => {
           )}
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-            <div>
+            <div style={{ flex: '1 1 200px', minWidth: 0 }}>
               <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 'bold', fontSize: '0.875rem' }}>Image URL</label>
               <input
                 type="text"
                 value={newImageUrl}
                 onChange={e => setNewImageUrl(e.target.value)}
                 placeholder="https://..."
-                style={{ width: '300px', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
               />
             </div>
             <div>
@@ -711,7 +711,7 @@ const AdminArtist = () => {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', flexWrap: 'wrap' }}>
           <button
             type="submit"
             disabled={saving}
@@ -800,7 +800,7 @@ const AdminArtist = () => {
         {/* Add Relation Form */}
         {showAddRelationSection && (
           <div style={{ marginBottom: '0' }}>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <select
                 value={relationTypeToAdd}
                 onChange={(e) => {

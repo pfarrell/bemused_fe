@@ -1030,6 +1030,20 @@
    ================================= */
 
 @media (max-width: 768px) {
+  /* Admin pages: reduce padding to leave more room for content, and force
+     border-box on all descendants since Tailwind's preflight reset isn't
+     actually active in this build - any inline style pairing an explicit
+     width with padding/border would otherwise overflow the viewport. */
+  .admin-page {
+    padding: 1rem !important;
+  }
+
+  .admin-page *,
+  .admin-page *::before,
+  .admin-page *::after {
+    box-sizing: border-box;
+  }
+
   /* Header adjustments */
   .app-logo {
     display: none !important;
@@ -1723,4 +1737,29 @@
     height: calc(100vh - 2 * var(--mb, 4.5em) - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)) !important;
     height: calc(-webkit-fill-available - 2 * var(--mb, 4.5em) - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)) !important;
   }
+}
+
+/* Markdown tables (via remark-gfm) render as bare unstyled <table> elements
+   otherwise - add borders/padding so they're actually legible. */
+.note-markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.note-markdown th,
+.note-markdown td {
+  border: 1px solid #e5e7eb;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.note-markdown th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+.note-markdown p {
+  margin: 0.5rem 0;
 }

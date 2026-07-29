@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 
@@ -89,8 +90,8 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
           {note.error ? (
             <div style={{ color: '#9ca3af', fontStyle: 'italic' }}>Note unavailable</div>
           ) : (
-            <div style={{ lineHeight: '1.6', color: '#374151' }}>
-              <ReactMarkdown>{note.content}</ReactMarkdown>
+            <div className="note-markdown" style={{ lineHeight: '1.6', color: '#374151' }}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
             </div>
           )}
         </div>

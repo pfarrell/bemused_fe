@@ -5,9 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
+import CollectionResultCard from '../components/CollectionResultCard';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function Collections() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,8 +46,21 @@ export default function Collections() {
         <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
           <p style={{ fontSize: '1.125rem' }}>No collections found</p>
         </div>
+      ) : isMobile ? (
+        <div className="artist-grid">
+          <div className="artist-grid-container">
+            {collections.map((collection) => (
+              <CollectionResultCard
+                key={collection.id}
+                collection={collection}
+                imageUrl={apiService.getImageUrl(collection.image_path, 'album_small')}
+                onClick={() => navigate(`/collection/${collection.id}`)}
+              />
+            ))}
+          </div>
+        </div>
       ) : (
-        <div style={{
+        <div className="artist-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: '1.5rem'
