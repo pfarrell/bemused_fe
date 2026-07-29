@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
+    "arctic": "^3.7.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.0",
