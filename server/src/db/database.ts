@@ -131,7 +131,7 @@ interface UserTable {
   id: Generated<number>
   username: string
   email: string | null
-  password: string
+  password: string | null
   admin: boolean
   default_tag: string | null
   created_at: ColumnType<Date, never, never>
@@ -251,6 +251,15 @@ interface UserRecallTokenTable {
   connected_at: ColumnType<Date, string | Date | undefined, never>
 }
 
+interface OAuthIdentityTable {
+  id: Generated<number>
+  provider: string
+  provider_user_id: string
+  user_id: number
+  email: string
+  created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
 interface NoteTable {
   id: Generated<number>
   target_id: number
@@ -285,6 +294,7 @@ export interface Database {
   discovery_sources: DiscoverySourceTable
   user_recall_tokens: UserRecallTokenTable
   notes: NoteTable
+  oauth_identities: OAuthIdentityTable
 }
 
 // ---- DB instance ----
