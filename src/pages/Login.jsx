@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { apiService } from '../services/api';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -86,6 +87,17 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#d1d5db' }} />
+          <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>or</span>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#d1d5db' }} />
+        </div>
+        <a
+          href={apiService.getGoogleStartUrl()}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '1rem', fontWeight: '500', textDecoration: 'none' }}
+        >
+          Continue with Google
+        </a>
         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
           <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
             Don't have an account?{' '}
