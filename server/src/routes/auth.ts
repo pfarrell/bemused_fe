@@ -14,7 +14,9 @@ import {
   fetchGoogleProfile,
   decideOAuthAction,
   getIdentity,
+  getIdentityForUser,
   createIdentity,
+  deleteIdentity,
 } from '../services/googleOAuthService.js'
 
 const auth = new Hono<{ Variables: Variables }>()
@@ -62,6 +64,26 @@ const GOOGLE_OAUTH_COOKIE_PATH = '/'
 function clearGoogleOAuthCookies(c: Context, domain: string | undefined) {
   for (const name of ['google_oauth_state', 'google_oauth_verifier', 'google_oauth_from']) {
     deleteCookie(c, name, { path: GOOGLE_OAUTH_COOKIE_PATH, domain })
+  }
+}
+
+type AuthUser = { id: number; username: string; email: string | null; admin: boolean; default_tag: string | null }
+
+async function buildUserPayload(user: AuthUser) {
+  const [recallConnection, googleIdentity, hasPassword] = await Promise.all([
+    notesService.getConnection(user.id),
+    getIdentityForUser(user.id, 'google'),
+    authService.hasPassword(user.id),
+  ])
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    admin: user.admin,
+    default_tag: user.default_tag ?? null,
+    recall_connected: Boolean(recallConnection),
+    google_connected: Boolean(googleIdentity),
+    has_password: hasPassword,
   }
 }
 
@@ -226,17 +248,7 @@ auth.post('/signup', async (c) => {
     })
 
     // Return user data (without password)
-    const recallConnection = await notesService.getConnection(user.id)
-    return c.json({
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        admin: user.admin,
-        default_tag: user.default_tag ?? null,
-        recall_connected: Boolean(recallConnection),
-      },
-    })
+    return c.json({ user: await buildUserPayload(user) })
   } catch (error: any) {
     console.error('Signup error:', error)
     return c.json({ error: 'Failed to create account' }, 500)
@@ -282,17 +294,7 @@ auth.post('/login', async (c) => {
     })
 
     // Return user data (without password)
-    const recallConnection = await notesService.getConnection(user.id)
-    return c.json({
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        admin: user.admin,
-        default_tag: user.default_tag ?? null,
-        recall_connected: Boolean(recallConnection),
-      },
-    })
+    return c.json({ user: await buildUserPayload(user) })
   } catch (error: any) {
     console.error('Login error:', error)
     return c.json({ error: 'Authentication failed' }, 500)
@@ -321,17 +323,7 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Not authenticated' }, 401)
     }
 
-    const recallConnection = await notesService.getConnection(user.id)
-    return c.json({
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        admin: user.admin,
-        default_tag: user.default_tag ?? null,
-        recall_connected: Boolean(recallConnection),
-      },
-    })
+    return c.json({ user: await buildUserPayload(user) })
   } catch (error: any) {
     console.error('Get user error:', error)
     return c.json({ error: 'Failed to get user info' }, 500)
@@ -404,6 +396,43 @@ auth.delete('/recall/connect', async (c) => {
   if (!user) return c.json({ error: 'Authentication required' }, 401)
 
   await notesService.deleteConnection(user.id)
+  return c.json({ ok: true })
+})
+
+// PUT /auth/set-password — for accounts created via Google with no password yet
+auth.put('/set-password', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const body = await c.req.json()
+  const { password } = body
+  if (!password || password.length < 6) {
+    return c.json({ error: 'Password must be at least 6 characters' }, 400)
+  }
+
+  if (await authService.hasPassword(user.id)) {
+    return c.json({ error: 'Password already set' }, 400)
+  }
+
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
+  await authService.setPassword(user.id, passwordHash)
+  return c.json({ ok: true })
+})
+
+// DELETE /auth/google/disconnect — unlink Google; blocked if it would lock the user out
+auth.delete('/google/disconnect', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const hasPassword = await authService.hasPassword(user.id)
+  if (!hasPassword) {
+    return c.json({ error: 'Set a password before disconnecting Google' }, 400)
+  }
+
+  const identity = await getIdentityForUser(user.id, 'google')
+  if (!identity) return c.json({ error: 'No Google account connected' }, 400)
+
+  await deleteIdentity(user.id, 'google')
   return c.json({ ok: true })
 })
 
