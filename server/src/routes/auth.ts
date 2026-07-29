@@ -2,12 +2,20 @@ import { Hono } from 'hono'
 import type { Context } from 'hono'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { setCookie, deleteCookie } from 'hono/cookie'
+import { setCookie, getCookie, deleteCookie } from 'hono/cookie'
 import type { Variables } from '../types.js'
 import { authService } from '../services/authService.js'
 import { isLanHost } from '../db/streamUrl.js'
 import { recallAuthUrl, signRecallState, verifyRecallState, encryptRecallToken } from '../services/recallService.js'
 import { notesService } from '../services/notesService.js'
+import {
+  createAuthorization,
+  exchangeCode,
+  fetchGoogleProfile,
+  decideOAuthAction,
+  getIdentity,
+  createIdentity,
+} from '../services/googleOAuthService.js'
 
 const auth = new Hono<{ Variables: Variables }>()
 
@@ -39,6 +47,130 @@ function cookieOptionsForRequest(c: Context): { secure: boolean; domain: string 
     domain: isLan ? undefined : '.patf.com',
   }
 }
+
+// Path must be '/', not a sub-path like '/auth/google': both nginx
+// (`rewrite ^/bemused/api/(.*) /$1 break`) and the Vite dev proxy strip the
+// /api prefix before the request reaches this Hono app, so the backend
+// never sees the same path the *browser* used to set the cookie. A
+// Path=/auth/google cookie set in response to a browser request for
+// /bemused/api/auth/google/start would never be sent back on
+// /bemused/api/auth/google/callback, since that's the path the browser
+// compares against, not whatever path Hono thinks it's routing internally.
+// The existing `auth` cookie already sidesteps this the same way (path: '/').
+const GOOGLE_OAUTH_COOKIE_PATH = '/'
+
+function clearGoogleOAuthCookies(c: Context, domain: string | undefined) {
+  for (const name of ['google_oauth_state', 'google_oauth_verifier', 'google_oauth_from']) {
+    deleteCookie(c, name, { path: GOOGLE_OAUTH_COOKIE_PATH, domain })
+  }
+}
+
+// GET /auth/google/start — kick off the PKCE flow, redirect to Google
+auth.get('/google/start', async (c) => {
+  const { url, state, codeVerifier } = createAuthorization()
+
+  const returnToRaw = c.req.query('return_to')
+  const returnTo = returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//') ? returnToRaw : null
+
+  const cookieOpts = {
+    httpOnly: true,
+    sameSite: 'Lax' as const,
+    maxAge: 600, // 10 minutes
+    path: GOOGLE_OAUTH_COOKIE_PATH,
+    ...cookieOptionsForRequest(c),
+  }
+  setCookie(c, 'google_oauth_state', state, cookieOpts)
+  setCookie(c, 'google_oauth_verifier', codeVerifier, cookieOpts)
+  if (returnTo) setCookie(c, 'google_oauth_from', returnTo, cookieOpts)
+
+  return c.redirect(url)
+})
+
+// GET /auth/google/callback — validate the code, apply the login/signup/link decision
+auth.get('/google/callback', async (c) => {
+  const { domain } = cookieOptionsForRequest(c)
+  const spaBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/bemused/app' : 'http://localhost:5173'
+
+  const code = c.req.query('code')
+  const state = c.req.query('state')
+  const storedState = getCookie(c, 'google_oauth_state')
+  const codeVerifier = getCookie(c, 'google_oauth_verifier')
+  const returnTo = getCookie(c, 'google_oauth_from') || null
+
+  if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
+    clearGoogleOAuthCookies(c, domain)
+    return c.redirect(`${spaBase}/login?error=google_failed`)
+  }
+
+  let profile
+  try {
+    const accessToken = await exchangeCode(code, codeVerifier)
+    profile = await fetchGoogleProfile(accessToken)
+  } catch (error) {
+    console.error('Google OAuth exchange failed:', error)
+    clearGoogleOAuthCookies(c, domain)
+    return c.redirect(`${spaBase}/login?error=google_failed`)
+  }
+
+  if (!profile.email_verified) {
+    clearGoogleOAuthCookies(c, domain)
+    return c.redirect(`${spaBase}/login?error=google_email_unverified`)
+  }
+
+  const currentUser = c.get('user')
+  const identity = await getIdentity('google', profile.sub)
+  const decision = decideOAuthAction(currentUser?.id ?? null, identity?.user_id ?? null)
+
+  let redirectPath = returnTo || '/'
+  let loggedInUser: { id: number; username: string; admin: boolean } | undefined
+
+  switch (decision.kind) {
+    case 'login': {
+      const found = await authService.findUserById(decision.userId)
+      if (!found) {
+        clearGoogleOAuthCookies(c, domain)
+        return c.redirect(`${spaBase}/login?error=google_failed`)
+      }
+      loggedInUser = found
+      break
+    }
+    case 'signup': {
+      const created = await authService.createUserFromGoogle({ email: profile.email })
+      if (!created) {
+        clearGoogleOAuthCookies(c, domain)
+        return c.redirect(`${spaBase}/login?error=google_failed`)
+      }
+      await createIdentity({ provider: 'google', providerUserId: profile.sub, userId: created.id, email: profile.email })
+      loggedInUser = created
+      break
+    }
+    case 'link': {
+      await createIdentity({ provider: 'google', providerUserId: profile.sub, userId: decision.userId, email: profile.email })
+      redirectPath = '/account?linked=google'
+      break
+    }
+    case 'link-noop':
+      redirectPath = '/account'
+      break
+    case 'link-conflict':
+      clearGoogleOAuthCookies(c, domain)
+      return c.redirect(`${spaBase}/account?error=google_already_linked`)
+  }
+
+  if (loggedInUser) {
+    const token = generateToken(loggedInUser.id, loggedInUser.username, loggedInUser.admin)
+    setCookie(c, 'auth', token, {
+      httpOnly: true,
+      sameSite: 'Lax',
+      maxAge: 86400 * 14,
+      path: '/',
+      ...cookieOptionsForRequest(c),
+    })
+  }
+
+  clearGoogleOAuthCookies(c, domain)
+  return c.redirect(`${spaBase}${redirectPath}`)
+})
 
 // POST /auth/signup - Create new user account
 auth.post('/signup', async (c) => {
