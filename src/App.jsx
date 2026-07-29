@@ -14,6 +14,7 @@ import Search from './pages/Search';
 import Artist from './pages/Artist';
 import Album from './pages/Album';
 import Library from './pages/Library';
+import Account from './pages/Account';
 import Playlists from './pages/Playlists';
 import Playlist from './pages/Playlist';
 import Collections from './pages/Collections';
@@ -207,6 +208,11 @@ function App() {
                 <Route path="/artist/:id" element={<Artist />} />
                 <Route path="/album/:id" element={<Album />} />
                 <Route path="/library" element={<Library />} />
+                <Route path="/account" element={
+                  <ProtectedRoute>
+                    <Account />
+                  </ProtectedRoute>
+                } />
                 <Route path="/playlists" element={<Playlists />} />
                 <Route path="/playlist/:id" element={<Playlist />} />
                 <Route path="/collections" element={<Collections />} />
