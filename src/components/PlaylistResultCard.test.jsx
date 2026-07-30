@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PlaylistResultCard from './PlaylistResultCard';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
+import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 vi.mock('../services/api', () => ({
   apiService: {
@@ -129,5 +131,37 @@ describe('mobile row layout', () => {
       false,
       { flashActivity: true }
     );
+  });
+});
+
+describe('PlaylistResultCard — Favorite menu item', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ isAuthenticated: false });
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
+  });
+
+  test('right-click does nothing when logged out', () => {
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Playlist').closest('.artist-card'));
+    expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+  });
+
+  test('right-click shows the Favorite item when logged in', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Playlist').closest('.artist-card'));
+    expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
+  });
+
+  test('clicking it calls toggleFavorite with the playlist kind/id', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const toggleFavorite = vi.fn();
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Playlist').closest('.artist-card'));
+
+    fireEvent.click(screen.getByText('☆ Add to Favorites'));
+
+    expect(toggleFavorite).toHaveBeenCalledWith('playlist', playlist.id, expect.objectContaining({ id: playlist.id, name: playlist.name }));
   });
 });

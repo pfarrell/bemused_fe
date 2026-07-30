@@ -3,13 +3,23 @@ import { useState } from 'react';
 import { formatCount } from '../utils/formatters';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
+import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 import ResultRow from './ResultRow';
+import ContextMenu from './ContextMenu';
+import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 const PlaylistResultCard = ({ playlist, onClick, imageUrl }) => {
   const isMobile = useIsMobile();
   const [playLoading, setPlayLoading] = useState(false);
   const { clearPlaylist, addTracks } = usePlayerStore();
+  const { isAuthenticated } = useAuthStore();
+  const isFavorite = useFavoritesStore((s) => s.isFavorite('playlist', playlist.id));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const ctxMenu = useContextMenu({
+    shouldIgnore: (e) => !isAuthenticated || e.target.closest('[data-result-row-play]'),
+  });
 
   const handleImageError = (e) => {
     if (e.target.src.includes('/sm/')) {
@@ -43,45 +53,80 @@ const PlaylistResultCard = ({ playlist, onClick, imageUrl }) => {
     addTracks(tracks, false, { flashActivity: true });
   });
 
+  const handleToggleFavorite = (e) => {
+    e.stopPropagation();
+    toggleFavorite('playlist', playlist.id, {
+      id: playlist.id,
+      name: playlist.name,
+      image_path: playlist.image_path,
+      track_count: playlist.track_count,
+    });
+    ctxMenu.close();
+  };
+
+  const menu = (
+    <ContextMenu
+      open={ctxMenu.open}
+      position={ctxMenu.position}
+      onDismiss={ctxMenu.dismiss}
+      onSwallowTouch={ctxMenu.swallowTouch}
+      testId="playlist-card-menu-backdrop"
+    >
+      <button onClick={handleToggleFavorite} onTouchEnd={(e) => { e.preventDefault(); handleToggleFavorite(e); }}>
+        {isFavorite ? '★ Remove from Favorites' : '☆ Add to Favorites'}
+      </button>
+    </ContextMenu>
+  );
+
   if (isMobile) {
     const trackCount = formatCount(playlist.track_count || null, 'track');
     return (
-      <ResultRow
-        imageUrl={imageUrl}
-        imageShape="square"
-        title={playlist.name}
-        subtitle={trackCount ? `Playlist · ${trackCount}` : 'Playlist'}
-        onClick={() => onClick(playlist)}
-        onImageError={handleImageError}
-        play={{
-          loading: playLoading,
-          onPlay: handlePlayAll,
-          onPlayNext: handlePlayNext,
-          onAddToQueue: handleAddToQueue,
-          label: `Play ${playlist.name}`,
-        }}
-      />
+      <>
+        <ResultRow
+          imageUrl={imageUrl}
+          imageShape="square"
+          title={playlist.name}
+          subtitle={trackCount ? `Playlist · ${trackCount}` : 'Playlist'}
+          onClick={() => !ctxMenu.open && onClick(playlist)}
+          onImageError={handleImageError}
+          onContextMenu={ctxMenu.triggerProps.onContextMenu}
+          onTouchStart={ctxMenu.triggerProps.onTouchStart}
+          onTouchMove={ctxMenu.triggerProps.onTouchMove}
+          onTouchEnd={ctxMenu.triggerProps.onTouchEnd}
+          play={{
+            loading: playLoading,
+            onPlay: handlePlayAll,
+            onPlayNext: handlePlayNext,
+            onAddToQueue: handleAddToQueue,
+            label: `Play ${playlist.name}`,
+          }}
+        />
+        {menu}
+      </>
     );
   }
 
   return (
-    <div className="artist-card" onClick={() => onClick(playlist)}>
-      <div className="artist-card-image">
-        <img
-          src={imageUrl}
-          alt={playlist.name}
-          onError={handleImageError}
-        />
+    <>
+      <div className="artist-card" onClick={() => !ctxMenu.open && onClick(playlist)} {...ctxMenu.triggerProps}>
+        <div className="artist-card-image">
+          <img
+            src={imageUrl}
+            alt={playlist.name}
+            onError={handleImageError}
+          />
+        </div>
+        <div className="artist-card-title">
+          <h3>{playlist.name}</h3>
+          {formatCount(playlist.track_count || null, 'track') && (
+            <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
+              {formatCount(playlist.track_count || null, 'track')}
+            </p>
+          )}
+        </div>
       </div>
-      <div className="artist-card-title">
-        <h3>{playlist.name}</h3>
-        {formatCount(playlist.track_count || null, 'track') && (
-          <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
-            {formatCount(playlist.track_count || null, 'track')}
-          </p>
-        )}
-      </div>
-    </div>
+      {menu}
+    </>
   );
 };
 
