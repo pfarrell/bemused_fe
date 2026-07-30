@@ -390,6 +390,26 @@ const Layout = ({ children }) => {
                       <button
                         onClick={() => {
                           setShowDropdown(false);
+                          navigate('/library');
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '0.5rem 1rem',
+                          background: 'none',
+                          border: 'none',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                        Favorites
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDropdown(false);
                           navigate('/account');
                         }}
                         style={{
