@@ -12,7 +12,7 @@ const MENU_PADDING = 16;
 const ContextMenu = ({ open, position, onDismiss, onSwallowTouch, testId = 'context-menu-backdrop', children }) => {
   if (!open) return null;
 
-  const menuHeight = Children.count(children) * BUTTON_HEIGHT + MENU_PADDING;
+  const menuHeight = Children.toArray(children).filter(Boolean).length * BUTTON_HEIGHT + MENU_PADDING;
   let left = position.x;
   let top = position.y;
   if (left + MENU_WIDTH > window.innerWidth) left = window.innerWidth - MENU_WIDTH - 10;
