@@ -9,16 +9,29 @@ import Track from '../components/Track';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import ShareButton from '../components/ShareButton';
+import ContextMenu from '../components/ContextMenu';
+import { useContextMenu } from '../hooks/useContextMenu';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 export default function Playlist() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addTracks, clearPlaylist, currentTrack, setPageTracks } = usePlayerStore();
-  const { user, isAdmin } = useAuthStore();
+  const { user, isAdmin, isAuthenticated } = useAuthStore();
   const [playlistData, setPlaylistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite('playlist', parseInt(id)));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
+
+  const handleToggleFavorite = () => {
+    if (!playlistData?.playlist) return;
+    const { playlist: p } = playlistData;
+    toggleFavorite('playlist', p.id, { id: p.id, name: p.name, image_path: p.image_path, track_count: playlistData.tracks?.length });
+    ctxMenu.close();
+  };
 
   useEffect(() => {
     loadPlaylist();
@@ -66,15 +79,18 @@ export default function Playlist() {
   return (
     <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
       {/* Playlist Header */}
-      <div style={{
-        display: 'flex',
-        gap: '2rem',
-        marginBottom: '2rem',
-        backgroundColor: 'white',
-        padding: '2rem',
-        borderRadius: '0.5rem',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '2rem',
+          marginBottom: '2rem',
+          backgroundColor: 'white',
+          padding: '2rem',
+          borderRadius: '0.5rem',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}
+        {...ctxMenu.triggerProps}
+      >
         {/* Playlist Image */}
         <div style={{ flexShrink: 0 }}>
           {playlist.image_path ? (
@@ -175,6 +191,21 @@ export default function Playlist() {
           </div>
         </div>
       </div>
+
+      <ContextMenu
+        open={ctxMenu.open}
+        position={ctxMenu.position}
+        onDismiss={ctxMenu.dismiss}
+        onSwallowTouch={ctxMenu.swallowTouch}
+        testId="playlist-header-menu-backdrop"
+      >
+        <button
+          onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleFavorite(); }}
+        >
+          {isFavorite ? '★ Remove from Favorites' : '☆ Add to Favorites'}
+        </button>
+      </ContextMenu>
 
       {showImageModal && playlist.image_path && createPortal(
         <div

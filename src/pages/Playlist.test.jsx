@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Playlist from './Playlist';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 import { apiService } from '../services/api';
 
 vi.mock('../services/api', () => ({
@@ -31,7 +32,8 @@ const renderPlaylist = () =>
 
 beforeEach(() => {
   apiService.getPlaylist.mockResolvedValue({ data: playlistData });
-  useAuthStore.setState({ isAdmin: false, user: null });
+  useAuthStore.setState({ isAdmin: false, user: null, isAuthenticated: true });
+  useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
 });
 
 describe('Playlist page', () => {
@@ -55,5 +57,38 @@ describe('Playlist page', () => {
     unmount();
 
     expect(usePlayerStore.getState().pageTracks).toEqual([]);
+  });
+});
+
+describe('Playlist page — header context menu', () => {
+  test('right-clicking the header shows Favorite', async () => {
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    fireEvent.contextMenu(screen.getByText('Test Playlist').closest('div'));
+
+    expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
+  });
+
+  test('shows nothing on right-click when logged out', async () => {
+    useAuthStore.setState({ isAdmin: false, user: null, isAuthenticated: false });
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    fireEvent.contextMenu(screen.getByText('Test Playlist').closest('div'));
+
+    expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+  });
+
+  test('clicking Favorite calls toggleFavorite with the playlist kind/id', async () => {
+    const toggleFavorite = vi.fn();
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    fireEvent.contextMenu(screen.getByText('Test Playlist').closest('div'));
+    fireEvent.click(screen.getByText('☆ Add to Favorites'));
+
+    expect(toggleFavorite).toHaveBeenCalledWith('playlist', playlistData.playlist.id, expect.objectContaining({ id: playlistData.playlist.id, name: playlistData.playlist.name }));
   });
 });

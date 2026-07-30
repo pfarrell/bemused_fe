@@ -12,6 +12,9 @@ import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import TagsSection from '../components/TagsSection';
 import ShareButton from '../components/ShareButton';
+import ContextMenu from '../components/ContextMenu';
+import { useContextMenu } from '../hooks/useContextMenu';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 const Artist = () => {
   const { id } = useParams();
@@ -25,6 +28,19 @@ const Artist = () => {
   const [showAllSimilar, setShowAllSimilar] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [showArtistModal, setShowArtistModal] = useState(false);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite('artist', parseInt(id)));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
+
+  const handleToggleFavorite = () => {
+    if (!artistData?.artist) return;
+    toggleFavorite('artist', artistData.artist.id, {
+      id: artistData.artist.id,
+      name: artistData.artist.name,
+      image_path: artistData.artist.image_path,
+    });
+    ctxMenu.close();
+  };
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth <= 768);
@@ -103,7 +119,7 @@ const Artist = () => {
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Artist Header */}
-      <div className='media-page-header'>
+      <div className='media-page-header' {...ctxMenu.triggerProps}>
         {/* Artist Image */}
         <div style={{ flexShrink: 0 }}>
           <img
@@ -272,6 +288,21 @@ const Artist = () => {
 
         </div>
       </div>
+
+      <ContextMenu
+        open={ctxMenu.open}
+        position={ctxMenu.position}
+        onDismiss={ctxMenu.dismiss}
+        onSwallowTouch={ctxMenu.swallowTouch}
+        testId="artist-header-menu-backdrop"
+      >
+        <button
+          onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleFavorite(); }}
+        >
+          {isFavorite ? '★ Remove from Favorites' : '☆ Add to Favorites'}
+        </button>
+      </ContextMenu>
 
       {/* Albums Grid */}
       {albums && albums.length > 0 && (

@@ -8,6 +8,9 @@ import AlbumCard from '../components/AlbumCard';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import NotesSection from '../components/NotesSection';
+import ContextMenu from '../components/ContextMenu';
+import { useContextMenu } from '../hooks/useContextMenu';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 export default function Collection() {
   const { id } = useParams();
@@ -17,6 +20,16 @@ export default function Collection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite('collection', parseInt(id)));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
+
+  const handleToggleFavorite = () => {
+    if (!collectionData?.collection) return;
+    const { collection: c } = collectionData;
+    toggleFavorite('collection', c.id, { id: c.id, name: c.name, image_path: c.image_path, album_count: collectionData.albums?.length });
+    ctxMenu.close();
+  };
 
   useEffect(() => {
     loadCollection();
@@ -45,15 +58,18 @@ export default function Collection() {
   return (
     <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
       {/* Collection Header */}
-      <div style={{
-        display: 'flex',
-        gap: '2rem',
-        marginBottom: '2rem',
-        backgroundColor: 'white',
-        padding: '2rem',
-        borderRadius: '0.5rem',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '2rem',
+          marginBottom: '2rem',
+          backgroundColor: 'white',
+          padding: '2rem',
+          borderRadius: '0.5rem',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}
+        {...ctxMenu.triggerProps}
+      >
         {/* Collection Image */}
         <div style={{ flexShrink: 0 }}>
           {collection.image_path ? (
@@ -115,6 +131,21 @@ export default function Collection() {
           </p>
         </div>
       </div>
+
+      <ContextMenu
+        open={ctxMenu.open}
+        position={ctxMenu.position}
+        onDismiss={ctxMenu.dismiss}
+        onSwallowTouch={ctxMenu.swallowTouch}
+        testId="collection-header-menu-backdrop"
+      >
+        <button
+          onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleFavorite(); }}
+        >
+          {isFavorite ? '★ Remove from Favorites' : '☆ Add to Favorites'}
+        </button>
+      </ContextMenu>
 
       {showImageModal && collection.image_path && createPortal(
         <div
