@@ -11,6 +11,7 @@ import streams, { downloads } from './routes/streams.js'
 import logs from './routes/logs.js'
 import playlists from './routes/playlists.js'
 import collections from './routes/collections.js'
+import favorites from './routes/favorites.js'
 import tags from './routes/tags.js'
 import share from './routes/share.js'
 import admin from './routes/admin.js'
@@ -71,6 +72,7 @@ app.route('/playlist', playlists)
 app.route('/playlists', playlists)
 app.route('/collection', collections)
 app.route('/collections', collections)
+app.route('/favorites', favorites)
 app.route('/tags', tags)
 app.route('/share', share)
 app.route('/top', playlists)

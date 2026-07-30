@@ -22,7 +22,7 @@ function buildTrack(t: any, c: Context) {
   }
 }
 
-async function fetchTracksForIds(trackIds: number[], c: Context) {
+export async function fetchTracksForIds(trackIds: number[], c: Context) {
   if (!trackIds.length) return []
   const rows = await db
     .selectFrom('tracks')
