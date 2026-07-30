@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import ArtistCard from './ArtistCard';
+import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 const artist = { id: 1, name: 'Test Artist', image_path: 'x.jpg' };
 
@@ -40,5 +42,45 @@ describe('mobile row layout', () => {
     render(<ArtistCard artist={artist} onClick={onClick} imageUrl="/img/sm/x.jpg" />);
     fireEvent.click(screen.getByText('Test Artist'));
     expect(onClick).toHaveBeenCalledWith(artist);
+  });
+});
+
+describe('ArtistCard — Favorite menu item', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ isAuthenticated: false });
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
+  });
+
+  test('right-click does nothing when logged out', () => {
+    render(<ArtistCard artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Artist').closest('.artist-card'));
+    expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+  });
+
+  test('right-click shows the Favorite item when logged in', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    render(<ArtistCard artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Artist').closest('.artist-card'));
+    expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
+  });
+
+  test('clicking it calls toggleFavorite with the artist kind/id', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const toggleFavorite = vi.fn();
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
+    render(<ArtistCard artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Artist').closest('.artist-card'));
+
+    fireEvent.click(screen.getByText('☆ Add to Favorites'));
+
+    expect(toggleFavorite).toHaveBeenCalledWith('artist', artist.id, expect.objectContaining({ id: artist.id, name: artist.name }));
+  });
+
+  test('shows "Remove from Favorites" when already favorited', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    useFavoritesStore.setState({ isFavorite: () => true, toggleFavorite: vi.fn() });
+    render(<ArtistCard artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Artist').closest('.artist-card'));
+    expect(screen.getByText('★ Remove from Favorites')).toBeInTheDocument();
   });
 });
