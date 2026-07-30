@@ -1740,10 +1740,20 @@
 }
 
 /* Markdown tables (via remark-gfm) render as bare unstyled <table> elements
-   otherwise - add borders/padding so they're actually legible. */
+   otherwise - add borders/padding so they're actually legible. A table with
+   long unbreakable cell content (e.g. a URL) can force its min-content width
+   past the container even with width: 100% - auto table layout takes the max
+   of the specified width and the summed column min-content widths. Without a
+   scroll container, that widens .note-markdown, then NotesSection, then the
+   whole page, causing horizontal scroll on mobile. Scope the scrollbar to the
+   markdown wrapper instead so wide tables scroll in place. */
+.note-markdown {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 .note-markdown table {
   border-collapse: collapse;
-  width: 100%;
   margin: 0.5rem 0;
   font-size: 0.9rem;
 }

@@ -12,6 +12,7 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
   const [content, setContent] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState(null);
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth <= 768);
 
   const isConnected = Boolean(user?.recall_connected);
   const addNoteFn = entityType === 'collection' ? apiService.addCollectionNote : apiService.addAlbumNote;
@@ -52,17 +53,27 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
       borderRadius: '8px',
       border: '1px solid #e5e7eb'
     }}>
-      <div style={{
-        fontSize: '0.75rem',
-        fontWeight: '600',
-        color: '#6b7280',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        marginBottom: '0.75rem'
-      }}>
-        Notes
+      <div
+        onClick={() => setCollapsed((c) => !c)}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '0.75rem',
+          fontWeight: '600',
+          color: '#6b7280',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          marginBottom: collapsed ? 0 : '0.75rem',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        <span>Notes{notes.length > 0 ? ` (${notes.length})` : ''}</span>
+        <span aria-hidden="true">{collapsed ? '▸' : '▾'}</span>
       </div>
 
+      {collapsed ? null : <>
       {notes.map((note) => (
         <div key={note.id} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.35rem' }}>
@@ -150,6 +161,7 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
           </a>
         )
       )}
+      </>}
     </div>
   );
 };
