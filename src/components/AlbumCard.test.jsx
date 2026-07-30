@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import AlbumCard from './AlbumCard';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
+import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 vi.mock('./AddToCollectionModal', () => ({ default: () => null }));
 vi.mock('../services/api', () => ({
@@ -302,5 +304,38 @@ describe('mobile row layout', () => {
 
     expect(screen.queryByText('▣ Add to Collection')).toBeNull();
     vi.useRealTimers();
+  });
+});
+
+describe('AlbumCard — Favorite menu item', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ isAuthenticated: false });
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
+  });
+
+  test('does not render when logged out', () => {
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+    expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+  });
+
+  test('shows "Add to Favorites" alongside "Add to Collection" when logged in', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+    expect(screen.getByText('▣ Add to Collection')).toBeInTheDocument();
+    expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
+  });
+
+  test('clicking it calls toggleFavorite with the album kind/id', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const toggleFavorite = vi.fn();
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+
+    fireEvent.click(screen.getByText('☆ Add to Favorites'));
+
+    expect(toggleFavorite).toHaveBeenCalledWith('album', album.id, expect.objectContaining({ id: album.id, title: album.title }));
   });
 });
