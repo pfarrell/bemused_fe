@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Track from './Track';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 vi.mock('./AddToPlaylistModal', () => ({ default: () => null }));
 vi.mock('./TrackNotesModal', () => ({ default: () => null }));
@@ -39,6 +40,7 @@ beforeEach(() => {
     playTrackAtIndex: vi.fn(),
   });
   useAuthStore.setState({ isAuthenticated: false });
+  useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
 });
 
 describe('Track component', () => {
@@ -254,5 +256,43 @@ describe('Track component — per-track artist display', () => {
       },
     });
     expect(screen.getByText(/- Orphan Artist/)).toBeInTheDocument();
+  });
+});
+
+describe('Track component — Favorite menu item', () => {
+  test('does not render when logged out', () => {
+    useAuthStore.setState({ isAuthenticated: false });
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+  });
+
+  test('shows "Add to Favorites" when not yet favorited', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
+  });
+
+  test('shows "Remove from Favorites" when already favorited', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    useFavoritesStore.setState({ isFavorite: () => true, toggleFavorite: vi.fn() });
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.getByText('★ Remove from Favorites')).toBeInTheDocument();
+  });
+
+  test('clicking it calls toggleFavorite with the track kind/id and closes the menu', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const toggleFavorite = vi.fn();
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+
+    fireEvent.click(screen.getByText('☆ Add to Favorites'));
+
+    expect(toggleFavorite).toHaveBeenCalledWith('track', mockTrack.id, expect.objectContaining({ id: mockTrack.id, title: mockTrack.title }));
+    expect(screen.queryByText('☆ Add to Favorites')).not.toBeInTheDocument();
   });
 });
