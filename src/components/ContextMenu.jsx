@@ -1,7 +1,7 @@
 import { Children } from 'react';
 import { createPortal } from 'react-dom';
 
-const MENU_WIDTH = 200; // matches .track-dropdown's CSS min-width
+const MENU_WIDTH = 240; // clamp estimate used before layout; comfortably covers the mobile breakpoint's 200px min-width plus longer labels (e.g. "★ Remove from Favorites") at its larger 1rem font/padding
 const BUTTON_HEIGHT = 44;
 const MENU_PADDING = 16;
 

@@ -51,8 +51,8 @@ test('menu clamps left position to stay on-screen', () => {
   const left = parseInt(style.left);
 
   // Menu should be clamped when it would exceed window width
-  // 900 + 200 (MENU_WIDTH) = 1100 > 1024, so left should be 1024 - 200 - 10 = 814
-  expect(left).toBe(814);
+  // 900 + 240 (MENU_WIDTH) = 1140 > 1024, so left should be 1024 - 240 - 10 = 774
+  expect(left).toBe(774);
 });
 
 test('renders null when open is false', () => {

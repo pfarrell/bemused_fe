@@ -3,7 +3,7 @@ import { useIsMobile } from './useIsMobile';
 
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
-const MENU_WIDTH_ESTIMATE = 200; // matches ContextMenu's clamp width and the .track-dropdown CSS min-width
+const MENU_WIDTH_ESTIMATE = 200; // matches the mobile breakpoint's .track-dropdown CSS min-width; used only to center the long-press open position, not to clamp (see ContextMenu.jsx's own MENU_WIDTH for the on-screen clamp)
 
 // Shared right-click (desktop) / long-press (mobile) gesture detection for
 // per-item action menus (Track.jsx and AlbumCard.jsx each had their own
