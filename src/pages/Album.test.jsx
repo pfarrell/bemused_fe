@@ -3,10 +3,12 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Album from './Album';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 import { apiService } from '../services/api';
 
 vi.mock('../components/TagsSection', () => ({ default: () => null }));
 vi.mock('../components/NotesSection', () => ({ default: () => null }));
+vi.mock('../components/AddToCollectionModal', () => ({ default: () => null }));
 vi.mock('../services/api', () => ({
   apiService: {
     getAlbum: vi.fn(),
@@ -37,6 +39,7 @@ const renderAlbum = () =>
 beforeEach(() => {
   apiService.getAlbum.mockResolvedValue({ data: albumData });
   useAuthStore.setState({ isAdmin: false, isAuthenticated: true });
+  useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
 });
 
 describe('Album page', () => {
@@ -206,5 +209,40 @@ describe('Album page — collection links', () => {
     await screen.findByText('Test Album');
 
     expect(screen.queryByText(/In collections/)).not.toBeInTheDocument();
+  });
+});
+
+describe('Album page — header context menu', () => {
+  test('right-clicking the header shows Add to Collection and Favorite', async () => {
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.media-page-header'));
+
+    expect(screen.getByText('▣ Add to Collection')).toBeInTheDocument();
+    expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
+  });
+
+  test('shows Add to Collection but not Favorite when logged out', async () => {
+    useAuthStore.setState({ isAdmin: false, isAuthenticated: false });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.media-page-header'));
+
+    expect(screen.getByText('▣ Add to Collection')).toBeInTheDocument();
+    expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+  });
+
+  test('clicking Favorite calls toggleFavorite with the album kind/id', async () => {
+    const toggleFavorite = vi.fn();
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.media-page-header'));
+    fireEvent.click(screen.getByText('☆ Add to Favorites'));
+
+    expect(toggleFavorite).toHaveBeenCalledWith('album', albumData.album.id, expect.objectContaining({ id: albumData.album.id, title: albumData.album.title }));
   });
 });

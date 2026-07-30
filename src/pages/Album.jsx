@@ -12,6 +12,10 @@ import NotesSection from '../components/NotesSection';
 import CompilationArtistLinks from '../components/CompilationArtistLinks';
 import ShareButton from '../components/ShareButton';
 import PlayActionsMenu from '../components/PlayActionsMenu';
+import AddToCollectionModal from '../components/AddToCollectionModal';
+import ContextMenu from '../components/ContextMenu';
+import { useContextMenu } from '../hooks/useContextMenu';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 const Album = () => {
   const { id } = useParams();
@@ -23,6 +27,10 @@ const Album = () => {
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAlbumModal, setShowAlbumModal] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite('album', parseInt(id)));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => e.target.tagName === 'A' || !!e.target.closest('button') });
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -72,6 +80,18 @@ const Album = () => {
     if (albumData?.tracks) {
       addTracks(albumData.tracks, false, { flashActivity: true }); // store auto-starts playback if idle
     }
+  };
+
+  const handleToggleFavorite = () => {
+    if (!albumData?.album) return;
+    toggleFavorite('album', album.id, {
+      id: album.id,
+      title: album.title,
+      image_path: album.image_path,
+      track_count: tracks?.length,
+      artist: artist ? { id: artist.id, name: artist.name } : null,
+    });
+    ctxMenu.close();
   };
 
   // Helper function to check if a track is currently playing
@@ -139,7 +159,7 @@ const Album = () => {
   return (
     <div style={{ padding: '.5rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Album Header */}
-      <div className='media-page-header'>
+      <div className='media-page-header' {...ctxMenu.triggerProps}>
         {/* Album Cover */}
         <div style={{ flexShrink: 0 }}>
           <img
@@ -266,6 +286,36 @@ const Album = () => {
           )}
         </div>
       </div>
+
+      <ContextMenu
+        open={ctxMenu.open}
+        position={ctxMenu.position}
+        onDismiss={ctxMenu.dismiss}
+        onSwallowTouch={ctxMenu.swallowTouch}
+        testId="album-header-menu-backdrop"
+      >
+        <button
+          onClick={(e) => { e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
+        >
+          ▣ Add to Collection
+        </button>
+        {isAuthenticated && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleFavorite(); }}
+          >
+            {isFavorite ? '★ Remove from Favorites' : '☆ Add to Favorites'}
+          </button>
+        )}
+      </ContextMenu>
+
+      {showCollectionModal && (
+        <AddToCollectionModal
+          album={album}
+          onClose={() => setShowCollectionModal(false)}
+        />
+      )}
 
       {/* Track List */}
       <div style={{
