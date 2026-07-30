@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import CollectionResultCard from './CollectionResultCard';
+import { useAuthStore } from '../stores/authStore';
+import { useFavoritesStore } from '../stores/favoritesStore';
 
 const collection = { id: 9, name: 'Test Collection' };
 
@@ -66,5 +68,37 @@ describe('mobile row layout', () => {
     render(<CollectionResultCard collection={collection} onClick={onClick} imageUrl="/img/sm/x.jpg" />);
     fireEvent.click(screen.getByText('Test Collection'));
     expect(onClick).toHaveBeenCalledWith(collection);
+  });
+});
+
+describe('CollectionResultCard — Favorite menu item', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ isAuthenticated: false });
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
+  });
+
+  test('right-click does nothing when logged out', () => {
+    render(<CollectionResultCard collection={collection} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Collection').closest('.artist-card'));
+    expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+  });
+
+  test('right-click shows the Favorite item when logged in', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    render(<CollectionResultCard collection={collection} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Collection').closest('.artist-card'));
+    expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
+  });
+
+  test('clicking it calls toggleFavorite with the collection kind/id', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const toggleFavorite = vi.fn();
+    useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
+    render(<CollectionResultCard collection={collection} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Collection').closest('.artist-card'));
+
+    fireEvent.click(screen.getByText('☆ Add to Favorites'));
+
+    expect(toggleFavorite).toHaveBeenCalledWith('collection', collection.id, expect.objectContaining({ id: collection.id, name: collection.name }));
   });
 });
