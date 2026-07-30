@@ -1,5 +1,6 @@
 import { useAuthStore } from './authStore';
 import { useTagFilterStore } from './tagFilterStore';
+import { useFavoritesStore } from './favoritesStore';
 import { apiService } from '../services/api';
 
 vi.mock('../services/api', () => ({
@@ -8,6 +9,7 @@ vi.mock('../services/api', () => ({
     logout: vi.fn(),
     signup: vi.fn(),
     getMe: vi.fn(),
+    getFavorites: vi.fn().mockResolvedValue({ data: [] }),
   },
 }));
 
@@ -21,6 +23,7 @@ const initialState = {
 beforeEach(() => {
   useAuthStore.setState(initialState);
   useTagFilterStore.setState({ activeTag: null });
+  useFavoritesStore.setState({ items: [], loading: false, loaded: false });
   localStorage.clear();
   vi.clearAllMocks();
 });
@@ -104,6 +107,16 @@ describe('authStore — login', () => {
 
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
+
+  test('loads favorites on successful login', async () => {
+    apiService.login.mockResolvedValue({
+      data: { user: { id: 1, username: 'pat', admin: false, default_tag: null } },
+    });
+
+    await useAuthStore.getState().login('pat', 'password');
+
+    expect(apiService.getFavorites).toHaveBeenCalled();
+  });
 });
 
 describe('authStore — logout', () => {
@@ -132,5 +145,15 @@ describe('authStore — logout', () => {
     await useAuthStore.getState().logout();
 
     expect(useAuthStore.getState().isAdmin).toBe(false);
+  });
+
+  test('clears favorites', async () => {
+    useAuthStore.setState({ user: { id: 1, username: 'pat' }, isAuthenticated: true, isAdmin: false });
+    useFavoritesStore.setState({ items: [{ id: 1, kind: 'artist', target_id: 5, item: {} }], loaded: true });
+    apiService.logout.mockResolvedValue({});
+
+    await useAuthStore.getState().logout();
+
+    expect(useFavoritesStore.getState().items).toEqual([]);
   });
 });

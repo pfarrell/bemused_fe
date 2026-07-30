@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { apiService } from '../services/api';
 import { useTagFilterStore } from './tagFilterStore';
+import { useFavoritesStore } from './favoritesStore';
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -49,6 +50,7 @@ export const useAuthStore = create((set) => ({
       if (user.default_tag) {
         useTagFilterStore.getState().setTag(user.default_tag);
       }
+      useFavoritesStore.getState().load();
 
       set({
         user,
@@ -74,6 +76,7 @@ export const useAuthStore = create((set) => ({
       console.error('Logout error:', error);
     } finally {
       useTagFilterStore.getState().clearTag();
+      useFavoritesStore.getState().clear();
       set({
         user: null,
         isAuthenticated: false,
@@ -94,6 +97,7 @@ export const useAuthStore = create((set) => ({
       if (user.default_tag) {
         useTagFilterStore.getState().setTag(user.default_tag);
       }
+      useFavoritesStore.getState().load();
 
       set({
         user,
