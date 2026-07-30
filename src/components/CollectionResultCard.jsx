@@ -23,7 +23,7 @@ const CollectionResultCard = ({ collection, onClick, imageUrl }) => {
 
   const handleToggleFavorite = (e) => {
     e.stopPropagation();
-    toggleFavorite('collection', collection.id, { id: collection.id, name: collection.name, image_path: collection.image_path });
+    toggleFavorite('collection', collection.id, { id: collection.id, name: collection.name, image_path: collection.image_path, album_count: collection.album_count });
     ctxMenu.close();
   };
 

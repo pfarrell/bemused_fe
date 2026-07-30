@@ -100,7 +100,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
           <div className="artist-card-image">
             <img
               src={imageUrl}
-              alt={`${album.title}, ${artist.name}`}
+              alt={`${album.title}, ${artist?.name || ''}`}
               style={{ cursor: 'pointer' }}
               onError={handleImageError}
             />
@@ -109,7 +109,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
             <h3>{album.title}</h3>
             {!hideArtist && (
               <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0', cursor: 'pointer' }}>
-                {artist.name}{album.has_collaborators && ' +'}
+                {artist?.name}{album.has_collaborators && ' +'}
               </p>
             )}
             {formatCount(album.track_count || null, 'track') && (

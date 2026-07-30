@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
+import { sql } from 'kysely'
 import { db } from '../db/database.js'
 import { requireAuth } from '../middleware/auth.js'
 import type { Variables } from '../types.js'
@@ -21,7 +22,8 @@ async function hydrateItems(kind: Kind, ids: number[], c: Context): Promise<Map<
 
   if (kind === 'artist') {
     const rows = await db.selectFrom('artists').select(['id', 'name', 'image_path']).where('id', 'in', ids).execute()
-    return new Map(rows.map((r) => [r.id, r]))
+    const albumCounts = await countsService.albumCountsByArtistIds(ids)
+    return new Map(rows.map((r) => [r.id, { ...r, album_count: albumCounts.get(r.id) ?? 0 }]))
   }
 
   if (kind === 'album') {
@@ -91,7 +93,13 @@ favorites.get('/', async (c) => {
 
   let query = db.selectFrom('favorites').selectAll().where('user_id', '=', user.id)
   if (kindFilter) query = query.where('kind', '=', kindFilter)
-  const rows = await query.orderBy('created_at', 'desc').execute()
+  // Kysely 0.27's fluent `(ob) => ob.desc().nullsLast()` orderBy modifier API
+  // doesn't exist yet (added in 0.28) — the `direction` param here accepts
+  // either an OrderByDirection string or a raw Expression, so a raw SQL
+  // fragment is the correct way to add NULLS LAST on this version. This
+  // guards against legacy rows with a NULL created_at (pre-dating migration
+  // 032's DEFAULT) sorting before real favorites in descending order.
+  const rows = await query.orderBy('created_at', sql`desc nulls last`).execute()
 
   return c.json(await hydrateFavorites(rows, c))
 })

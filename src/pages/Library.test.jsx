@@ -78,3 +78,27 @@ test('calls load() on mount when favorites have not been loaded yet', () => {
   renderLibrary();
   expect(load).toHaveBeenCalled();
 });
+
+test('renders a favorited album with no artist (orphaned album, artist: null) without crashing', () => {
+  // Regression test: server/src/routes/favorites.ts hydrates an orphaned
+  // album's artist as a literal `null` (albums.artist_id has no FK — see
+  // CLAUDE.md), and this project has no error boundary anywhere, so an
+  // unguarded `artist.name` dereference in AlbumCard's desktop render
+  // branch would blank the entire app. jsdom's default window.innerWidth
+  // (1024) is above useIsMobile's 768px breakpoint, so this already
+  // exercises the desktop (non-mobile) branch that crashed.
+  expect(window.innerWidth).toBeGreaterThan(768);
+  useFavoritesStore.setState({
+    items: [
+      { id: 2, kind: 'album', target_id: 8, item: { id: 8, title: 'Orphaned Album', image_path: null, artist: null } },
+    ],
+    loading: false,
+    loaded: true,
+    load: vi.fn(),
+  });
+  renderLibrary();
+
+  fireEvent.click(screen.getByText('Albums'));
+
+  expect(screen.getByText('Orphaned Album')).toBeInTheDocument();
+});
