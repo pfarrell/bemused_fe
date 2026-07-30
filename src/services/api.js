@@ -134,6 +134,11 @@ export const apiService = {
   reorderCollectionAlbums: (collectionId, album_orders) => api.patch(`/collection/${collectionId}/albums/reorder`, { album_orders }),
   downloadCollectionImage: (id, image_url, image_name) => api.post(`/admin/collection/${id}/image`, { image_url, image_name }),
 
+  // Favorites
+  getFavorites: (kind = null) => api.get(`/favorites${kind ? `?kind=${encodeURIComponent(kind)}` : ''}`),
+  addFavorite: (kind, target_id) => api.post('/favorites', { kind, target_id }),
+  removeFavorite: (kind, target_id) => api.delete('/favorites', { data: { kind, target_id } }),
+
   // Image management
   getAlbumImages: (albumId) => api.get(`/admin/album/${albumId}/images`),
   addAlbumImage: (albumId, image_url, image_name, set_primary = false) =>
