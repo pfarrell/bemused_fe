@@ -144,12 +144,13 @@ describe('Go to Album / Go to Artist menu', () => {
     expect(screen.getByText('💿 Go to Album')).toBeInTheDocument();
   });
 
-  test('clicking Go to Album navigates, closes the menu, and closes the drawer', () => {
+  test('clicking Go to Album navigates, closes the menu, and closes the drawer, without also activating the row', () => {
     const navigate = vi.fn();
     useNavigate.mockReturnValue(navigate);
     const closeDrawer = vi.fn();
     usePlayerStore.setState({ closeDrawer });
-    renderRow();
+    const onActivate = vi.fn();
+    renderRow({ onActivate });
     fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
 
     fireEvent.click(screen.getByText('💿 Go to Album'));
@@ -157,20 +158,23 @@ describe('Go to Album / Go to Artist menu', () => {
     expect(navigate).toHaveBeenCalledWith('/album/20');
     expect(closeDrawer).toHaveBeenCalled();
     expect(screen.queryByText('💿 Go to Album')).not.toBeInTheDocument();
+    expect(onActivate).not.toHaveBeenCalled();
   });
 
-  test('clicking Go to Artist navigates, closes the menu, and closes the drawer', () => {
+  test('clicking Go to Artist navigates, closes the menu, and closes the drawer, without also activating the row', () => {
     const navigate = vi.fn();
     useNavigate.mockReturnValue(navigate);
     const closeDrawer = vi.fn();
     usePlayerStore.setState({ closeDrawer });
-    renderRow();
+    const onActivate = vi.fn();
+    renderRow({ onActivate });
     fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
 
     fireEvent.click(screen.getByText('🎤 Go to Artist'));
 
     expect(navigate).toHaveBeenCalledWith('/artist/5');
     expect(closeDrawer).toHaveBeenCalled();
+    expect(onActivate).not.toHaveBeenCalled();
   });
 
   test('a long-press on mobile does not also trigger tap-to-play once the menu opens', () => {
@@ -206,5 +210,11 @@ describe('Go to Album / Go to Artist menu', () => {
     const deleteButton = screen.getByRole('button', { name: 'Remove track from playlist' });
     fireEvent.contextMenu(deleteButton);
     expect(screen.queryByText('💿 Go to Album')).not.toBeInTheDocument();
+  });
+
+  test('the menu does not open at all when both items would be suppressed', () => {
+    renderRow({ track: track(1, { album: null, artist: { id: null, name: 'Orphan' } }) });
+    fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
+    expect(document.querySelector('.track-dropdown')).not.toBeInTheDocument();
   });
 });

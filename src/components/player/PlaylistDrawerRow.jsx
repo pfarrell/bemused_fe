@@ -44,15 +44,20 @@ const PlaylistDrawerRow = ({
   const closeDrawer = usePlayerStore((s) => s.closeDrawer);
   const onThisAlbum = useIsCurrentPage(track.album?.id ? `/album/${track.album.id}` : null);
   const onThisArtist = useIsCurrentPage(track.artist?.id ? `/artist/${track.artist.id}` : null);
-  const ctxMenu = useContextMenu({ shouldIgnore: (e) => e.target.closest('.track-delete-button') });
+  const hasMenuItems = Boolean((track.album?.id && !onThisAlbum) || (track.artist?.id && !onThisArtist));
+  const ctxMenu = useContextMenu({
+    shouldIgnore: (e) => !hasMenuItems || e.target.closest('.track-delete-button'),
+  });
 
-  const handleGoToAlbum = () => {
+  const handleGoToAlbum = (e) => {
+    if (e) e.stopPropagation();
     navigate(`/album/${track.album.id}`);
     ctxMenu.close();
     closeDrawer();
   };
 
-  const handleGoToArtist = () => {
+  const handleGoToArtist = (e) => {
+    if (e) e.stopPropagation();
     navigate(`/artist/${track.artist.id}`);
     ctxMenu.close();
     closeDrawer();
