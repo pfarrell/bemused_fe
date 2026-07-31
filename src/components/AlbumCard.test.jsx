@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import AlbumCard from './AlbumCard';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
@@ -12,11 +13,20 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, useNavigate: vi.fn() };
+});
+
 const album = { id: 7, title: 'Test Album', image_path: 'x.jpg' };
 const artist = { id: 3, name: 'Test Artist' };
 
 afterEach(() => {
   Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+});
+
+beforeEach(() => {
+  useNavigate.mockReturnValue(vi.fn());
 });
 
 test('shows a "+" after the artist name when the album has collaborators', () => {
@@ -337,5 +347,25 @@ describe('AlbumCard — Favorite menu item', () => {
     fireEvent.click(screen.getByText('☆ Add to Favorites'));
 
     expect(toggleFavorite).toHaveBeenCalledWith('album', album.id, expect.objectContaining({ id: album.id, title: album.title }));
+  });
+});
+
+describe('AlbumCard — Go to Artist menu item', () => {
+  test('navigates to the artist and closes the menu', () => {
+    const navigate = vi.fn();
+    useNavigate.mockReturnValue(navigate);
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+
+    fireEvent.click(screen.getByText('🎤 Go to Artist'));
+
+    expect(navigate).toHaveBeenCalledWith('/artist/3');
+    expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
+  });
+
+  test('is absent when no artist is provided', () => {
+    render(<AlbumCard album={album} artist={null} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+    expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
   });
 });

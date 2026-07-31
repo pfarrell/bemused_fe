@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import AddToCollectionModal from './AddToCollectionModal';
+import { useNavigate } from 'react-router-dom';
 import ResultRow from './ResultRow';
 import ContextMenu from './ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
@@ -14,6 +15,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [playLoading, setPlayLoading] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { clearPlaylist, addTracks } = usePlayerStore();
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', album.id));
@@ -60,6 +62,11 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
       track_count: album.track_count,
       artist: artist ? { id: artist.id, name: artist.name } : null,
     });
+    ctxMenu.close();
+  };
+
+  const handleGoToArtist = () => {
+    navigate(`/artist/${artist.id}`);
     ctxMenu.close();
   };
 
@@ -128,6 +135,14 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
         onSwallowTouch={ctxMenu.swallowTouch}
         testId="album-card-menu-backdrop"
       >
+        {artist?.id && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleGoToArtist(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}
+          >
+            🎤 Go to Artist
+          </button>
+        )}
         <button
           onClick={(e) => { e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
           onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
