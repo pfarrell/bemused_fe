@@ -364,7 +364,12 @@
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 100;
+  /* Must clear every other fixed-position overlay in the app — .app-header/.app-footer
+     sit at 1100, .music-player-playlist-container at up to 1002 — or a menu opened on a
+     row inside one of those (e.g. the playlist drawer) renders visually behind it. Kept
+     in sync with ContextMenu.jsx's inline zIndex, which wins on specificity; this rule
+     exists so this class doesn't silently drift out of sync with that value. */
+  z-index: 1200;
   min-width: 140px;
   padding: 4px 0;
   overflow: hidden;
