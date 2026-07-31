@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import Track from './Track';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
@@ -8,11 +8,16 @@ import { useFavoritesStore } from '../stores/favoritesStore';
 vi.mock('./AddToPlaylistModal', () => ({ default: () => null }));
 vi.mock('./TrackNotesModal', () => ({ default: () => null }));
 
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, useNavigate: vi.fn() };
+});
+
 const mockTrack = {
   id: 1,
   title: 'Test Track',
   duration: 180,
-  artist: { name: 'Test Artist' },
+  artist: { id: 2, name: 'Test Artist' },
   album: {
     id: 10,
     title: 'Test Album',
@@ -41,6 +46,7 @@ beforeEach(() => {
   });
   useAuthStore.setState({ isAuthenticated: false });
   useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
+  useNavigate.mockReturnValue(vi.fn());
 });
 
 describe('Track component', () => {
@@ -294,5 +300,37 @@ describe('Track component — Favorite menu item', () => {
 
     expect(toggleFavorite).toHaveBeenCalledWith('track', mockTrack.id, expect.objectContaining({ id: mockTrack.id, title: mockTrack.title }));
     expect(screen.queryByText('☆ Add to Favorites')).not.toBeInTheDocument();
+  });
+});
+
+describe('Track component — Go to Album / Go to Artist menu items', () => {
+  test('Go to Album navigates to the track\'s album and closes the menu', () => {
+    const navigate = vi.fn();
+    useNavigate.mockReturnValue(navigate);
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+
+    fireEvent.click(screen.getByText('💿 Go to Album'));
+
+    expect(navigate).toHaveBeenCalledWith('/album/10');
+    expect(screen.queryByText('💿 Go to Album')).not.toBeInTheDocument();
+  });
+
+  test('Go to Album is absent when the track has no album', () => {
+    renderTrack({ track: { ...mockTrack, album: null } });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText('💿 Go to Album')).not.toBeInTheDocument();
+  });
+
+  test('Go to Artist navigates to the track\'s artist and closes the menu', () => {
+    const navigate = vi.fn();
+    useNavigate.mockReturnValue(navigate);
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+
+    fireEvent.click(screen.getByText('🎤 Go to Artist'));
+
+    expect(navigate).toHaveBeenCalledWith('/artist/2');
+    expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
   });
 });

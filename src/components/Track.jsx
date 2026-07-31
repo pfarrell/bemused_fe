@@ -73,6 +73,24 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     }, 220);
   };
 
+  const handleGoToAlbum = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    navigate(`/album/${track.album.id}`);
+    ctxMenu.close();
+  };
+
+  const handleGoToArtist = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    navigate(`/artist/${track.artist.id}`);
+    ctxMenu.close();
+  };
+
   const handleAddToPlaylist = (e) => {
     if (e) {
       e.preventDefault();
@@ -230,6 +248,24 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToQueue(); }}
         >
           ➕ Add to Queue
+        </button>
+
+        {track.album?.id && (
+          <button
+            onClick={handleGoToAlbum}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToAlbum(); }}
+          >
+            💿 Go to Album
+          </button>
+        )}
+
+        <button
+          onClick={handleGoToArtist}
+          onTouchStart={(e) => { e.stopPropagation(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}
+        >
+          🎤 Go to Artist
         </button>
 
         <button
