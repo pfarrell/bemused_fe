@@ -333,4 +333,10 @@ describe('Track component — Go to Album / Go to Artist menu items', () => {
     expect(navigate).toHaveBeenCalledWith('/artist/2');
     expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
   });
+
+  test('Go to Artist is absent when the track has no artist id (orphaned track, no FK constraint on tracks.artist_id)', () => {
+    renderTrack({ track: { ...mockTrack, artist: { id: null, name: 'Orphan Artist' } } });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
+  });
 });

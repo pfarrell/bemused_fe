@@ -260,13 +260,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           </button>
         )}
 
-        <button
-          onClick={handleGoToArtist}
-          onTouchStart={(e) => { e.stopPropagation(); }}
-          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}
-        >
-          🎤 Go to Artist
-        </button>
+        {track.artist?.id && (
+          <button
+            onClick={handleGoToArtist}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}
+          >
+            🎤 Go to Artist
+          </button>
+        )}
 
         <button
           onClick={handleAddToPlaylist}
