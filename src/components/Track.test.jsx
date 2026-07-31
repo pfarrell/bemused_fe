@@ -26,9 +26,9 @@ const mockTrack = {
   download_url: 'http://localhost:3000/download/1',
 };
 
-const renderTrack = (props = {}) =>
+const renderTrack = (props = {}, { route = '/' } = {}) =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[route]}>
       <Track track={mockTrack} index={0} trackCount={1} {...props} />
     </MemoryRouter>
   );
@@ -370,5 +370,19 @@ describe('Track component — Go to Album / Go to Artist menu items', () => {
     renderTrack({ track: { ...mockTrack, artist: { id: null, name: 'Orphan Artist' } } });
     fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
     expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
+  });
+
+  test('Go to Album is absent when already on that album\'s page', () => {
+    renderTrack({}, { route: '/album/10' });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText('💿 Go to Album')).not.toBeInTheDocument();
+    expect(screen.getByText('🎤 Go to Artist')).toBeInTheDocument();
+  });
+
+  test('Go to Artist is absent when already on that artist\'s page', () => {
+    renderTrack({}, { route: '/artist/2' });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
+    expect(screen.getByText('💿 Go to Album')).toBeInTheDocument();
   });
 });

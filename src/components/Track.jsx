@@ -7,6 +7,7 @@ import { formatDuration } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useIsCurrentPage } from '../hooks/useIsCurrentPage';
 import ContextMenu from './ContextMenu';
 import AddToPlaylistModal from './AddToPlaylistModal';
 import TrackNotesModal from './TrackNotesModal';
@@ -23,6 +24,9 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const ctxMenu = useContextMenu({ shouldIgnore: (e) => e.target.tagName === 'A' });
+
+  const onThisAlbum = useIsCurrentPage(track.album?.id ? `/album/${track.album.id}` : null);
+  const onThisArtist = useIsCurrentPage(track.artist?.id ? `/artist/${track.artist.id}` : null);
 
   const handleTrackClick = () => {
     const existingIndex = playlist.findIndex((t) => t.id === track.id);
@@ -253,7 +257,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           ➕ Add to Queue
         </button>
 
-        {track.album?.id && (
+        {track.album?.id && !onThisAlbum && (
           <button
             onClick={handleGoToAlbum}
             onTouchStart={(e) => { e.stopPropagation(); }}
@@ -263,7 +267,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           </button>
         )}
 
-        {track.artist?.id && (
+        {track.artist?.id && !onThisArtist && (
           <button
             onClick={handleGoToArtist}
             onTouchStart={(e) => { e.stopPropagation(); }}
