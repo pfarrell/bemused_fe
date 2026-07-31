@@ -5,6 +5,7 @@ import ResultRow from './ResultRow';
 import ContextMenu from './ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useIsCurrentPage } from '../hooks/useIsCurrentPage';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
@@ -21,6 +22,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', album.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const ctxMenu = useContextMenu({ shouldIgnore: (e) => e.target.closest('[data-result-row-play]') });
+  const onThisArtist = useIsCurrentPage(artist?.id ? `/artist/${artist.id}` : null);
 
   const handleImageError = (e) => {
     if (e.target.src.includes('/sm/')) {
@@ -136,7 +138,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
         onSwallowTouch={ctxMenu.swallowTouch}
         testId="album-card-menu-backdrop"
       >
-        {artist?.id && (
+        {artist?.id && !onThisArtist && (
           <button
             onClick={(e) => { e.stopPropagation(); handleGoToArtist(); }}
             onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}

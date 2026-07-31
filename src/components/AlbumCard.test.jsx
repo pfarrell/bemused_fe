@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import AlbumCard from './AlbumCard';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
@@ -15,7 +15,7 @@ vi.mock('../services/api', () => ({
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
-  return { ...actual, useNavigate: vi.fn() };
+  return { ...actual, useNavigate: vi.fn(), useLocation: vi.fn() };
 });
 
 const album = { id: 7, title: 'Test Album', image_path: 'x.jpg' };
@@ -27,6 +27,7 @@ afterEach(() => {
 
 beforeEach(() => {
   useNavigate.mockReturnValue(vi.fn());
+  useLocation.mockReturnValue({ pathname: '/' });
 });
 
 test('shows a "+" after the artist name when the album has collaborators', () => {
@@ -367,5 +368,19 @@ describe('AlbumCard — Go to Artist menu item', () => {
     render(<AlbumCard album={album} artist={null} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
     fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
     expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
+  });
+
+  test('is absent when already on that artist\'s page', () => {
+    useLocation.mockReturnValue({ pathname: '/artist/3' });
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+    expect(screen.queryByText('🎤 Go to Artist')).not.toBeInTheDocument();
+  });
+
+  test('renders when on a different page', () => {
+    useLocation.mockReturnValue({ pathname: '/artist/999' });
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+    expect(screen.getByText('🎤 Go to Artist')).toBeInTheDocument();
   });
 });
