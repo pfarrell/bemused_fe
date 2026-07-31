@@ -116,6 +116,28 @@ describe('Track component', () => {
     vi.useRealTimers();
   });
 
+  test('a stray click landing on a menu item right after a long-press open does not trigger it', () => {
+    vi.useFakeTimers();
+    renderWithPlayer();
+    const row = screen.getByText(/Test Track/).closest('.track-item');
+
+    fireEvent.touchStart(row, { touches: [{ clientX: 50, clientY: 50 }] });
+    act(() => { vi.advanceTimersByTime(500); });
+    expect(screen.getByText('➕ Add to Queue')).toBeInTheDocument();
+
+    // Simulates the browser dispatching a synthetic click at the release
+    // coordinates, which can land on whichever menu item now renders there.
+    fireEvent.click(screen.getByText('➕ Add to Queue'));
+    expect(usePlayerStore.getState().addTrack).not.toHaveBeenCalled();
+
+    // A deliberate tap once the guard window has elapsed still works.
+    act(() => { vi.advanceTimersByTime(350); });
+    fireEvent.click(screen.getByText('➕ Add to Queue'));
+    expect(usePlayerStore.getState().addTrack).toHaveBeenCalledWith(mockTrack, { flashActivity: true });
+
+    vi.useRealTimers();
+  });
+
   test('Notes menu item closes the dropdown when clicked', () => {
     renderTrack();
     fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
@@ -177,6 +199,16 @@ describe('Track component', () => {
   describe('Download menu item', () => {
     afterEach(() => {
       import.meta.env.VITE_ENABLE_DOWNLOADS = 'false';
+      Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    });
+
+    test('does not render on mobile, even if logged in and the flag is enabled (browser-only feature)', () => {
+      import.meta.env.VITE_ENABLE_DOWNLOADS = 'true';
+      useAuthStore.setState({ isAuthenticated: true });
+      Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true });
+      renderTrack();
+      fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+      expect(screen.queryByText('⬇ Download')).not.toBeInTheDocument();
     });
 
     test('does not render when logged out, even if the flag is enabled', () => {

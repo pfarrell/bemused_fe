@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import ContextMenu from './ContextMenu';
 
 test('falsy children do not inflate the height calculation', () => {
@@ -69,6 +69,70 @@ test('renders null when open is false', () => {
 
   // When open is false, component returns null and doesn't render anything to document.body
   expect(document.querySelector('.track-dropdown')).not.toBeInTheDocument();
+});
+
+describe('early-tap guard on touch-opened menus', () => {
+  test('swallows a click landing on an item immediately after a touch-opened menu appears', () => {
+    vi.useFakeTimers();
+    const onClick = vi.fn();
+    render(
+      <ContextMenu
+        open={true}
+        position={{ x: 10, y: 10 }}
+        openedViaTouch={true}
+        onDismiss={vi.fn()}
+        onSwallowTouch={vi.fn()}
+      >
+        <button onClick={onClick}>Play Now</button>
+      </ContextMenu>
+    );
+
+    fireEvent.click(screen.getByText('Play Now'));
+
+    expect(onClick).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  test('lets the click through once the guard window has elapsed', () => {
+    vi.useFakeTimers();
+    const onClick = vi.fn();
+    render(
+      <ContextMenu
+        open={true}
+        position={{ x: 10, y: 10 }}
+        openedViaTouch={true}
+        onDismiss={vi.fn()}
+        onSwallowTouch={vi.fn()}
+      >
+        <button onClick={onClick}>Play Now</button>
+      </ContextMenu>
+    );
+
+    act(() => { vi.advanceTimersByTime(350); });
+    fireEvent.click(screen.getByText('Play Now'));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  test('does not guard a desktop right-click open — the immediate follow-up click works normally', () => {
+    const onClick = vi.fn();
+    render(
+      <ContextMenu
+        open={true}
+        position={{ x: 10, y: 10 }}
+        openedViaTouch={false}
+        onDismiss={vi.fn()}
+        onSwallowTouch={vi.fn()}
+      >
+        <button onClick={onClick}>Play Now</button>
+      </ContextMenu>
+    );
+
+    fireEvent.click(screen.getByText('Play Now'));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
 });
 
 test('uses custom testId on backdrop', () => {

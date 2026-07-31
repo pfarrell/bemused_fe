@@ -17,6 +17,7 @@ test('onContextMenu opens the menu at the click position', () => {
   });
   expect(result.current.open).toBe(true);
   expect(result.current.position).toEqual({ x: 40, y: 60 });
+  expect(result.current.openedViaTouch).toBe(false);
 });
 
 test('shouldIgnore suppresses onContextMenu', () => {
@@ -35,6 +36,18 @@ test('a long-press (500ms touch hold) opens the menu', () => {
   });
   act(() => { vi.advanceTimersByTime(500); });
   expect(result.current.open).toBe(true);
+  expect(result.current.openedViaTouch).toBe(true);
+  vi.useRealTimers();
+});
+
+test('a long-press opens the menu offset below the touch point, not directly under the fingertip', () => {
+  vi.useFakeTimers();
+  const { result } = renderHook(() => useContextMenu());
+  act(() => {
+    result.current.triggerProps.onTouchStart({ touches: [{ clientX: 10, clientY: 100 }] });
+  });
+  act(() => { vi.advanceTimersByTime(500); });
+  expect(result.current.position.y).toBeGreaterThan(100);
   vi.useRealTimers();
 });
 

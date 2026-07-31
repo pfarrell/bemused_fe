@@ -4,6 +4,7 @@ import { useIsMobile } from './useIsMobile';
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
 const MENU_WIDTH_ESTIMATE = 200; // matches the mobile breakpoint's .track-dropdown CSS min-width; used only to center the long-press open position, not to clamp (see ContextMenu.jsx's own MENU_WIDTH for the on-screen clamp)
+const TOUCH_OPEN_Y_OFFSET = 30; // vertical gap between the touch point and the menu's first item — without this the menu opens directly under the fingertip that just triggered it, which both hides the top item and risks the finger's release landing on it
 
 // Shared right-click (desktop) / long-press (mobile) gesture detection for
 // per-item action menus (Track.jsx and AlbumCard.jsx each had their own
@@ -16,6 +17,7 @@ export const useContextMenu = ({ shouldIgnore } = {}) => {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [openedViaTouch, setOpenedViaTouch] = useState(false);
   const longPressTimer = useRef(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
   const justOpenedByLongPress = useRef(false);
@@ -37,6 +39,7 @@ export const useContextMenu = ({ shouldIgnore } = {}) => {
     if (shouldIgnore?.(e)) return;
     e.preventDefault();
     e.stopPropagation();
+    setOpenedViaTouch(false);
     openAt(e.clientX, e.clientY);
   };
 
@@ -46,7 +49,8 @@ export const useContextMenu = ({ shouldIgnore } = {}) => {
     longPressTimer.current = setTimeout(() => {
       justOpenedByLongPress.current = true;
       const x = isMobile ? Math.max(10, touchStartPos.current.x - MENU_WIDTH_ESTIMATE / 2) : touchStartPos.current.x;
-      openAt(x, touchStartPos.current.y);
+      setOpenedViaTouch(true);
+      openAt(x, touchStartPos.current.y + TOUCH_OPEN_Y_OFFSET);
       if (navigator.vibrate) navigator.vibrate(50);
     }, LONG_PRESS_MS);
   };
@@ -83,6 +87,7 @@ export const useContextMenu = ({ shouldIgnore } = {}) => {
   return {
     open,
     position,
+    openedViaTouch,
     triggerProps: { onContextMenu, onTouchStart, onTouchMove, onTouchEnd },
     close,
     dismiss,

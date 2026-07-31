@@ -131,6 +131,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
       <ContextMenu
         open={ctxMenu.open}
         position={ctxMenu.position}
+        openedViaTouch={ctxMenu.openedViaTouch}
         onDismiss={ctxMenu.dismiss}
         onSwallowTouch={ctxMenu.swallowTouch}
         testId="album-card-menu-backdrop"

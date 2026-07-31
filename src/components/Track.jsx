@@ -6,6 +6,7 @@ import { useFavoritesStore } from '../stores/favoritesStore';
 import { formatDuration } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useContextMenu } from '../hooks/useContextMenu';
+import { useIsMobile } from '../hooks/useIsMobile';
 import ContextMenu from './ContextMenu';
 import AddToPlaylistModal from './AddToPlaylistModal';
 import TrackNotesModal from './TrackNotesModal';
@@ -19,6 +20,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
   const isFavorite = useFavoritesStore((s) => s.isFavorite('track', track.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const downloadsEnabled = import.meta.env.VITE_ENABLE_DOWNLOADS !== 'false';
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const ctxMenu = useContextMenu({ shouldIgnore: (e) => e.target.tagName === 'A' });
 
@@ -220,6 +222,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       <ContextMenu
         open={ctxMenu.open}
         position={ctxMenu.position}
+        openedViaTouch={ctxMenu.openedViaTouch}
         onDismiss={ctxMenu.dismiss}
         onSwallowTouch={ctxMenu.swallowTouch}
         testId="track-menu-backdrop"
@@ -296,7 +299,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           </button>
         )}
 
-        {downloadsEnabled && isAuthenticated && track.download_url && (
+        {downloadsEnabled && isAuthenticated && track.download_url && !isMobile && (
           <button
             onClick={handleDownload}
             onTouchStart={(e) => { e.stopPropagation(); }}
