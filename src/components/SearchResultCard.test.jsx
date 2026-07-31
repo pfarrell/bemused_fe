@@ -1,7 +1,17 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import SearchResultCard from './SearchResultCard';
+import { useNavigate } from 'react-router-dom';
 
 vi.mock('./AddToCollectionModal', () => ({ default: () => null }));
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, useNavigate: vi.fn() };
+});
+
+beforeEach(() => {
+  useNavigate.mockReturnValue(vi.fn());
+});
 
 const getImageUrl = () => '/img/sm/x.jpg';
 
