@@ -2,17 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePlayerStore } from '../../stores/playerStore';
 import { apiService } from '../../services/api';
 import { isMobileDevice } from '../../utils/device';
-
-const formatTime = (seconds) => {
-  if (!seconds || !Number.isFinite(seconds)) return '0:00';
-  const minutes = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-};
-
-// CSS's own animation (activity-row-flash, 0.6s x2) self-terminates the
-// visual fade — this component has no timing logic of its own.
-const ActivityOverlay = () => <div className="track-item-activity-overlay" />;
+import PlaylistDrawerRow from './PlaylistDrawerRow';
 
 const PlaylistDrawer = () => {
   const playlist = usePlayerStore((s) => s.playlist);
@@ -91,43 +81,28 @@ const PlaylistDrawer = () => {
       <div className="music-player-playlist-container">
         <ul className="playlist">
           {playlist.map((track, index) => {
-            const isActive = index === currentTrackIndex;
             const imageUrl = track.image_path ? apiService.getImageUrl(track.image_path, 'album_small') : null;
             const artSize = mobile ? 32 : 40;
             return (
-              <li
+              <PlaylistDrawerRow
                 key={`${track.id}-${index}`}
-                className={`track-item ${isActive ? 'active' : ''} ${draggedIndex === index ? 'dragging' : ''}`}
-                draggable={!mobile}
+                track={track}
+                index={index}
+                isActive={index === currentTrackIndex}
+                isFlashing={flashIndices.includes(index)}
+                isDragged={draggedIndex === index}
+                mobile={mobile}
+                imageUrl={imageUrl}
+                artSize={artSize}
                 onDragStart={() => setDraggedIndex(index)}
                 onDragOver={(e) => e.preventDefault()}
                 onDragEnd={() => setDraggedIndex(null)}
                 onDrop={(e) => handleDrop(e, index)}
-                onClick={!mobile ? () => handleRowActivate(index) : undefined}
-                onTouchStart={mobile ? handleTouchStart : undefined}
-                onTouchEnd={mobile ? handleTouchEnd(index) : undefined}
-              >
-                {imageUrl ? (
-                  <img className="playlist-track-art" src={imageUrl} alt={track.title} style={{ width: artSize, height: artSize }} />
-                ) : (
-                  <div className="playlist-track-art-blank" style={{ width: artSize, height: artSize }} />
-                )}
-                <span className="track-text">
-                  {index + 1}. {track.title} - {track.artist?.name} ({formatTime(track.duration)})
-                </span>
-                <button
-                  className="track-delete-button"
-                  aria-label="Remove track from playlist"
-                  title="Remove from playlist"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeTrackFromPlaylist(index);
-                  }}
-                >
-                  &#10060;
-                </button>
-                {flashIndices.includes(index) && <ActivityOverlay />}
-              </li>
+                onActivate={handleRowActivate}
+                onTouchStartRow={handleTouchStart}
+                onTouchEndRow={handleTouchEnd}
+                onRemove={removeTrackFromPlaylist}
+              />
             );
           })}
         </ul>

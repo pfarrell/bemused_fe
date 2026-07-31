@@ -1,10 +1,13 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import PlaylistDrawer from './PlaylistDrawer';
 import { usePlayerStore } from '../../stores/playerStore';
 
 vi.mock('../../services/api', () => ({ apiService: { getImageUrl: () => 'http://example.com/art.jpg' } }));
 
 const track = (id, overrides = {}) => ({ id, title: `Track ${id}`, url: `/stream/${id}`, duration: 125, artist: { name: 'Artist' }, ...overrides });
+
+const renderDrawer = () => render(<MemoryRouter><PlaylistDrawer /></MemoryRouter>);
 
 beforeEach(() => {
   usePlayerStore.setState({
@@ -22,12 +25,12 @@ beforeEach(() => {
 
 test('renders nothing when the drawer is closed', () => {
   usePlayerStore.setState({ drawerOpen: false });
-  render(<PlaylistDrawer />);
+  renderDrawer();
   expect(document.querySelector('.music-player-playlist-container')).toBeNull();
 });
 
 test('renders every track in the playlist', () => {
-  render(<PlaylistDrawer />);
+  renderDrawer();
   expect(screen.getByText(/Track 1/)).toBeInTheDocument();
   expect(screen.getByText(/Track 2/)).toBeInTheDocument();
   expect(screen.getByText(/Track 3/)).toBeInTheDocument();
@@ -35,7 +38,7 @@ test('renders every track in the playlist', () => {
 
 test('only flashes the track at the position recorded in recentlyAddedIndices at mount time', () => {
   usePlayerStore.setState({ recentlyAddedIndices: [2] }); // track 3 is at index 2
-  render(<PlaylistDrawer />);
+  renderDrawer();
   const row1 = screen.getByText(/Track 1/).closest('.track-item');
   const row3 = screen.getByText(/Track 3/).closest('.track-item');
   expect(row1.querySelector('.track-item-activity-overlay')).toBeNull();
@@ -44,13 +47,13 @@ test('only flashes the track at the position recorded in recentlyAddedIndices at
 
 test('clears recentlyAddedIndices after mount so a later open does not re-flash', () => {
   usePlayerStore.setState({ recentlyAddedIndices: [2] });
-  render(<PlaylistDrawer />);
+  renderDrawer();
   expect(usePlayerStore.getState().recentlyAddedIndices).toEqual([]);
 });
 
 test('regression: queueing a track whose id already exists elsewhere in the playlist only flashes the new occurrence', () => {
   usePlayerStore.setState({ playlist: [track(5)], currentTrackIndex: 0, isPlaying: true, recentlyAddedIndices: [] });
-  render(<PlaylistDrawer />);
+  renderDrawer();
 
   act(() => usePlayerStore.getState().addTrack(track(5), { flashActivity: true }));
   act(() => usePlayerStore.setState({ drawerOpen: false }));
@@ -69,7 +72,7 @@ test('reported scenario: only the latest add flashes, and only on its first open
   // like the real app, instead of calling render() again per step (which
   // would hide this class of bug behind a fresh mount each time).
   usePlayerStore.setState({ playlist: [track(1)], currentTrackIndex: 0, drawerOpen: false, recentlyAddedIndices: [] });
-  render(<PlaylistDrawer />);
+  renderDrawer();
 
   // Queue track 2 (flashActivity, lands at index 1), then play-next track 3
   // (flashActivity, inserted after current index 0, so also lands at index 1)
@@ -100,20 +103,20 @@ test('reported scenario: only the latest add flashes, and only on its first open
 });
 
 test('clicking a non-current row plays that track', () => {
-  render(<PlaylistDrawer />);
+  renderDrawer();
   fireEvent.click(screen.getByText(/Track 3/));
   expect(usePlayerStore.getState().playTrackAtIndex).toHaveBeenCalledWith(2);
 });
 
 test('clicking the current row toggles play/pause instead of replaying', () => {
-  render(<PlaylistDrawer />);
+  renderDrawer();
   fireEvent.click(screen.getByText(/Track 2/));
   expect(usePlayerStore.getState().togglePlayPause).toHaveBeenCalled();
   expect(usePlayerStore.getState().playTrackAtIndex).not.toHaveBeenCalled();
 });
 
 test('the delete button removes that track and does not also trigger a row click', () => {
-  render(<PlaylistDrawer />);
+  renderDrawer();
   const row = screen.getByText(/Track 3/).closest('.track-item');
   fireEvent.click(row.querySelector('.track-delete-button'));
   expect(usePlayerStore.getState().removeTrackFromPlaylist).toHaveBeenCalledWith(2);
@@ -124,7 +127,7 @@ test('tapping the delete button on mobile removes the track instead of playing i
   const originalInnerWidth = window.innerWidth;
   Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true });
 
-  render(<PlaylistDrawer />);
+  renderDrawer();
   const row = screen.getByText(/Track 3/).closest('.track-item');
   const deleteButton = row.querySelector('.track-delete-button');
 
@@ -142,13 +145,13 @@ test('tapping the delete button on mobile removes the track instead of playing i
 });
 
 test('clicking the backdrop closes the drawer', () => {
-  render(<PlaylistDrawer />);
+  renderDrawer();
   fireEvent.click(document.querySelector('.playlist-backdrop'));
   expect(usePlayerStore.getState().toggleDrawer).toHaveBeenCalled();
 });
 
 test('the currently playing row has the active class', () => {
-  render(<PlaylistDrawer />);
+  renderDrawer();
   expect(screen.getByText(/Track 2/).closest('.track-item')).toHaveClass('active');
 });
 
@@ -178,7 +181,7 @@ test('drag-forward reorder: dragging track at index 0 to drop target index 3 cal
     toJSON: () => ({}),
   });
 
-  render(<PlaylistDrawer />);
+  renderDrawer();
 
   const rows = screen.getAllByText(/Track [1-4]/);
   const row0 = rows[0].closest('.track-item');
