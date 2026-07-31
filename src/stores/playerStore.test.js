@@ -468,6 +468,20 @@ describe('standby unlock', () => {
   });
 });
 
+describe('closeDrawer', () => {
+  test('sets drawerOpen to false when it was open', () => {
+    usePlayerStore.setState({ drawerOpen: true });
+    usePlayerStore.getState().closeDrawer();
+    expect(usePlayerStore.getState().drawerOpen).toBe(false);
+  });
+
+  test('is a no-op (stays false) when already closed', () => {
+    usePlayerStore.setState({ drawerOpen: false });
+    usePlayerStore.getState().closeDrawer();
+    expect(usePlayerStore.getState().drawerOpen).toBe(false);
+  });
+});
+
 describe('togglePlayPause with an empty playlist', () => {
   test('enqueues and plays pageTracks, same as Play Now, when the playlist is empty', () => {
     const audioElement = mockAudioElement();

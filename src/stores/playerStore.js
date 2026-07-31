@@ -210,6 +210,7 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   toggleDrawer: () => set((state) => ({ drawerOpen: !state.drawerOpen })),
+  closeDrawer: () => set({ drawerOpen: false }),
 
   triggerActivityPulse: () => set((state) => ({ activityPulseToken: state.activityPulseToken + 1 })),
 
