@@ -639,9 +639,11 @@ const AdminArtist = () => {
                 if (!newImageUrl || !newImageName) return;
                 setAddingImage(true);
                 try {
-                  await apiService.addArtistImage(id, newImageUrl, newImageName, images.length === 0);
+                  const setPrimary = images.length === 0;
+                  await apiService.addArtistImage(id, newImageUrl, newImageName, setPrimary);
                   const res = await apiService.getArtistImages(id);
                   setImages(res.data);
+                  if (setPrimary) setImagePath(newImageName);
                   setNewImageUrl('');
                   setNewImageName(toFilename(name) + '.jpg');
                   toast.success('Image added');

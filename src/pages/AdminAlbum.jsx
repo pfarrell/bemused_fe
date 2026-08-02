@@ -735,9 +735,11 @@ const AdminAlbum = () => {
                 if (!newImageUrl || !newImageName) return;
                 setAddingImage(true);
                 try {
-                  await apiService.addAlbumImage(id, newImageUrl, newImageName, images.length === 0);
+                  const setPrimary = images.length === 0;
+                  await apiService.addAlbumImage(id, newImageUrl, newImageName, setPrimary);
                   const res = await apiService.getAlbumImages(id);
                   setImages(res.data);
+                  if (setPrimary) setImagePath(newImageName);
                   setNewImageUrl('');
                   setNewImageName(toFilename(albumData?.artist?.name || '') + '-' + toFilename(title) + '.jpg');
                 } finally {
