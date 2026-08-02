@@ -51,10 +51,18 @@ export async function fetchAlbumArtFromCAA(
 
   if (images.length === 0) {
     console.log(`  ℹ️  No CAA images for album ${albumId} (${mbid})`)
-    // Record that we checked so we don't re-query on future runs
+    // Record that we checked so we don't re-query on future runs. Concurrent
+    // per-track lookups for the same album can race here — ON CONFLICT keeps
+    // it idempotent (see migration 033_dedupe_not_found_images).
     await db
       .insertInto('images')
       .values({ album_id: albumId, is_primary: false, source: 'cover_art_archive', status: 'not_found' })
+      .onConflict(oc => oc
+        .columns(['album_id', 'source'])
+        .where('status', '=', 'not_found')
+        .where('album_id', 'is not', null)
+        .doNothing()
+      )
       .execute()
     return false
   }

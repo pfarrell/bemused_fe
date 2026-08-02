@@ -1670,6 +1670,9 @@ async function getImagesForEntity(entityKind: EntityKind, entityId: number) {
       'media_files.absolute_path as path',
     ])
     .where(`images.${field}` as any, '=', entityId)
+    // 'not_found' rows are bookkeeping only (an external lookup came back
+    // empty) — they have no backing file and would render as a blank tile.
+    .where('images.status', '!=', 'not_found')
     .orderBy('images.is_primary', 'desc')
     .orderBy('images.created_at', 'asc')
     .execute()

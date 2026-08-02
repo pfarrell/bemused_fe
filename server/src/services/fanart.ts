@@ -223,5 +223,11 @@ async function markNotFound(artistId: number) {
   await db
     .insertInto('images')
     .values({ artist_id: artistId, is_primary: false, source: 'fanart', status: 'not_found' })
+    .onConflict(oc => oc
+      .columns(['artist_id', 'source'])
+      .where('status', '=', 'not_found')
+      .where('artist_id', 'is not', null)
+      .doNothing()
+    )
     .execute()
 }
