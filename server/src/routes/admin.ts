@@ -881,6 +881,65 @@ admin.put('/track/:id', async (c) => {
   }
 })
 
+// POST /admin/track/:id/make-single — removes a track from its album and files
+// it under the track's own artist's singles pseudo-album (an album titled
+// '_Singles', one per artist; read by GET /artist/:id, see routes/artists.ts).
+// Creates that album on first use for the artist. The track's artist_id is
+// left unchanged — it's what determines which artist's singles it joins,
+// which matters for a compilation track credited to someone other than the
+// album's nominal artist.
+const SINGLES_ALBUM_TITLE = '_Singles'
+
+admin.post('/track/:id/make-single', async (c) => {
+  const id = parseInt(c.req.param('id'))
+
+  const track = await db
+    .selectFrom('tracks')
+    .select(['id', 'artist_id'])
+    .where('id', '=', id)
+    .executeTakeFirst()
+
+  if (!track) return c.json({ error: 'Track not found' }, 404)
+  if (!track.artist_id) return c.json({ error: 'Track has no artist' }, 400)
+
+  try {
+    let singlesAlbum = await db
+      .selectFrom('albums')
+      .select(['id'])
+      .where('artist_id', '=', track.artist_id)
+      .where('title', '=', SINGLES_ALBUM_TITLE)
+      .executeTakeFirst()
+
+    if (!singlesAlbum) {
+      singlesAlbum = await db
+        .insertInto('albums')
+        .values({ title: SINGLES_ALBUM_TITLE, artist_id: track.artist_id })
+        .returning(['id'])
+        .executeTakeFirstOrThrow()
+    }
+
+    const maxTrackNumberRow = await db
+      .selectFrom('tracks')
+      .select(sql<number | null>`MAX(track_number::integer)`.as('max_track_number'))
+      .where('album_id', '=', singlesAlbum.id)
+      .executeTakeFirst()
+
+    const nextTrackNumber = (maxTrackNumberRow?.max_track_number ?? 0) + 1
+
+    const updated = await db
+      .updateTable('tracks')
+      .set({ album_id: singlesAlbum.id, track_number: String(nextTrackNumber), updated_at: new Date() })
+      .where('id', '=', id)
+      .returningAll()
+      .executeTakeFirst()
+
+    return c.json({ ...updated, album: { id: singlesAlbum.id, title: SINGLES_ALBUM_TITLE } })
+  } catch (error) {
+    console.error('Error making track a single:', error)
+    return c.json({ error: 'Failed to make track a single' }, 500)
+  }
+})
+
 // DELETE /admin/track/:id — delete a track
 admin.delete('/track/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
