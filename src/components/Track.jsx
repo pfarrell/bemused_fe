@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { apiService } from '../services/api';
 import { formatDuration } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 import { useContextMenu } from '../hooks/useContextMenu';
@@ -12,7 +13,7 @@ import ContextMenu from './ContextMenu';
 import AddToPlaylistModal from './AddToPlaylistModal';
 import TrackNotesModal from './TrackNotesModal';
 
-const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false }) => {
+const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false, showMakeSingle = false, onMadeSingle }) => {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [pressedButton, setPressedButton] = useState(null);
@@ -95,6 +96,23 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     }
     navigate(`/artist/${track.artist.id}`);
     ctxMenu.close();
+  };
+
+  const handleMakeSingle = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!window.confirm(`Remove "${track.title}" from this album and register it as a single for ${track.artist.name}?`)) {
+      return;
+    }
+    try {
+      await apiService.makeTrackSingle(track.id);
+      ctxMenu.close();
+      onMadeSingle?.(track.id);
+    } catch (error) {
+      alert('Failed to make track a single: ' + (error.response?.data?.error || error.message));
+    }
   };
 
   const handleAddToPlaylist = (e) => {
@@ -274,6 +292,16 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
             onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}
           >
             🎤 Go to Artist
+          </button>
+        )}
+
+        {showMakeSingle && track.album?.id && track.album.title !== '_Singles' && (
+          <button
+            onClick={handleMakeSingle}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleMakeSingle(); }}
+          >
+            🎵 Make Single
           </button>
         )}
 

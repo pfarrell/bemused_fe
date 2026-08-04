@@ -1,12 +1,17 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import Track from './Track';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { apiService } from '../services/api';
 
 vi.mock('./AddToPlaylistModal', () => ({ default: () => null }));
 vi.mock('./TrackNotesModal', () => ({ default: () => null }));
+
+vi.mock('../services/api', () => ({
+  apiService: { makeTrackSingle: vi.fn() },
+}));
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
@@ -294,6 +299,77 @@ describe('Track component — per-track artist display', () => {
       },
     });
     expect(screen.getByText(/- Orphan Artist/)).toBeInTheDocument();
+  });
+});
+
+describe('Track component — Make Single menu item', () => {
+  beforeEach(() => {
+    apiService.makeTrackSingle.mockReset();
+  });
+
+  test('does not render when showMakeSingle is false (default)', () => {
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText(/Make Single/)).not.toBeInTheDocument();
+  });
+
+  test('renders when showMakeSingle is true and the track has an album', () => {
+    renderTrack({ showMakeSingle: true });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.getByText('🎵 Make Single')).toBeInTheDocument();
+  });
+
+  test('does not render when the track has no album', () => {
+    renderTrack({ showMakeSingle: true, track: { ...mockTrack, album: null } });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText(/Make Single/)).not.toBeInTheDocument();
+  });
+
+  test('does not render when the track is already in the _Singles album', () => {
+    renderTrack({ showMakeSingle: true, track: { ...mockTrack, album: { ...mockTrack.album, title: '_Singles' } } });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText(/Make Single/)).not.toBeInTheDocument();
+  });
+
+  test('clicking it confirms, calls makeTrackSingle, and notifies the parent via onMadeSingle', async () => {
+    window.confirm = vi.fn(() => true);
+    apiService.makeTrackSingle.mockResolvedValue({ data: {} });
+    const onMadeSingle = vi.fn();
+    renderTrack({ showMakeSingle: true, onMadeSingle });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+
+    fireEvent.click(screen.getByText('🎵 Make Single'));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Remove "Test Track" from this album and register it as a single for Test Artist?'
+    );
+    await waitFor(() => expect(apiService.makeTrackSingle).toHaveBeenCalledWith(mockTrack.id));
+    await waitFor(() => expect(onMadeSingle).toHaveBeenCalledWith(mockTrack.id));
+    expect(screen.queryByText('🎵 Make Single')).not.toBeInTheDocument();
+  });
+
+  test('does nothing when the confirm dialog is dismissed', () => {
+    window.confirm = vi.fn(() => false);
+    renderTrack({ showMakeSingle: true });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+
+    fireEvent.click(screen.getByText('🎵 Make Single'));
+
+    expect(apiService.makeTrackSingle).not.toHaveBeenCalled();
+  });
+
+  test('shows an alert and does not call onMadeSingle when the API call fails', async () => {
+    window.confirm = vi.fn(() => true);
+    window.alert = vi.fn();
+    apiService.makeTrackSingle.mockRejectedValue({ response: { data: { error: 'boom' } } });
+    const onMadeSingle = vi.fn();
+    renderTrack({ showMakeSingle: true, onMadeSingle });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+
+    fireEvent.click(screen.getByText('🎵 Make Single'));
+
+    await waitFor(() => expect(window.alert).toHaveBeenCalledWith('Failed to make track a single: boom'));
+    expect(onMadeSingle).not.toHaveBeenCalled();
   });
 });
 

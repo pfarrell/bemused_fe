@@ -87,6 +87,7 @@ export const apiService = {
   downloadAlbumImage: (id, image_url, image_name) => api.post(`/admin/album/${id}/image`, { image_url, image_name }),
   updateTrack: (id, data) => api.put(`/admin/track/${id}`, data),
   deleteTrack: (id) => api.delete(`/admin/track/${id}`),
+  makeTrackSingle: (id) => api.post(`/admin/track/${id}/make-single`),
   bulkUpdateTracks: (album_id, data) => api.patch(`/admin/album/${album_id}/tracks`, data),
   moveAlbumToArtist: (id, target_artist_id) => api.post(`/admin/album/${id}/move-to-artist`, { target_artist_id }),
   mergeAlbum: (id, destination_album_id, track_offset) => api.post(`/admin/album/${id}/merge`, { destination_album_id, track_offset }),
