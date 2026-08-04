@@ -19,6 +19,7 @@ function buildSearchClauses(exactOnly: boolean): { exactClauses: string; fuzzyCl
       FROM albums a
       INNER JOIN tracks t ON t.album_id = a.id AND t.approved = true
       WHERE f_unaccent(lower(a.title)) ILIKE f_unaccent(lower($1))
+        AND a.title != '_Singles'
       ORDER BY a.id)
     UNION ALL
     (SELECT DISTINCT ON (a.id) 'Artist' AS model_type, a.id, ${EXACT_MATCH_SCORE} AS similarity_score
@@ -56,6 +57,7 @@ function buildSearchClauses(exactOnly: boolean): { exactClauses: string; fuzzyCl
       FROM albums a
       INNER JOIN tracks t ON t.album_id = a.id AND t.approved = true
       WHERE f_unaccent(lower(a.title)) % f_unaccent(lower($2))
+        AND a.title != '_Singles'
     ) ranked WHERE rn = 1)
     UNION ALL
     (SELECT model_type, id, similarity_score FROM (
