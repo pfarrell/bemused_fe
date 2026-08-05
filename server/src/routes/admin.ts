@@ -189,6 +189,7 @@ admin.put('/album/:id', async (c) => {
     }
 
     let mbidUpdate: { musicbrainz_id: string | null; mbid_confidence: number | null; mbid_status: string } | null = null
+    let mbidReleaseYear: string | undefined
 
     if (musicbrainz_id !== undefined) {
       const raw = typeof musicbrainz_id === 'string' ? musicbrainz_id.trim() : ''
@@ -214,6 +215,11 @@ admin.put('/album/:id', async (c) => {
             return c.json({ error: 'No such release found on MusicBrainz' }, 400)
           }
           mbidUpdate = { musicbrainz_id: mbid, mbid_confidence: 1.0, mbid_status: 'manual' }
+          // Prefer the release-group's original release date over this specific
+          // edition's — a manually-pasted MBID is often for a remaster/reissue,
+          // and the point of auto-filling this is to save the admin from having
+          // to go look up the original year by hand.
+          mbidReleaseYear = (entity.original_date || entity.date)?.match(/^\d{4}/)?.[0]
         }
       }
     }
@@ -223,7 +229,7 @@ admin.put('/album/:id', async (c) => {
       .set({
         title,
         artist_id,
-        release_year: release_year || null,
+        release_year: mbidReleaseYear ?? (release_year || null),
         image_path: image_path || null,
         wikipedia: wikipedia || null,
         is_compilation: Boolean(is_compilation),
