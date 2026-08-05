@@ -32,6 +32,7 @@ async function main() {
       'artists.name as artist_name',
     ])
     .where('albums.musicbrainz_id', 'is not', null)
+    .where('albums.title', '!=', '_Singles')
     .where(eb => eb.or([
       eb('albums.release_year', 'is', null),
       eb('albums.release_year', '=', ''),

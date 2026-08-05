@@ -32,6 +32,7 @@ async function processAlbums() {
       'albums.mbid_status',
       'artists.name as artist_name',
     ])
+    .where('albums.title', '!=', '_Singles')
 
   if (singleId) {
     query = query.where('albums.id', '=', singleId) as typeof query

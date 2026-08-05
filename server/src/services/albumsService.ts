@@ -12,6 +12,7 @@ export function createAlbumsService(db: Kysely<Database>) {
           INNER JOIN albums_tags at ON at.album_id = al.id
           INNER JOIN tags tg ON tg.id = at.tag_id AND tg.name = ${tag}
           WHERE al.image_path IS NOT NULL AND al.image_path != ''
+            AND al.title != '_Singles'
         ),
         random_ids AS (
           SELECT id FROM eligible_album_ids ORDER BY random() LIMIT ${size}
@@ -34,6 +35,7 @@ export function createAlbumsService(db: Kysely<Database>) {
           FROM albums al
           INNER JOIN tracks t ON t.album_id = al.id AND t.approved = true
           WHERE al.image_path IS NOT NULL AND al.image_path != ''
+            AND al.title != '_Singles'
         ),
         random_ids AS (
           SELECT id FROM eligible_album_ids ORDER BY random() LIMIT ${size}
