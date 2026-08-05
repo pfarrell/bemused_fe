@@ -1278,21 +1278,23 @@ const AdminAlbum = () => {
                         {track.duration ? `${Math.floor(track.duration / 60)}:${String(track.duration % 60).padStart(2, '0')}` : '-'}
                       </td>
                       <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                        <button
-                          onClick={() => handleMakeSingle(track)}
-                          style={{
-                            padding: '0.25rem 0.75rem',
-                            marginRight: '0.5rem',
-                            backgroundColor: '#6b7280',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Make Single
-                        </button>
+                        {albumData?.album?.title !== '_Singles' && (
+                          <button
+                            onClick={() => handleMakeSingle(track)}
+                            style={{
+                              padding: '0.25rem 0.75rem',
+                              marginRight: '0.5rem',
+                              backgroundColor: '#6b7280',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Make Single
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteTrack(track.id)}
                           style={{

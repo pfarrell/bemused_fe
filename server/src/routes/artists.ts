@@ -136,6 +136,8 @@ artists.get('/:id', async (c) => {
       .orderBy('tracks.track_number', 'asc')
       .execute()
 
+    singlesRows.sort((a, b) => (parseInt(a.track_number ?? '0') || 0) - (parseInt(b.track_number ?? '0') || 0))
+
     singles = singlesRows.map(t => ({
       id: t.id,
       title: t.title,
@@ -143,6 +145,7 @@ artists.get('/:id', async (c) => {
       track_number: t.track_number,
       artist: { id: t.artist_id, name: t.artist_name },
       album: { id: t.album_id, title: t.album_title, artist: { id: artist.id, name: artist.name } },
+      image_path: artist.image_path,
       url: `${streamBase(c)}/stream/${t.id}`,
       download_url: `${streamBase(c)}/download/${t.id}`,
     }))

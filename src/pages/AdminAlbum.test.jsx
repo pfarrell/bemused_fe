@@ -213,4 +213,17 @@ describe('AdminAlbum — Make Single', () => {
     await waitFor(() => expect(apiService.makeTrackSingle).toHaveBeenCalledWith(1));
     await waitFor(() => expect(screen.queryByDisplayValue('Born to Be Wild')).not.toBeInTheDocument());
   });
+
+  test('does not render the Make Single button when the loaded album is the _Singles pseudo-album', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: {
+        ...albumPayload,
+        album: { ...albumPayload.album, title: '_Singles' },
+      },
+    });
+    renderAdminAlbum();
+
+    await screen.findByDisplayValue('_Singles');
+    expect(screen.queryByRole('button', { name: 'Make Single' })).not.toBeInTheDocument();
+  });
 });
