@@ -14,6 +14,7 @@ vi.mock('../services/api', () => ({
     updateTrack: vi.fn(),
     searchAdminArtists: vi.fn(),
     getReprocessPreview: vi.fn(),
+    makeTrackSingle: vi.fn(),
   },
 }));
 
@@ -45,6 +46,7 @@ const renderAdminAlbum = () =>
   );
 
 beforeEach(() => {
+  vi.clearAllMocks();
   apiService.getAlbum.mockResolvedValue({ data: albumPayload });
   apiService.getAlbumImages.mockResolvedValue({ data: [] });
   apiService.getAlbumSecondaryArtists.mockResolvedValue({ data: [] });
@@ -157,5 +159,58 @@ describe('AdminAlbum — reprocess from files', () => {
 
     await waitFor(() => expect(apiService.getReprocessPreview).toHaveBeenCalledWith('10'));
     expect(await screen.findByText('Reprocess Album From Files')).toBeInTheDocument();
+  });
+});
+
+describe('AdminAlbum — Make Single', () => {
+  test('confirms, calls makeTrackSingle, and removes the track from the table', async () => {
+    window.confirm = vi.fn(() => true);
+    apiService.makeTrackSingle.mockResolvedValue({ data: {} });
+    const user = userEvent.setup();
+    renderAdminAlbum();
+
+    await screen.findByDisplayValue('Easy Rider');
+    await user.click(screen.getByRole('button', { name: 'Make Single' }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Remove "Born to Be Wild" from this album and register it as a single for Steppenwolf?'
+    );
+    await waitFor(() => expect(apiService.makeTrackSingle).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(screen.queryByDisplayValue('Born to Be Wild')).not.toBeInTheDocument());
+  });
+
+  test('does nothing when the confirm dialog is dismissed', async () => {
+    window.confirm = vi.fn(() => false);
+    const user = userEvent.setup();
+    renderAdminAlbum();
+
+    await screen.findByDisplayValue('Easy Rider');
+    await user.click(screen.getByRole('button', { name: 'Make Single' }));
+
+    expect(apiService.makeTrackSingle).not.toHaveBeenCalled();
+  });
+
+  test('handles null artist name gracefully', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: {
+        ...albumPayload,
+        tracks: [
+          { id: 1, title: 'Born to Be Wild', track_number: '1', duration: 180, album: { id: 10 }, artist: { id: null, name: undefined } },
+        ],
+      },
+    });
+    window.confirm = vi.fn(() => true);
+    apiService.makeTrackSingle.mockResolvedValue({ data: {} });
+    const user = userEvent.setup();
+    renderAdminAlbum();
+
+    await screen.findByDisplayValue('Easy Rider');
+    await user.click(screen.getByRole('button', { name: 'Make Single' }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Remove "Born to Be Wild" from this album and register it as a single for this artist?'
+    );
+    await waitFor(() => expect(apiService.makeTrackSingle).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(screen.queryByDisplayValue('Born to Be Wild')).not.toBeInTheDocument());
   });
 });

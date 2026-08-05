@@ -358,6 +358,19 @@ const AdminAlbum = () => {
     }
   };
 
+  const handleMakeSingle = async (track) => {
+    if (!window.confirm(`Remove "${track.title}" from this album and register it as a single for ${track.artist?.name || 'this artist'}?`)) {
+      return;
+    }
+    try {
+      await apiService.makeTrackSingle(track.id);
+      setTracks(prevTracks => prevTracks.filter(t => t.id !== track.id));
+    } catch (error) {
+      console.error('Error making track a single:', error);
+      alert('Failed to make track a single: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   const handleTransferModeChange = (mode) => {
     setTransferMode(mode);
     setTransferQuery('');
@@ -1265,6 +1278,21 @@ const AdminAlbum = () => {
                         {track.duration ? `${Math.floor(track.duration / 60)}:${String(track.duration % 60).padStart(2, '0')}` : '-'}
                       </td>
                       <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleMakeSingle(track)}
+                          style={{
+                            padding: '0.25rem 0.75rem',
+                            marginRight: '0.5rem',
+                            backgroundColor: '#6b7280',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Make Single
+                        </button>
                         <button
                           onClick={() => handleDeleteTrack(track.id)}
                           style={{
