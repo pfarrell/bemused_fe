@@ -89,7 +89,9 @@ artists.get('/:id', async (c) => {
            pa.id AS primary_artist_id, pa.name AS primary_artist_name,
            EXISTS (
              SELECT 1 FROM artist_albums caa WHERE caa.album_id = albums.id AND caa.role = 'collaborator'
-           ) AS has_collaborators
+           ) AS has_collaborators,
+           (albums.release_year IS NOT NULL AND albums.release_year != '' AND albums.release_year != '0') AS has_release_year,
+           CASE WHEN albums.release_year IS NOT NULL AND albums.release_year != '' AND albums.release_year != '0' THEN albums.release_year END AS sort_year
     FROM albums
     INNER JOIN artists pa ON pa.id = albums.artist_id
     INNER JOIN tracks ON tracks.album_id = albums.id AND tracks.approved = true
@@ -97,7 +99,7 @@ artists.get('/:id', async (c) => {
        OR EXISTS (
          SELECT 1 FROM artist_albums ca WHERE ca.album_id = albums.id AND ca.artist_id = ${id} AND ca.role = 'collaborator'
        )
-    ORDER BY albums.release_year ASC
+    ORDER BY has_release_year DESC, sort_year DESC, albums.title ASC
   `.execute(db)
 
   const albumTrackCounts = await countsService.trackCountsByAlbumIds(albumRows.rows.map((a) => a.id))
