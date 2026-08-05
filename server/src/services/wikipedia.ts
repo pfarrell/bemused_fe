@@ -20,7 +20,7 @@ async function fetchWikipedia(title: string): Promise<WikiSummary | null> {
     if (!res.ok) return null
 
     const data = await res.json() as any
-    const raw: string = data.extract ?? ''
+    const raw: string = (data.extract ?? '').trim()
     if (!raw) return null
 
     let summary: string
