@@ -208,13 +208,13 @@ export async function getArtistByMbid(
 
 export async function getReleaseByMbid(
   mbid: string
-): Promise<{ id: string; title: string; artist_credit?: string } | null> {
+): Promise<{ id: string; title: string; artist_credit?: string; date?: string } | null> {
   const res = await rateLimitedFetchRaw(`${MB_BASE}/release/${mbid}?fmt=json&inc=artist-credits`)
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`MusicBrainz API error: ${res.status}`)
   const data = await res.json()
   const artistCredit = data['artist-credit']?.map((ac: any) => ac.name).join('') || undefined
-  return { id: data.id, title: data.title, artist_credit: artistCredit }
+  return { id: data.id, title: data.title, artist_credit: artistCredit, date: data.date || undefined }
 }
 
 export interface MBArtistCandidate {
