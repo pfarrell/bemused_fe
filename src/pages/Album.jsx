@@ -94,6 +94,10 @@ const Album = () => {
     ctxMenu.close();
   };
 
+  const handleMadeSingle = (trackId) => {
+    setAlbumData((d) => ({ ...d, tracks: d.tracks.filter((t) => t.id !== trackId) }));
+  };
+
   // Helper function to check if a track is currently playing
   const isTrackPlaying = (track) => {
     return currentTrack && currentTrack.id === track.id;
@@ -332,6 +336,8 @@ const Album = () => {
             index={index}
             trackCount={tracks.length}
             isPlaying={isTrackPlaying(track)}
+            showMakeSingle={isAdmin}
+            onMadeSingle={handleMadeSingle}
           />
         ))}
       </div>

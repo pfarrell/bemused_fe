@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Album from './Album';
 import { usePlayerStore } from '../stores/playerStore';
@@ -13,6 +13,7 @@ vi.mock('../services/api', () => ({
   apiService: {
     getAlbum: vi.fn(),
     getImageUrl: () => 'http://example.com/image.jpg',
+    makeTrackSingle: vi.fn(),
   },
 }));
 
@@ -20,8 +21,8 @@ const albumData = {
   artist: { id: 5, name: 'Album Artist' },
   album: { id: 10, title: 'Test Album', image_path: 'a.jpg' },
   tracks: [
-    { id: 1, title: 'Track One', duration: 180, artist: { name: 'Album Artist' }, album: { id: 10, title: 'Test Album', artist: { id: 5, name: 'Album Artist' } } },
-    { id: 2, title: 'Track Two', duration: 200, artist: { name: 'Album Artist' }, album: { id: 10, title: 'Test Album', artist: { id: 5, name: 'Album Artist' } } },
+    { id: 1, title: 'Track One', duration: 180, artist: { id: 5, name: 'Album Artist' }, album: { id: 10, title: 'Test Album', artist: { id: 5, name: 'Album Artist' } } },
+    { id: 2, title: 'Track Two', duration: 200, artist: { id: 5, name: 'Album Artist' }, album: { id: 10, title: 'Test Album', artist: { id: 5, name: 'Album Artist' } } },
   ],
   summary: {},
   secondary_artists: [],
@@ -244,5 +245,32 @@ describe('Album page — header context menu', () => {
     fireEvent.click(screen.getByText('☆ Add to Favorites'));
 
     expect(toggleFavorite).toHaveBeenCalledWith('album', albumData.album.id, expect.objectContaining({ id: albumData.album.id, title: albumData.album.title }));
+  });
+});
+
+describe('Album page — Make Single', () => {
+  test('does not show the Make Single menu item for non-admins', async () => {
+    useAuthStore.setState({ isAdmin: false, isAuthenticated: true });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    fireEvent.contextMenu(screen.getByText(/Track One/).closest('.track-item'));
+
+    expect(screen.queryByText(/Make Single/)).not.toBeInTheDocument();
+  });
+
+  test('shows the Make Single menu item for admins and removes the track from the list on success', async () => {
+    useAuthStore.setState({ isAdmin: true, isAuthenticated: true });
+    window.confirm = vi.fn(() => true);
+    apiService.makeTrackSingle.mockResolvedValue({ data: {} });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    fireEvent.contextMenu(screen.getByText(/Track One/).closest('.track-item'));
+    expect(screen.getByText('🎵 Make Single')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('🎵 Make Single'));
+
+    await waitFor(() => expect(screen.queryByText(/Track One/)).not.toBeInTheDocument());
+    expect(screen.getByText(/Track Two/)).toBeInTheDocument();
   });
 });
