@@ -6,12 +6,15 @@
 // release's own date, so remasters/reissues/live-album repackagings don't
 // get sorted or displayed under the year of that particular edition.
 //
-// Usage: tsx scripts/backfill-release-year.ts [--limit N] [--id N] [--dry-run] [--all]
-//   --all   re-check every album with a musicbrainz_id, not just ones
-//           missing a release_year — use this to correct years that were
-//           previously populated from a specific release's date.
+// Usage: tsx scripts/backfill-release-year.ts [--limit N] [--id N] [--dry-run] [--all] [--retry-failed <logfile>]
+//   --all             re-check every album with a musicbrainz_id, not just ones
+//                      missing a release_year — use this to correct years that
+//                      were previously populated from a specific release's date.
+//   --retry-failed F   only re-check albums whose id appears in a "MB lookup
+//                      failed" line (e.g. a 503) in a previous run's log file F.
 
 import 'dotenv/config'
+import fs from 'fs'
 import { db } from '../src/db/database.js'
 import { getReleaseByMbid } from '../src/services/musicbrainz.js'
 
@@ -24,10 +27,21 @@ const hasFlag = (flag: string) => args.includes(flag)
 
 const limit = getArg('--limit') ? parseInt(getArg('--limit')!) : undefined
 const singleId = getArg('--id') ? parseInt(getArg('--id')!) : undefined
+const retryFailedLog = getArg('--retry-failed')
 const dryRun = hasFlag('--dry-run')
 const all = hasFlag('--all')
 
 if (dryRun) console.log('🔍 Dry-run mode: no writes will occur')
+
+function parseFailedIds(logPath: string): number[] {
+  const text = fs.readFileSync(logPath, 'utf8')
+  const ids = new Set<number>()
+  for (const line of text.split('\n')) {
+    const match = line.match(/⚠️\s+MB lookup failed for \[(\d+)\]/)
+    if (match) ids.add(parseInt(match[1]))
+  }
+  return [...ids]
+}
 
 async function main() {
   let query = db
@@ -43,7 +57,11 @@ async function main() {
     .where('albums.musicbrainz_id', 'is not', null)
     .where('albums.title', '!=', '_Singles')
 
-  if (!all) {
+  if (retryFailedLog) {
+    const failedIds = parseFailedIds(retryFailedLog)
+    console.log(`\n🔁 Retrying ${failedIds.length} album(s) that previously failed in ${retryFailedLog}`)
+    query = query.where('albums.id', 'in', failedIds) as typeof query
+  } else if (!all) {
     query = query.where(eb => eb.or([
       eb('albums.release_year', 'is', null),
       eb('albums.release_year', '=', ''),
@@ -66,7 +84,7 @@ async function main() {
     try {
       release = await getReleaseByMbid(album.musicbrainz_id!)
     } catch (err) {
-      console.warn(`  ⚠️  MB lookup failed for "${album.artist_name}" — "${album.title}": ${(err as Error).message}`)
+      console.warn(`  ⚠️  MB lookup failed for [${album.id}] "${album.artist_name}" — "${album.title}": ${(err as Error).message}`)
       failed++
       continue
     }
