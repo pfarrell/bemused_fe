@@ -103,7 +103,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       e.preventDefault();
       e.stopPropagation();
     }
-    if (!window.confirm(`Remove "${track.title}" from this album and register it as a single for ${track.artist.name}?`)) {
+    if (!window.confirm(`Remove "${track.title}" from this album and register it as a single for ${track.artist?.name || 'this artist'}?`)) {
       return;
     }
     try {

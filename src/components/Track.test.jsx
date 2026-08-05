@@ -371,6 +371,15 @@ describe('Track component — Make Single menu item', () => {
     await waitFor(() => expect(window.alert).toHaveBeenCalledWith('Failed to make track a single: boom'));
     expect(onMadeSingle).not.toHaveBeenCalled();
   });
+
+  test('does not crash when the track has no artist name (orphaned track, no FK constraint on tracks.artist_id)', () => {
+    window.confirm = vi.fn(() => true);
+    renderTrack({ showMakeSingle: true, track: { ...mockTrack, artist: { id: null, name: undefined } } });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+
+    expect(() => fireEvent.click(screen.getByText('🎵 Make Single'))).not.toThrow();
+    expect(window.confirm).toHaveBeenCalledWith('Remove "Test Track" from this album and register it as a single for this artist?');
+  });
 });
 
 describe('Track component — Favorite menu item', () => {
