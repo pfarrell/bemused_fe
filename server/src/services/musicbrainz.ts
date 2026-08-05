@@ -208,13 +208,22 @@ export async function getArtistByMbid(
 
 export async function getReleaseByMbid(
   mbid: string
-): Promise<{ id: string; title: string; artist_credit?: string; date?: string } | null> {
-  const res = await rateLimitedFetchRaw(`${MB_BASE}/release/${mbid}?fmt=json&inc=artist-credits`)
+): Promise<{ id: string; title: string; artist_credit?: string; date?: string; original_date?: string } | null> {
+  const res = await rateLimitedFetchRaw(`${MB_BASE}/release/${mbid}?fmt=json&inc=artist-credits+release-groups`)
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`MusicBrainz API error: ${res.status}`)
   const data = await res.json()
   const artistCredit = data['artist-credit']?.map((ac: any) => ac.name).join('') || undefined
-  return { id: data.id, title: data.title, artist_credit: artistCredit, date: data.date || undefined }
+  return {
+    id: data.id,
+    title: data.title,
+    artist_credit: artistCredit,
+    date: data.date || undefined,
+    // The release-group's first-release-date is the original work's release
+    // year (e.g. 1969 for a Beatles album), independent of which specific
+    // edition/remaster/reissue this particular release mbid points at.
+    original_date: data['release-group']?.['first-release-date'] || undefined,
+  }
 }
 
 export interface MBArtistCandidate {
