@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 
 const FALLBACK_ARTWORK = `${import.meta.env.BASE_URL}icons/icon-512.png`;
 const PREFETCH_THRESHOLD_SECONDS = 15;
+const DEFAULT_TITLE = 'P·Share';
 
 const setMediaSessionActionHandler = (action, handler) => {
   try {
@@ -128,6 +129,18 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
       usePlayerStore.getState().ensureStandbyLoaded();
     }
   }, [nextTrackIndex]);
+
+  useEffect(() => {
+    if (!currentTrack) {
+      document.title = DEFAULT_TITLE;
+      return undefined;
+    }
+    const artist = currentTrack.artist?.name;
+    document.title = artist ? `${currentTrack.title} — ${artist}` : currentTrack.title;
+    return () => {
+      document.title = DEFAULT_TITLE;
+    };
+  }, [currentTrack]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
