@@ -3,6 +3,7 @@ import { db } from '../db/database.js'
 import type { Variables } from '../types.js'
 import { notesService } from '../services/notesService.js'
 import { createRecallNote, getRecallItem, decryptRecallToken, appendBacklink, stripBacklink } from '../services/recallService.js'
+import { getCollectionSummary } from '../services/wikipedia.js'
 
 const collections = new Hono<{ Variables: Variables }>()
 
@@ -27,6 +28,8 @@ collections.get('/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
   const collection = await db.selectFrom('collections').selectAll().where('id', '=', id).executeTakeFirst()
   if (!collection) return c.json({ error: 'Not found' }, 404)
+
+  const summary = await getCollectionSummary(collection.wikipedia)
 
   const caRows = await db
     .selectFrom('collection_albums')
@@ -84,7 +87,7 @@ collections.get('/:id', async (c) => {
     }
   }))
 
-  return c.json({ collection, albums: orderedAlbums, notes })
+  return c.json({ collection, albums: orderedAlbums, notes, summary })
 })
 
 // POST /collections
@@ -104,9 +107,9 @@ collections.post('/', async (c) => {
 // PUT /collection/:id
 collections.put('/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
-  const { name, image_path } = await c.req.json()
+  const { name, image_path, wikipedia } = await c.req.json()
 
-  await db.updateTable('collections').set({ name, image_path }).where('id', '=', id).execute()
+  await db.updateTable('collections').set({ name, image_path, wikipedia }).where('id', '=', id).execute()
   return c.json({ success: true })
 })
 

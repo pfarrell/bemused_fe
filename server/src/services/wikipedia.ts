@@ -94,3 +94,12 @@ export async function getAlbumSummary(
 ): Promise<WikiSummary | null> {
   return tryTitles(albumCandidates(artistName, albumTitle, artistWikipedia, albumWikipedia))
 }
+
+// Collections are user-curated, not canonical entities — there is no
+// name-based guessing here, only an explicit admin-set title is ever looked up.
+export async function getCollectionSummary(
+  title?: string | null
+): Promise<WikiSummary | null> {
+  if (!title) return null
+  return tryTitles([title])
+}
