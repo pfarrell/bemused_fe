@@ -14,6 +14,10 @@ const NowPlaying = () => {
     navigate(`/album/${track.album.id}`);
   };
 
+  const handlePlaylistClick = (track) => {
+    navigate(`/playlist/${track.source_playlist.id}`);
+  };
+
 
   // Don't show on mobile or when no track is playing
   if (!currentTrack) {
@@ -51,6 +55,15 @@ const NowPlaying = () => {
         <div className="track-title" onClick={() => handleTrackClick(currentTrack)} title="go to album">
           {currentTrack.title}
         </div>
+        {currentTrack.source_playlist && (
+          <div
+            className="track-source-playlist"
+            onClick={() => handlePlaylistClick(currentTrack)}
+            title="go to playlist"
+          >
+            from {currentTrack.source_playlist.name}
+          </div>
+        )}
       </div>
     </div>
   );
