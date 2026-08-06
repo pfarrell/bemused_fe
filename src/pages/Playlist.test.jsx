@@ -46,7 +46,20 @@ describe('Playlist page', () => {
     // asynchronously after paint) — waitFor avoids a race where this assertion runs
     // before that effect has flushed, most visible under heavy parallel test load.
     await waitFor(() => {
-      expect(usePlayerStore.getState().pageTracks).toEqual(playlistData.tracks);
+      expect(usePlayerStore.getState().pageTracks).toHaveLength(playlistData.tracks.length);
+      expect(usePlayerStore.getState().pageTracks[0]).toMatchObject({ id: 1, title: 'Track One' });
+    });
+  });
+
+  test('tags each loaded track with source_playlist matching this playlist', async () => {
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    await waitFor(() => {
+      expect(usePlayerStore.getState().pageTracks).toEqual([
+        { ...playlistData.tracks[0], source_playlist: { id: 20, name: 'Test Playlist' } },
+        { ...playlistData.tracks[1], source_playlist: { id: 20, name: 'Test Playlist' } },
+      ]);
     });
   });
 

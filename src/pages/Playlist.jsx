@@ -49,7 +49,14 @@ export default function Playlist() {
       setLoading(true);
       setError(null);
       const response = await apiService.getPlaylist(id);
-      setPlaylistData(response.data);
+      const { playlist, tracks } = response.data;
+      setPlaylistData({
+        ...response.data,
+        tracks: (tracks || []).map((track) => ({
+          ...track,
+          source_playlist: { id: playlist.id, name: playlist.name },
+        })),
+      });
     } catch (err) {
       setError(err.message);
     } finally {
