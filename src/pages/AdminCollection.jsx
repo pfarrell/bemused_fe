@@ -113,6 +113,7 @@ export default function AdminCollection() {
       await apiService.updateCollection(id, {
         name: collectionData.name,
         image_path: collectionData.image_path,
+        wikipedia: collectionData.wikipedia,
       });
       navigate(`/collection/${id}`);
     } catch (err) {
@@ -193,6 +194,26 @@ export default function AdminCollection() {
               borderRadius: '4px', fontSize: '1rem',
             }}
           />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="collection-wikipedia" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+            Wikipedia
+          </label>
+          <input
+            id="collection-wikipedia"
+            type="text"
+            value={collectionData?.wikipedia || ''}
+            onChange={(e) => setCollectionData({ ...collectionData, wikipedia: e.target.value })}
+            placeholder="e.g., Kind_of_Blue"
+            style={{
+              width: '100%', padding: '0.5rem', border: '1px solid #d1d5db',
+              borderRadius: '4px', fontSize: '1rem',
+            }}
+          />
+          <small style={{ color: '#666', fontSize: '0.875rem' }}>
+            The part after wikipedia.org/wiki/. Leave blank to skip Wikipedia lookup for this collection.
+          </small>
         </div>
 
         {/* Current image */}
