@@ -11,11 +11,11 @@ const NowPlaying = () => {
   };
 
   const handleTrackClick = (track) => {
-    navigate(`/album/${track.album.id}`);
-  };
-
-  const handlePlaylistClick = (track) => {
-    navigate(`/playlist/${track.source_playlist.id}`);
+    if (track.source_playlist?.id) {
+      navigate(`/playlist/${track.source_playlist.id}`);
+    } else {
+      navigate(`/album/${track.album.id}`);
+    }
   };
 
   // Don't show on mobile or when no track is playing
@@ -51,18 +51,13 @@ const NowPlaying = () => {
         <div className="track-artist" onClick={() => handleArtistClick(currentTrack)} title="go to artist">
           {currentTrack.artist?.name || 'Unknown Artist'}
         </div>
-        <div className="track-title" onClick={() => handleTrackClick(currentTrack)} title="go to album">
+        <div
+          className="track-title"
+          onClick={() => handleTrackClick(currentTrack)}
+          title={currentTrack.source_playlist?.id ? 'go to playlist' : 'go to album'}
+        >
           {currentTrack.title}
         </div>
-        {currentTrack.source_playlist?.id && (
-          <div
-            className="track-source-playlist"
-            onClick={() => handlePlaylistClick(currentTrack)}
-            title="go to playlist"
-          >
-            from {currentTrack.source_playlist.name}
-          </div>
-        )}
       </div>
     </div>
   );

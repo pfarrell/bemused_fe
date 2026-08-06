@@ -30,21 +30,21 @@ test('falls back to the music-notes icon when the track has no image_path', () =
   expect(screen.queryByRole('img')).toBeNull();
 });
 
-test('shows a "from <playlist>" link when the current track has a source_playlist', () => {
+test('the track title has a "go to playlist" tooltip when the current track has a source_playlist', () => {
   usePlayerStore.setState({ currentTrack: { ...track, source_playlist: { id: 7, name: 'Road Trip' } } });
   renderNP();
-  expect(screen.getByText('from Road Trip')).toBeInTheDocument();
+  expect(screen.getByText('T')).toHaveAttribute('title', 'go to playlist');
 });
 
-test('does not show a source-playlist link when the current track has none', () => {
+test('the track title has a "go to album" tooltip when the current track has no source_playlist', () => {
   renderNP();
-  expect(screen.queryByText(/^from /)).toBeNull();
+  expect(screen.getByText('T')).toHaveAttribute('title', 'go to album');
 });
 
-test('clicking the source-playlist link navigates to that playlist', () => {
+test('clicking the track title navigates to the source playlist when present', () => {
   usePlayerStore.setState({ currentTrack: { ...track, source_playlist: { id: 7, name: 'Road Trip' } } });
   renderNP();
-  screen.getByText('from Road Trip').click();
+  screen.getByText('T').click();
   // MemoryRouter has no observable location assertion wired here; this test only
   // needs the click handler to run without throwing. Navigation correctness for
   // the artist/album links above already follows this exact same pattern in this
