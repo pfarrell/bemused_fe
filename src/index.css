@@ -706,6 +706,17 @@
   cursor: pointer;
 }
 
+.now-playing .track-source-playlist {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.25;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
 /* Playlist button with fixed positioning */
 .playlist-button {
   background: none;

@@ -21,7 +21,7 @@ const ActivityOverlay = () => <div className="track-item-activity-overlay" />;
 // parent's single .map(), same reason Track.jsx is its own per-row component
 // elsewhere in the app). All the drag/touch/delete behavior below is
 // unchanged from the pre-extraction inline JSX; the new piece is the
-// right-click/long-press Go to Album / Go to Artist menu at the bottom.
+// right-click/long-press Go to Album / Go to Artist / Go to Playlist menu at the bottom.
 const PlaylistDrawerRow = ({
   track,
   index,
