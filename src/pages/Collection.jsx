@@ -86,21 +86,64 @@ export default function Collection() {
                 cursor: 'zoom-in'
               }}
             />
-          ) : (
-            <div style={{
-              width: '200px',
-              height: '200px',
-              backgroundColor: '#e5e7eb',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '4rem',
-              color: '#9ca3af'
-            }}>
-              ▣
-            </div>
-          )}
+          ) : (() => {
+            const albumsWithImages = (albums || []).filter((a) => a.image_path);
+            if (albumsWithImages.length >= 4) {
+              return (
+                <div
+                  data-testid="collection-collage"
+                  style={{
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '0.5rem',
+                    overflow: 'hidden',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateRows: '1fr 1fr',
+                  }}
+                >
+                  {albumsWithImages.slice(0, 4).map((a) => (
+                    <img
+                      key={a.id}
+                      src={apiService.getImageUrl(a.image_path, 'album_small')}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ))}
+                </div>
+              );
+            }
+            if (albumsWithImages.length >= 1) {
+              return (
+                <img
+                  data-testid="collection-single-cover"
+                  src={apiService.getImageUrl(albumsWithImages[0].image_path, 'album_small')}
+                  alt={collection.name}
+                  style={{
+                    width: '200px',
+                    height: '200px',
+                    objectFit: 'cover',
+                    borderRadius: '0.5rem',
+                  }}
+                />
+              );
+            }
+            return (
+              <div style={{
+                width: '200px',
+                height: '200px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '4rem',
+                color: '#9ca3af'
+              }}>
+                ▣
+              </div>
+            );
+          })()}
         </div>
 
         {/* Collection Info */}

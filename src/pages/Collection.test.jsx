@@ -54,3 +54,69 @@ describe('Collection page — wikipedia summary', () => {
     expect(screen.queryByText(/\.\.\.more at wikipedia/)).not.toBeInTheDocument();
   });
 });
+
+describe('Collection page — cover collage', () => {
+  test('shows a 2x2 collage of the first 4 albums with covers when there is no custom image', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        collection: baseCollection,
+        albums: [
+          { id: 1, title: 'A', image_path: 'a.jpg', artist: { id: 1, name: 'Artist A' } },
+          { id: 2, title: 'B', image_path: 'b.jpg', artist: { id: 2, name: 'Artist B' } },
+          { id: 3, title: 'C', image_path: null, artist: { id: 3, name: 'Artist C' } },
+          { id: 4, title: 'D', image_path: 'd.jpg', artist: { id: 4, name: 'Artist D' } },
+          { id: 5, title: 'E', image_path: 'e.jpg', artist: { id: 5, name: 'Artist E' } },
+        ],
+        notes: [],
+        summary: null,
+      },
+    });
+    renderCollection();
+    await screen.findByText('Road Trip Mix');
+
+    const collage = screen.getByTestId('collection-collage');
+    const tiles = collage.querySelectorAll('img');
+    expect(tiles).toHaveLength(4);
+    expect(tiles[0]).toHaveAttribute('src', 'http://example.com/a.jpg');
+    expect(tiles[1]).toHaveAttribute('src', 'http://example.com/b.jpg');
+    expect(tiles[2]).toHaveAttribute('src', 'http://example.com/d.jpg');
+    expect(tiles[3]).toHaveAttribute('src', 'http://example.com/e.jpg');
+  });
+
+  test('shows a single cover when 1-3 albums have images', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        collection: baseCollection,
+        albums: [
+          { id: 1, title: 'A', image_path: 'a.jpg', artist: { id: 1, name: 'Artist A' } },
+          { id: 2, title: 'B', image_path: null, artist: { id: 2, name: 'Artist B' } },
+        ],
+        notes: [],
+        summary: null,
+      },
+    });
+    renderCollection();
+    await screen.findByText('Road Trip Mix');
+
+    expect(screen.queryByTestId('collection-collage')).not.toBeInTheDocument();
+    const cover = screen.getByTestId('collection-single-cover');
+    expect(cover).toHaveAttribute('src', 'http://example.com/a.jpg');
+  });
+
+  test('shows the placeholder when no album has an image', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        collection: baseCollection,
+        albums: [{ id: 1, title: 'A', image_path: null, artist: { id: 1, name: 'Artist A' } }],
+        notes: [],
+        summary: null,
+      },
+    });
+    renderCollection();
+    await screen.findByText('Road Trip Mix');
+
+    expect(screen.queryByTestId('collection-collage')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('collection-single-cover')).not.toBeInTheDocument();
+    expect(screen.getByText('▣')).toBeInTheDocument();
+  });
+});
