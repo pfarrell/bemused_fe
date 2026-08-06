@@ -15,7 +15,7 @@ const track = {
 const renderNP = () => render(<MemoryRouter><NowPlaying /></MemoryRouter>);
 
 beforeEach(() => {
-  usePlayerStore.setState({ currentTrack: track });
+  usePlayerStore.setState({ currentTrack: track, closeDrawer: vi.fn() });
 });
 
 test('shows album art when the current track has an image_path', () => {
@@ -49,4 +49,20 @@ test('clicking the track title navigates to the source playlist when present', (
   // needs the click handler to run without throwing. Navigation correctness for
   // the artist/album links above already follows this exact same pattern in this
   // file and is not re-verified with a location assertion either.
+});
+
+test('clicking the track title closes the queue drawer', () => {
+  const closeDrawer = vi.fn();
+  usePlayerStore.setState({ closeDrawer });
+  renderNP();
+  screen.getByText('T').click();
+  expect(closeDrawer).toHaveBeenCalled();
+});
+
+test('clicking the artist closes the queue drawer', () => {
+  const closeDrawer = vi.fn();
+  usePlayerStore.setState({ closeDrawer });
+  renderNP();
+  screen.getByText('A').click();
+  expect(closeDrawer).toHaveBeenCalled();
 });

@@ -5,9 +5,10 @@ import { apiService } from '../services/api';
 
 const NowPlaying = () => {
   const navigate = useNavigate();
-  const { currentTrack } = usePlayerStore();
+  const { currentTrack, closeDrawer } = usePlayerStore();
   const handleArtistClick = (track) => {
     navigate(`/artist/${track.artist.id}`);
+    closeDrawer();
   };
 
   const handleTrackClick = (track) => {
@@ -16,6 +17,7 @@ const NowPlaying = () => {
     } else {
       navigate(`/album/${track.album.id}`);
     }
+    closeDrawer();
   };
 
   // Don't show on mobile or when no track is playing
