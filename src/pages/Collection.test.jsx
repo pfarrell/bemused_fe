@@ -74,7 +74,7 @@ describe('Collection page — cover collage', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    const collage = screen.getByTestId('collection-collage');
+    const collage = screen.getByTestId('cover-collage');
     const tiles = collage.querySelectorAll('img');
     expect(tiles).toHaveLength(4);
     expect(tiles[0]).toHaveAttribute('src', 'http://example.com/a.jpg');
@@ -98,8 +98,8 @@ describe('Collection page — cover collage', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    expect(screen.queryByTestId('collection-collage')).not.toBeInTheDocument();
-    const cover = screen.getByTestId('collection-single-cover');
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+    const cover = screen.getByTestId('cover-collage-single');
     expect(cover).toHaveAttribute('src', 'http://example.com/a.jpg');
   });
 
@@ -115,8 +115,8 @@ describe('Collection page — cover collage', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    expect(screen.queryByTestId('collection-collage')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('collection-single-cover')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-collage-single')).not.toBeInTheDocument();
     expect(screen.getByText('▣')).toBeInTheDocument();
   });
 
@@ -138,8 +138,8 @@ describe('Collection page — cover collage', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    expect(screen.queryByTestId('collection-collage')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('collection-single-cover')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-collage-single')).not.toBeInTheDocument();
 
     const img = screen.getByAltText('Road Trip Mix');
     expect(img).toHaveAttribute('src', 'http://example.com/cover.jpg');

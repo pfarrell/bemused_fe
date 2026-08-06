@@ -9,10 +9,10 @@ import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import NotesSection from '../components/NotesSection';
 import Wikipedia from '../components/Wikipedia';
+import CoverCollage from '../components/CoverCollage';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
-import { handleSmallImageError } from '../utils/imageFallback';
 
 export default function Collection() {
   const { id } = useParams();
@@ -73,80 +73,15 @@ export default function Collection() {
         {...ctxMenu.triggerProps}
       >
         {/* Collection Image */}
-        <div style={{ flexShrink: 0 }}>
-          {collection.image_path ? (
-            <img
-              src={apiService.getImageUrl(collection.image_path, 'album_page')}
-              alt={collection.name}
-              onClick={() => setShowImageModal(true)}
-              style={{
-                width: '200px',
-                height: '200px',
-                objectFit: 'cover',
-                borderRadius: '0.5rem',
-                cursor: 'zoom-in'
-              }}
-            />
-          ) : (() => {
-            const albumsWithImages = (albums || []).filter((a) => a.image_path);
-            if (albumsWithImages.length >= 4) {
-              return (
-                <div
-                  data-testid="collection-collage"
-                  style={{
-                    width: '200px',
-                    height: '200px',
-                    borderRadius: '0.5rem',
-                    overflow: 'hidden',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gridTemplateRows: '1fr 1fr',
-                  }}
-                >
-                  {albumsWithImages.slice(0, 4).map((a) => (
-                    <img
-                      key={a.id}
-                      src={apiService.getImageUrl(a.image_path, 'album_small')}
-                      alt=""
-                      onError={handleSmallImageError}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ))}
-                </div>
-              );
-            }
-            if (albumsWithImages.length >= 1) {
-              return (
-                <img
-                  data-testid="collection-single-cover"
-                  src={apiService.getImageUrl(albumsWithImages[0].image_path, 'album_small')}
-                  alt={collection.name}
-                  onError={handleSmallImageError}
-                  style={{
-                    width: '200px',
-                    height: '200px',
-                    objectFit: 'cover',
-                    borderRadius: '0.5rem',
-                  }}
-                />
-              );
-            }
-            return (
-              <div style={{
-                width: '200px',
-                height: '200px',
-                backgroundColor: '#e5e7eb',
-                borderRadius: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '4rem',
-                color: '#9ca3af'
-              }}>
-                ▣
-              </div>
-            );
-          })()}
+        <div style={{ flexShrink: 0, width: '200px', height: '200px', borderRadius: '0.5rem', overflow: 'hidden' }}>
+          <CoverCollage
+            imagePath={collection.image_path}
+            items={albums}
+            alt={collection.name}
+            onImageClick={collection.image_path ? () => setShowImageModal(true) : undefined}
+            placeholderGlyph="▣"
+            imageContext="album_page"
+          />
         </div>
 
         {/* Collection Info */}
@@ -176,14 +111,12 @@ export default function Collection() {
           <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
             {albums?.length || 0} {albums?.length === 1 ? 'album' : 'albums'}
           </p>
+
+          {summary && Object.keys(summary).length > 0 && (
+            <Wikipedia summary={summary} />
+          )}
         </div>
       </div>
-
-      {summary && Object.keys(summary).length > 0 && (
-        <div style={{ marginBottom: '2rem' }}>
-          <Wikipedia summary={summary} />
-        </div>
-      )}
 
       <ContextMenu
         open={ctxMenu.open}
