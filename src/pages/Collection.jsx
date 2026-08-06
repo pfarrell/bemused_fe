@@ -8,6 +8,7 @@ import AlbumCard from '../components/AlbumCard';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import NotesSection from '../components/NotesSection';
+import Wikipedia from '../components/Wikipedia';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
@@ -52,7 +53,7 @@ export default function Collection() {
   if (error) return <Retry message={error} onRetry={loadCollection} />;
   if (!collectionData) return <div>Collection not found</div>;
 
-  const { collection, albums, notes } = collectionData;
+  const { collection, albums, notes, summary } = collectionData;
   const canEdit = isAdmin || (user && collection.user_id === user.id);
 
   return (
@@ -131,6 +132,12 @@ export default function Collection() {
           </p>
         </div>
       </div>
+
+      {summary && Object.keys(summary).length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <Wikipedia summary={summary} />
+        </div>
+      )}
 
       <ContextMenu
         open={ctxMenu.open}
