@@ -32,7 +32,11 @@ const PlaylistResultCard = ({ playlist, onClick, imageUrl }) => {
     setPlayLoading(true);
     try {
       const response = await apiService.getPlaylist(playlist.id);
-      dispatch(response.data.tracks);
+      const tracks = response.data.tracks.map((track) => ({
+        ...track,
+        source_playlist: { id: playlist.id, name: playlist.name },
+      }));
+      dispatch(tracks);
     } catch (err) {
       console.error('Failed to play playlist', err);
     } finally {

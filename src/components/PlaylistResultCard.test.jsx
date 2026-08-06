@@ -83,8 +83,27 @@ describe('mobile row layout', () => {
 
     expect(apiService.getPlaylist).toHaveBeenCalledWith(5);
     expect(clearPlaylist).toHaveBeenCalled();
-    expect(addTracks).toHaveBeenCalledWith([{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }]);
+    expect(addTracks).toHaveBeenCalledWith([{ id: 1, title: 'Track One', url: 'http://x/1.mp3', source_playlist: { id: 5, name: 'Test Playlist' } }]);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  test('tags dispatched tracks with source_playlist matching this playlist card', async () => {
+    apiService.getPlaylist.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play Test Playlist' }));
+
+    await waitFor(() => {
+      expect(addTracks).toHaveBeenCalledWith([
+        { id: 1, title: 'Track One', url: 'http://x/1.mp3', source_playlist: { id: 5, name: 'Test Playlist' } },
+      ]);
+    });
   });
 
   test('right-clicking play and choosing "Play Next" fetches the playlist and inserts it next in the queue', async () => {
@@ -104,7 +123,7 @@ describe('mobile row layout', () => {
     expect(apiService.getPlaylist).toHaveBeenCalledWith(5);
     expect(clearPlaylist).not.toHaveBeenCalled();
     expect(addTracks).toHaveBeenCalledWith(
-      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }],
+      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3', source_playlist: { id: 5, name: 'Test Playlist' } }],
       true,
       { flashActivity: true }
     );
@@ -127,7 +146,7 @@ describe('mobile row layout', () => {
     expect(apiService.getPlaylist).toHaveBeenCalledWith(5);
     expect(clearPlaylist).not.toHaveBeenCalled();
     expect(addTracks).toHaveBeenCalledWith(
-      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }],
+      [{ id: 1, title: 'Track One', url: 'http://x/1.mp3', source_playlist: { id: 5, name: 'Test Playlist' } }],
       false,
       { flashActivity: true }
     );
