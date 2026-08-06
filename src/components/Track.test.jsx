@@ -1,3 +1,4 @@
+import { Profiler } from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import Track from './Track';
@@ -274,6 +275,35 @@ describe('Track component', () => {
     });
   });
 
+});
+
+describe('Track component — store subscription granularity', () => {
+  // While a track is loading, usePlayerEngine fires setBuffering()/setCurrentTime() repeatedly
+  // (every 'waiting'/'timeupdate' event) as separate macrotasks. If Track subscribes to the
+  // whole player store instead of the specific fields it reads, every one of those unrelated
+  // updates forces every <Track> row on the page to re-render, which is expensive enough across
+  // a long tracklist to visibly stall other main-thread work (e.g. a route-navigation click)
+  // for as long as the track keeps buffering.
+  test('does not re-render on unrelated player-store field changes (e.g. buffering/currentTime during track load)', () => {
+    const onRender = vi.fn();
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Profiler id="track" onRender={onRender}>
+          <Track track={mockTrack} index={0} trackCount={1} />
+        </Profiler>
+      </MemoryRouter>
+    );
+    onRender.mockClear();
+
+    act(() => {
+      usePlayerStore.setState({ isBuffering: true });
+    });
+    act(() => {
+      usePlayerStore.setState({ currentTime: 1.5 });
+    });
+
+    expect(onRender).not.toHaveBeenCalled();
+  });
 });
 
 describe('Track component — per-track artist display', () => {

@@ -17,7 +17,10 @@ import { useFavoritesStore } from '../stores/favoritesStore';
 export default function Playlist() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addTracks, clearPlaylist, currentTrack, setPageTracks } = usePlayerStore();
+  const addTracks = usePlayerStore((s) => s.addTracks);
+  const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const setPageTracks = usePlayerStore((s) => s.setPageTracks);
   const { user, isAdmin, isAuthenticated } = useAuthStore();
   const [playlistData, setPlaylistData] = useState(null);
   const [loading, setLoading] = useState(true);

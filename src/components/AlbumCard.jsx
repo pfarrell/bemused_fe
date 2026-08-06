@@ -17,7 +17,8 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
   const [playLoading, setPlayLoading] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { clearPlaylist, addTracks } = usePlayerStore();
+  const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
+  const addTracks = usePlayerStore((s) => s.addTracks);
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', album.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);

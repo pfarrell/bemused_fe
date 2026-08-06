@@ -20,7 +20,9 @@ const Artist = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, isAuthenticated } = useAuthStore();
-  const { addTracks, clearPlaylist, currentTrack } = usePlayerStore();
+  const addTracks = usePlayerStore((s) => s.addTracks);
+  const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
   const [artistData, setArtistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

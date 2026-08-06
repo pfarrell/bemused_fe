@@ -20,7 +20,10 @@ import { useFavoritesStore } from '../stores/favoritesStore';
 const Album = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addTracks, clearPlaylist, currentTrack, setPageTracks } = usePlayerStore();
+  const addTracks = usePlayerStore((s) => s.addTracks);
+  const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const setPageTracks = usePlayerStore((s) => s.setPageTracks);
   const { isAdmin, isAuthenticated } = useAuthStore();
   const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -17,7 +17,11 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [pressedButton, setPressedButton] = useState(null);
-  const { playlist, addTrack, addTracks, clearPlaylist, playTrackAtIndex } = usePlayerStore();
+  const playlist = usePlayerStore((s) => s.playlist);
+  const addTrack = usePlayerStore((s) => s.addTrack);
+  const addTracks = usePlayerStore((s) => s.addTracks);
+  const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
+  const playTrackAtIndex = usePlayerStore((s) => s.playTrackAtIndex);
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useFavoritesStore((s) => s.isFavorite('track', track.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);

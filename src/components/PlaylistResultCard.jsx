@@ -18,7 +18,8 @@ import { useIsMobile } from '../hooks/useIsMobile';
 const PlaylistResultCard = ({ playlist, onClick, imageUrl, previewAlbums }) => {
   const isMobile = useIsMobile();
   const [playLoading, setPlayLoading] = useState(false);
-  const { clearPlaylist, addTracks } = usePlayerStore();
+  const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
+  const addTracks = usePlayerStore((s) => s.addTracks);
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useFavoritesStore((s) => s.isFavorite('playlist', playlist.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);

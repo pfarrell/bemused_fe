@@ -22,7 +22,7 @@ const TABS = [
 const Library = () => {
   const navigate = useNavigate();
   const { items, loading, loaded, load } = useFavoritesStore();
-  const { currentTrack } = usePlayerStore();
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
   const [activeKind, setActiveKind] = useState('artist');
 
   useEffect(() => {

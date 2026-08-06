@@ -5,7 +5,8 @@ import { apiService } from '../services/api';
 
 const NowPlaying = () => {
   const navigate = useNavigate();
-  const { currentTrack, closeDrawer } = usePlayerStore();
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const closeDrawer = usePlayerStore((s) => s.closeDrawer);
   const handleArtistClick = (track) => {
     navigate(`/artist/${track.artist.id}`);
     closeDrawer();
