@@ -175,7 +175,7 @@ export default function Playlist() {
                 opacity: tracks?.length ? 1 : 0.5
               }}
             >
-              � Play Now
+              ▶ Play Now
             </button>
             <button
               onClick={handleAddToQueue}
