@@ -68,8 +68,38 @@ playlists.get('/', async (c) => {
     .where('auto_generated', 'is', null)
     .execute()
 
-  const trackCounts = await countsService.trackCountsByPlaylistIds(rows.map((r) => r.id))
-  return c.json(rows.map((r) => ({ ...r, track_count: trackCounts.get(r.id) ?? 0 })))
+  if (rows.length === 0) return c.json([])
+
+  const playlistIds = rows.map((r) => r.id)
+  const trackCounts = await countsService.trackCountsByPlaylistIds(playlistIds)
+
+  // Preview album covers: first 4 *distinct* albums-with-images per playlist,
+  // in track order — a playlist can have multiple tracks from the same album,
+  // unlike a collection's albums, so duplicates must be filtered here.
+  const albumRows = await db
+    .selectFrom('playlist_tracks')
+    .innerJoin('tracks', 'tracks.id', 'playlist_tracks.track_id')
+    .innerJoin('albums', 'albums.id', 'tracks.album_id')
+    .select(['playlist_tracks.playlist_id', 'albums.id as album_id', 'albums.image_path'])
+    .where('playlist_tracks.playlist_id', 'in', playlistIds)
+    .where('albums.image_path', 'is not', null)
+    .orderBy('playlist_tracks.order', 'asc')
+    .execute()
+
+  const previewsByPlaylist = new Map<number, { id: number; image_path: string }[]>()
+  for (const row of albumRows) {
+    const list = previewsByPlaylist.get(row.playlist_id) ?? []
+    if (list.length < 4 && !list.some((a) => a.id === row.album_id)) {
+      list.push({ id: row.album_id, image_path: row.image_path as string })
+    }
+    previewsByPlaylist.set(row.playlist_id, list)
+  }
+
+  return c.json(rows.map((r) => ({
+    ...r,
+    track_count: trackCounts.get(r.id) ?? 0,
+    preview_albums: previewsByPlaylist.get(r.id) ?? [],
+  })))
 })
 
 // POST /playlists - Create a new playlist
