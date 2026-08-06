@@ -93,6 +93,15 @@ describe('Track component', () => {
     expect(screen.getByText('Album Artist')).toBeInTheDocument();
   });
 
+  test('omits "from <album>" for tracks in the _Singles pseudo-album', () => {
+    renderTrack({
+      includeMeta: true,
+      track: { ...mockTrack, album: { ...mockTrack.album, title: '_Singles' } },
+    });
+    expect(screen.queryByText('_Singles')).not.toBeInTheDocument();
+    expect(screen.getByText('Album Artist')).toBeInTheDocument();
+  });
+
   test('renders formatted duration', () => {
     renderTrack();
     expect(screen.getByText('(3:00)')).toBeInTheDocument();

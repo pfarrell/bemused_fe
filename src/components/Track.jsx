@@ -212,18 +212,23 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
             {includeMeta && track.album && (
               <>
               {' '}
-              from
-              <a onClick={(e) => {
-                e.stopPropagation();
-                if (track.album.id) {
-                  navigate(`/album/${track.album.id}`);
-                } else {
-                  console.log('Go to album:', track.album);
-                }
-              }}>
-                {track.album.title}
-              </a>
-              {' by'}
+              {track.album.title !== '_Singles' && (
+                <>
+                from
+                <a onClick={(e) => {
+                  e.stopPropagation();
+                  if (track.album.id) {
+                    navigate(`/album/${track.album.id}`);
+                  } else {
+                    console.log('Go to album:', track.album);
+                  }
+                }}>
+                  {track.album.title}
+                </a>
+                {' '}
+                </>
+              )}
+              by
               <a onClick={(e) => {
                 e.stopPropagation();
                 if (track.album.artist.id) {
