@@ -9,6 +9,7 @@ import Track from '../components/Track';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import ShareButton from '../components/ShareButton';
+import CoverCollage from '../components/CoverCollage';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
@@ -83,6 +84,18 @@ export default function Playlist() {
   // Show edit button if user is admin OR if user owns the playlist
   const canEdit = isAdmin || (user && playlist.user_id === user.id);
 
+  // Distinct albums (by id, in track order) among this playlist's tracks that
+  // have a cover — feeds the collage fallback when the playlist has no custom image.
+  const albumCoverItems = [];
+  const seenAlbumIds = new Set();
+  for (const t of tracks || []) {
+    const albumId = t.album?.id;
+    if (albumId == null || seenAlbumIds.has(albumId) || !t.image_path) continue;
+    seenAlbumIds.add(albumId);
+    albumCoverItems.push({ id: albumId, image_path: t.image_path });
+    if (albumCoverItems.length >= 4) break;
+  }
+
   return (
     <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
       {/* Playlist Header */}
@@ -99,35 +112,15 @@ export default function Playlist() {
         {...ctxMenu.triggerProps}
       >
         {/* Playlist Image */}
-        <div style={{ flexShrink: 0 }}>
-          {playlist.image_path ? (
-            <img
-              src={apiService.getImageUrl(playlist.image_path, 'album_page')}
-              alt={playlist.name}
-              onClick={() => setShowImageModal(true)}
-              style={{
-                width: '200px',
-                height: '200px',
-                objectFit: 'cover',
-                borderRadius: '0.5rem',
-                cursor: 'zoom-in'
-              }}
-            />
-          ) : (
-            <div style={{
-              width: '200px',
-              height: '200px',
-              backgroundColor: '#e5e7eb',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '4rem',
-              color: '#9ca3af'
-            }}>
-              ♪
-            </div>
-          )}
+        <div style={{ flexShrink: 0, width: '200px', height: '200px', borderRadius: '0.5rem', overflow: 'hidden' }}>
+          <CoverCollage
+            imagePath={playlist.image_path}
+            items={albumCoverItems}
+            alt={playlist.name}
+            onImageClick={playlist.image_path ? () => setShowImageModal(true) : undefined}
+            placeholderGlyph="♪"
+            imageContext="album_page"
+          />
         </div>
 
         {/* Playlist Info */}

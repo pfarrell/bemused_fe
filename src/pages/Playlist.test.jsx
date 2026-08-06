@@ -9,7 +9,7 @@ import { apiService } from '../services/api';
 vi.mock('../services/api', () => ({
   apiService: {
     getPlaylist: vi.fn(),
-    getImageUrl: () => 'http://example.com/image.jpg',
+    getImageUrl: vi.fn(() => 'http://example.com/image.jpg'),
   },
 }));
 
@@ -70,6 +70,88 @@ describe('Playlist page', () => {
     unmount();
 
     expect(usePlayerStore.getState().pageTracks).toEqual([]);
+  });
+});
+
+describe('Playlist page — cover collage', () => {
+  beforeEach(() => {
+    apiService.getImageUrl.mockImplementation((path, context) => (path ? `http://example.com/${context}/${path}` : null));
+  });
+
+  test('shows a 2x2 collage of the first 4 distinct albums with covers, deduping repeated albums', async () => {
+    apiService.getPlaylist.mockResolvedValue({
+      data: {
+        playlist: { id: 20, name: 'Test Playlist', user_id: 1 },
+        tracks: [
+          { id: 1, title: 'A1', duration: 100, album: { id: 1, title: 'Album 1', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'a.jpg' },
+          { id: 2, title: 'A2', duration: 100, album: { id: 1, title: 'Album 1', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'a.jpg' },
+          { id: 3, title: 'B1', duration: 100, album: { id: 2, title: 'Album 2', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'b.jpg' },
+          { id: 4, title: 'C1', duration: 100, album: { id: 3, title: 'Album 3', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: null },
+          { id: 5, title: 'D1', duration: 100, album: { id: 4, title: 'Album 4', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'd.jpg' },
+          { id: 6, title: 'E1', duration: 100, album: { id: 5, title: 'Album 5', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'e.jpg' },
+        ],
+      },
+    });
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    const collage = screen.getByTestId('cover-collage');
+    const tiles = collage.querySelectorAll('img');
+    expect(tiles).toHaveLength(4);
+    expect(tiles[0]).toHaveAttribute('src', 'http://example.com/album_small/a.jpg');
+    expect(tiles[1]).toHaveAttribute('src', 'http://example.com/album_small/b.jpg');
+    expect(tiles[2]).toHaveAttribute('src', 'http://example.com/album_small/d.jpg');
+    expect(tiles[3]).toHaveAttribute('src', 'http://example.com/album_small/e.jpg');
+  });
+
+  test('shows a single cover when 1-3 distinct albums have images', async () => {
+    apiService.getPlaylist.mockResolvedValue({
+      data: {
+        playlist: { id: 20, name: 'Test Playlist', user_id: 1 },
+        tracks: [
+          { id: 1, title: 'A1', duration: 100, album: { id: 1, title: 'Album 1', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'a.jpg' },
+          { id: 2, title: 'A2', duration: 100, album: { id: 1, title: 'Album 1', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'a.jpg' },
+        ],
+      },
+    });
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+    const cover = screen.getByTestId('cover-collage-single');
+    expect(cover).toHaveAttribute('src', 'http://example.com/album_small/a.jpg');
+  });
+
+  test('shows the ♪ placeholder when no track has an album cover', async () => {
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-collage-single')).not.toBeInTheDocument();
+    expect(screen.getByTestId('cover-collage-placeholder')).toHaveTextContent('♪');
+  });
+
+  test('shows the custom image instead of the collage when playlist.image_path is set, and it stays clickable', async () => {
+    apiService.getPlaylist.mockResolvedValue({
+      data: {
+        playlist: { id: 20, name: 'Test Playlist', user_id: 1, image_path: 'cover.jpg' },
+        tracks: [
+          { id: 1, title: 'A1', duration: 100, album: { id: 1, title: 'Album 1', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'a.jpg' },
+          { id: 2, title: 'B1', duration: 100, album: { id: 2, title: 'Album 2', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'b.jpg' },
+          { id: 3, title: 'C1', duration: 100, album: { id: 3, title: 'Album 3', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'c.jpg' },
+          { id: 4, title: 'D1', duration: 100, album: { id: 4, title: 'Album 4', artist: { id: 900, name: 'X' } }, artist: { name: 'X' }, image_path: 'd.jpg' },
+        ],
+      },
+    });
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-collage-single')).not.toBeInTheDocument();
+
+    const img = screen.getByAltText('Test Playlist');
+    expect(img).toHaveAttribute('src', 'http://example.com/album_page/cover.jpg');
+    expect(img.style.cursor).toBe('zoom-in');
   });
 });
 
