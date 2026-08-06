@@ -6,6 +6,7 @@ import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import PlaylistResultCard from '../components/PlaylistResultCard';
+import CoverCollage from '../components/CoverCollage';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { formatCount } from '../utils/formatters';
 
@@ -39,10 +40,6 @@ export default function Playlists() {
 
   return (
     <div style={{ padding: '2rem', paddingBottom: '8rem', maxWidth: '1400px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '2rem', color: '#1f2937' }}>
-        Playlists
-      </h1>
-
       {playlists.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
           <p style={{ fontSize: '1.125rem' }}>No playlists found</p>
@@ -55,6 +52,7 @@ export default function Playlists() {
                 key={playlist.id}
                 playlist={playlist}
                 imageUrl={apiService.getImageUrl(playlist.image_path, 'album_small')}
+                previewAlbums={playlist.preview_albums}
                 onClick={() => navigate(`/playlist/${playlist.id}`)}
               />
             ))}
@@ -88,43 +86,16 @@ export default function Playlists() {
                 position: 'relative',
                 backgroundColor: '#e5e7eb'
               }}>
-                {playlist.image_path ? (
-                  <img
-                    src={apiService.getImageUrl(playlist.image_path, 'album_small')}
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                  <CoverCollage
+                    imagePath={playlist.image_path}
+                    items={playlist.preview_albums}
                     alt={playlist.name}
-                    onClick={(e) => { e.stopPropagation(); setZoomedPlaylist(playlist); }}
-                    onError={(e) => {
-                      if (e.target.src.includes('/sm/')) {
-                        e.target.src = e.target.src.replace('/sm/', '/');
-                        e.target.onerror = null;
-                      }
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      cursor: 'zoom-in'
-                    }}
+                    onImageClick={playlist.image_path ? (e) => { e.stopPropagation(); setZoomedPlaylist(playlist); } : undefined}
+                    placeholderGlyph="♪"
+                    imageContext="album_small"
                   />
-                ) : (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '3rem',
-                    color: '#9ca3af'
-                  }}>
-                    ♪
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* Playlist Name */}

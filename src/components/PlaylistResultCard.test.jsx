@@ -8,6 +8,7 @@ import { useFavoritesStore } from '../stores/favoritesStore';
 vi.mock('../services/api', () => ({
   apiService: {
     getPlaylist: vi.fn(),
+    getImageUrl: (path, context) => (path ? `http://example.com/${context}/${path}` : null),
   },
 }));
 
@@ -150,6 +151,52 @@ describe('mobile row layout', () => {
       false,
       { flashActivity: true }
     );
+  });
+});
+
+describe('mobile row — cover collage', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true });
+  });
+
+  test('renders the collage when there is no custom image and 4+ preview albums are given', () => {
+    render(
+      <PlaylistResultCard
+        playlist={playlist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+        previewAlbums={[
+          { id: 1, image_path: 'a.jpg' },
+          { id: 2, image_path: 'b.jpg' },
+          { id: 3, image_path: 'c.jpg' },
+          { id: 4, image_path: 'd.jpg' },
+        ]}
+      />
+    );
+    expect(screen.getByTestId('cover-collage')).toBeInTheDocument();
+  });
+
+  test('falls back to the plain imageUrl when previewAlbums is absent', () => {
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-collage-single')).not.toBeInTheDocument();
+  });
+
+  test('ignores previewAlbums when the playlist has a custom image', () => {
+    render(
+      <PlaylistResultCard
+        playlist={{ ...playlist, image_path: 'custom.jpg' }}
+        onClick={vi.fn()}
+        imageUrl="/img/custom.jpg"
+        previewAlbums={[
+          { id: 1, image_path: 'a.jpg' },
+          { id: 2, image_path: 'b.jpg' },
+          { id: 3, image_path: 'c.jpg' },
+          { id: 4, image_path: 'd.jpg' },
+        ]}
+      />
+    );
+    expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
   });
 });
 
