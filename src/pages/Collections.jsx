@@ -38,10 +38,6 @@ export default function Collections() {
 
   return (
     <div style={{ padding: '2rem', paddingBottom: '8rem', maxWidth: '1400px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '2rem', color: '#1f2937' }}>
-        Collections
-      </h1>
-
       {collections.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
           <p style={{ fontSize: '1.125rem' }}>No collections found</p>
