@@ -20,7 +20,28 @@ function buildAlbum(a: any) {
 // GET /collections
 collections.get('/', async (c) => {
   const rows = await db.selectFrom('collections').selectAll().orderBy('name', 'asc').execute()
-  return c.json(rows)
+  if (rows.length === 0) return c.json([])
+
+  const collectionIds = rows.map((r) => r.id)
+  const albumRows = await db
+    .selectFrom('collection_albums')
+    .innerJoin('albums', 'albums.id', 'collection_albums.album_id')
+    .select(['collection_albums.collection_id', 'albums.id as album_id', 'albums.image_path'])
+    .where('collection_albums.collection_id', 'in', collectionIds)
+    .where('albums.image_path', 'is not', null)
+    .orderBy('collection_albums.order', 'asc')
+    .execute()
+
+  const previewsByCollection = new Map<number, { id: number; image_path: string }[]>()
+  for (const row of albumRows) {
+    const list = previewsByCollection.get(row.collection_id) ?? []
+    if (list.length < 4) {
+      list.push({ id: row.album_id, image_path: row.image_path as string })
+      previewsByCollection.set(row.collection_id, list)
+    }
+  }
+
+  return c.json(rows.map((r) => ({ ...r, preview_albums: previewsByCollection.get(r.id) ?? [] })))
 })
 
 // GET /collection/:id
