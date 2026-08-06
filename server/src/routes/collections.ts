@@ -87,7 +87,7 @@ collections.get('/:id', async (c) => {
     }
   }))
 
-  return c.json({ collection, albums: orderedAlbums, notes, summary })
+  return c.json({ collection, albums: orderedAlbums, notes, summary: summary ?? {} })
 })
 
 // POST /collections

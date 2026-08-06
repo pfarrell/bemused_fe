@@ -12,6 +12,7 @@ import Wikipedia from '../components/Wikipedia';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { handleSmallImageError } from '../utils/imageFallback';
 
 export default function Collection() {
   const { id } = useParams();
@@ -107,6 +108,7 @@ export default function Collection() {
                       key={a.id}
                       src={apiService.getImageUrl(a.image_path, 'album_small')}
                       alt=""
+                      onError={handleSmallImageError}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ))}
@@ -119,6 +121,7 @@ export default function Collection() {
                   data-testid="collection-single-cover"
                   src={apiService.getImageUrl(albumsWithImages[0].image_path, 'album_small')}
                   alt={collection.name}
+                  onError={handleSmallImageError}
                   style={{
                     width: '200px',
                     height: '200px',

@@ -119,4 +119,30 @@ describe('Collection page — cover collage', () => {
     expect(screen.queryByTestId('collection-single-cover')).not.toBeInTheDocument();
     expect(screen.getByText('▣')).toBeInTheDocument();
   });
+
+  test('shows the custom image instead of the collage when image_path is set, and it stays clickable', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        collection: { ...baseCollection, image_path: 'cover.jpg' },
+        albums: [
+          { id: 1, title: 'A', image_path: 'a.jpg', artist: { id: 1, name: 'Artist A' } },
+          { id: 2, title: 'B', image_path: 'b.jpg', artist: { id: 2, name: 'Artist B' } },
+          { id: 3, title: 'C', image_path: 'c.jpg', artist: { id: 3, name: 'Artist C' } },
+          { id: 4, title: 'D', image_path: 'd.jpg', artist: { id: 4, name: 'Artist D' } },
+          { id: 5, title: 'E', image_path: 'e.jpg', artist: { id: 5, name: 'Artist E' } },
+        ],
+        notes: [],
+        summary: null,
+      },
+    });
+    renderCollection();
+    await screen.findByText('Road Trip Mix');
+
+    expect(screen.queryByTestId('collection-collage')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('collection-single-cover')).not.toBeInTheDocument();
+
+    const img = screen.getByAltText('Road Trip Mix');
+    expect(img).toHaveAttribute('src', 'http://example.com/cover.jpg');
+    expect(img.style.cursor).toBe('zoom-in');
+  });
 });
