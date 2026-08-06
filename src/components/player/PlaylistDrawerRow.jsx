@@ -44,7 +44,12 @@ const PlaylistDrawerRow = ({
   const closeDrawer = usePlayerStore((s) => s.closeDrawer);
   const onThisAlbum = useIsCurrentPage(track.album?.id ? `/album/${track.album.id}` : null);
   const onThisArtist = useIsCurrentPage(track.artist?.id ? `/artist/${track.artist.id}` : null);
-  const hasMenuItems = Boolean((track.album?.id && !onThisAlbum) || (track.artist?.id && !onThisArtist));
+  const onThisPlaylist = useIsCurrentPage(track.source_playlist?.id ? `/playlist/${track.source_playlist.id}` : null);
+  const hasMenuItems = Boolean(
+    (track.album?.id && !onThisAlbum) ||
+    (track.artist?.id && !onThisArtist) ||
+    (track.source_playlist?.id && !onThisPlaylist)
+  );
   const ctxMenu = useContextMenu({
     shouldIgnore: (e) => !hasMenuItems || e.target.closest('.track-delete-button'),
   });
@@ -59,6 +64,13 @@ const PlaylistDrawerRow = ({
   const handleGoToArtist = (e) => {
     if (e) e.stopPropagation();
     navigate(`/artist/${track.artist.id}`);
+    ctxMenu.close();
+    closeDrawer();
+  };
+
+  const handleGoToPlaylist = (e) => {
+    if (e) e.stopPropagation();
+    navigate(`/playlist/${track.source_playlist.id}`);
     ctxMenu.close();
     closeDrawer();
   };
@@ -141,6 +153,15 @@ const PlaylistDrawerRow = ({
             onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}
           >
             🎤 Go to Artist
+          </button>
+        )}
+        {track.source_playlist?.id && !onThisPlaylist && (
+          <button
+            onClick={handleGoToPlaylist}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToPlaylist(); }}
+          >
+            📃 Go to Playlist
           </button>
         )}
       </ContextMenu>

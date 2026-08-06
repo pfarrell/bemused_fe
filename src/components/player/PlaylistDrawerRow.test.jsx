@@ -110,7 +110,7 @@ test('shows the dragging class when isDragged is true', () => {
   expect(screen.getByText(/Track 1/).closest('.track-item')).toHaveClass('dragging');
 });
 
-describe('Go to Album / Go to Artist menu', () => {
+describe('Go to Album / Go to Artist / Go to Playlist menu', () => {
   test('right-click opens a menu with Go to Album and Go to Artist', () => {
     renderRow();
     fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
@@ -216,5 +216,50 @@ describe('Go to Album / Go to Artist menu', () => {
     renderRow({ track: track(1, { album: null, artist: { id: null, name: 'Orphan' } }) });
     fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
     expect(document.querySelector('.track-dropdown')).not.toBeInTheDocument();
+  });
+
+  test('right-click opens a menu with Go to Playlist when the track has a source_playlist', () => {
+    renderRow({ track: track(1, { source_playlist: { id: 9, name: 'Chill Mix' } }) });
+    fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
+    expect(screen.getByText('📃 Go to Playlist')).toBeInTheDocument();
+  });
+
+  test('Go to Playlist is absent when the track has no source_playlist', () => {
+    renderRow();
+    fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
+    expect(screen.queryByText('📃 Go to Playlist')).not.toBeInTheDocument();
+  });
+
+  test('Go to Playlist is absent when already on that playlist\'s page', () => {
+    renderRow({ track: track(1, { source_playlist: { id: 9, name: 'Chill Mix' } }) }, '/playlist/9');
+    fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
+    expect(screen.queryByText('📃 Go to Playlist')).not.toBeInTheDocument();
+    // Album/Artist items are unaffected by being on the playlist page
+    expect(screen.getByText('💿 Go to Album')).toBeInTheDocument();
+  });
+
+  test('clicking Go to Playlist navigates, closes the menu, and closes the drawer, without also activating the row', () => {
+    const navigate = vi.fn();
+    useNavigate.mockReturnValue(navigate);
+    const closeDrawer = vi.fn();
+    usePlayerStore.setState({ closeDrawer });
+    const onActivate = vi.fn();
+    renderRow({ track: track(1, { source_playlist: { id: 9, name: 'Chill Mix' } }), onActivate });
+    fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
+
+    fireEvent.click(screen.getByText('📃 Go to Playlist'));
+
+    expect(navigate).toHaveBeenCalledWith('/playlist/9');
+    expect(closeDrawer).toHaveBeenCalled();
+    expect(screen.queryByText('📃 Go to Playlist')).not.toBeInTheDocument();
+    expect(onActivate).not.toHaveBeenCalled();
+  });
+
+  test('the menu still opens for a track whose only applicable item is Go to Playlist', () => {
+    renderRow({
+      track: track(1, { album: null, artist: { id: null, name: 'Orphan' }, source_playlist: { id: 9, name: 'Chill Mix' } }),
+    });
+    fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
+    expect(screen.getByText('📃 Go to Playlist')).toBeInTheDocument();
   });
 });
