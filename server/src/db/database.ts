@@ -193,6 +193,7 @@ interface CollectionTable {
   name: string
   user_id: number | null
   image_path: string | null
+  wikipedia: string | null
   created_at: ColumnType<Date, string | Date | undefined, never>
   updated_at: ColumnType<Date, string | Date | undefined, string | Date>
 }
