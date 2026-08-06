@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 
 const ResultRow = ({
   imageUrl,
+  imageContent,
   imageShape = 'square',
   title,
   subtitle,
@@ -113,7 +114,7 @@ const ResultRow = ({
       onTouchEnd={onTouchEnd}
     >
       <div className={`result-row-image result-row-image-${imageShape}`}>
-        <img src={imageUrl} alt={title} onError={onImageError} />
+        {imageContent || <img src={imageUrl} alt={title} onError={onImageError} />}
       </div>
       <div className="result-row-text">
         <h3 className="result-row-title">{title}</h3>

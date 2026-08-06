@@ -6,6 +6,7 @@ import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import CollectionResultCard from '../components/CollectionResultCard';
+import CoverCollage from '../components/CoverCollage';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function Collections() {
@@ -50,6 +51,7 @@ export default function Collections() {
                 key={collection.id}
                 collection={collection}
                 imageUrl={apiService.getImageUrl(collection.image_path, 'album_small')}
+                previewAlbums={collection.preview_albums}
                 onClick={() => navigate(`/collection/${collection.id}`)}
               />
             ))}
@@ -82,39 +84,16 @@ export default function Collections() {
                 position: 'relative',
                 backgroundColor: '#e5e7eb'
               }}>
-                {collection.image_path ? (
-                  <img
-                    src={apiService.getImageUrl(collection.image_path, 'album_small')}
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                  <CoverCollage
+                    imagePath={collection.image_path}
+                    items={collection.preview_albums}
                     alt={collection.name}
-                    onClick={(e) => { e.stopPropagation(); setZoomedCollection(collection); }}
-                    onError={(e) => {
-                      if (e.target.src.includes('/sm/')) {
-                        e.target.src = e.target.src.replace('/sm/', '/');
-                        e.target.onerror = null;
-                      }
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: 0, left: 0,
-                      width: '100%', height: '100%',
-                      objectFit: 'cover',
-                      cursor: 'zoom-in'
-                    }}
+                    onImageClick={collection.image_path ? (e) => { e.stopPropagation(); setZoomedCollection(collection); } : undefined}
+                    placeholderGlyph="▣"
+                    imageContext="album_small"
                   />
-                ) : (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0, left: 0,
-                    width: '100%', height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '3rem',
-                    color: '#9ca3af'
-                  }}>
-                    ▣
-                  </div>
-                )}
+                </div>
               </div>
 
               <div style={{ padding: '1rem' }}>
