@@ -7,7 +7,8 @@ vi.mock('../../services/api', () => ({ apiService: { getImageUrl: () => 'http://
 
 const track = (id, overrides = {}) => ({ id, title: `Track ${id}`, url: `/stream/${id}`, duration: 125, artist: { name: 'Artist' }, ...overrides });
 
-const renderDrawer = () => render(<MemoryRouter><PlaylistDrawer /></MemoryRouter>);
+const renderDrawer = (props = {}) =>
+  render(<MemoryRouter><PlaylistDrawer onSaveQueue={vi.fn()} {...props} /></MemoryRouter>);
 
 beforeEach(() => {
   usePlayerStore.setState({
@@ -206,4 +207,32 @@ test('drag-forward reorder: dragging track at index 0 to drop target index 3 cal
   expect(mockReorderPlaylist).toHaveBeenCalledWith(0, 4);
 
   getBoundingClientRectSpy.mockRestore();
+});
+
+test('right-click on empty drawer background opens the Save as Playlist menu', () => {
+  renderDrawer();
+  fireEvent.contextMenu(document.querySelector('.music-player-playlist-container'));
+  expect(screen.getByText('💾 Save as Playlist')).toBeInTheDocument();
+});
+
+test('clicking Save as Playlist calls onSaveQueue and closes the menu', () => {
+  const onSaveQueue = vi.fn();
+  renderDrawer({ onSaveQueue });
+  fireEvent.contextMenu(document.querySelector('.music-player-playlist-container'));
+  fireEvent.click(screen.getByText('💾 Save as Playlist'));
+  expect(onSaveQueue).toHaveBeenCalled();
+  expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
+});
+
+test('right-click on a track row does not open the background Save as Playlist menu', () => {
+  renderDrawer();
+  fireEvent.contextMenu(screen.getByText(/Track 1/).closest('.track-item'));
+  expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
+});
+
+test('Save as Playlist is not offered when the queue is empty', () => {
+  usePlayerStore.setState({ playlist: [] });
+  renderDrawer();
+  fireEvent.contextMenu(document.querySelector('.music-player-playlist-container'));
+  expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
 });

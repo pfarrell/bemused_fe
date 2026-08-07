@@ -3,8 +3,10 @@ import { usePlayerStore } from '../../stores/playerStore';
 import { apiService } from '../../services/api';
 import { isMobileDevice } from '../../utils/device';
 import PlaylistDrawerRow from './PlaylistDrawerRow';
+import { useContextMenu } from '../../hooks/useContextMenu';
+import ContextMenu from '../ContextMenu';
 
-const PlaylistDrawer = () => {
+const PlaylistDrawer = ({ onSaveQueue }) => {
   const playlist = usePlayerStore((s) => s.playlist);
   const currentTrackIndex = usePlayerStore((s) => s.currentTrackIndex);
   const drawerOpen = usePlayerStore((s) => s.drawerOpen);
@@ -32,6 +34,16 @@ const PlaylistDrawer = () => {
     if (recentlyAddedIndices.length > 0) clearRecentlyAdded();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to the drawerOpen transition, not every recentlyAddedIndices change
   }, [drawerOpen]);
+
+  const bgCtx = useContextMenu({
+    shouldIgnore: (e) => Boolean(e.target.closest('.track-item')) || playlist.length === 0,
+  });
+
+  const handleSaveQueue = (e) => {
+    if (e) e.stopPropagation();
+    bgCtx.close();
+    onSaveQueue();
+  };
 
   if (!drawerOpen) return null;
 
@@ -78,7 +90,13 @@ const PlaylistDrawer = () => {
   return (
     <>
       <div className="playlist-backdrop" onClick={toggleDrawer} />
-      <div className="music-player-playlist-container">
+      <div
+        className="music-player-playlist-container"
+        onContextMenu={bgCtx.triggerProps.onContextMenu}
+        onTouchStart={bgCtx.triggerProps.onTouchStart}
+        onTouchMove={bgCtx.triggerProps.onTouchMove}
+        onTouchEnd={bgCtx.triggerProps.onTouchEnd}
+      >
         <ul className="playlist">
           {playlist.map((track, index) => {
             const imageUrl = track.image_path ? apiService.getImageUrl(track.image_path, 'album_small') : null;
@@ -106,6 +124,23 @@ const PlaylistDrawer = () => {
             );
           })}
         </ul>
+
+        <ContextMenu
+          open={bgCtx.open}
+          position={bgCtx.position}
+          openedViaTouch={bgCtx.openedViaTouch}
+          onDismiss={bgCtx.dismiss}
+          onSwallowTouch={bgCtx.swallowTouch}
+          testId="save-queue-drawer-menu-backdrop"
+        >
+          <button
+            onClick={handleSaveQueue}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSaveQueue(); }}
+          >
+            💾 Save as Playlist
+          </button>
+        </ContextMenu>
       </div>
     </>
   );
