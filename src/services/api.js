@@ -118,7 +118,7 @@ export const apiService = {
   // Playlists
   getPlaylists: () => api.get('/playlists'),
   getPlaylist: (id) => api.get(`/playlist/${id}`),
-  createPlaylist: (name) => api.post('/playlists', { name }),
+  createPlaylist: (name, trackIds) => api.post('/playlists', { name, track_ids: trackIds }),
   addTrackToPlaylist: (playlistId, trackId) => api.post(`/playlist/${playlistId}/tracks`, { track_id: trackId }),
   removeTrackFromPlaylist: (playlistId, trackId) => api.delete(`/playlist/${playlistId}/tracks/${trackId}`),
   reorderPlaylistTracks: (playlistId, track_orders) => api.patch(`/playlist/${playlistId}/tracks/reorder`, { track_orders }),
