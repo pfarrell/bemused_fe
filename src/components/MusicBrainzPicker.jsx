@@ -100,14 +100,16 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, pendi
       )}
 
       <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.5rem' }}>
-        <input
-          type="text"
-          value={pasteText}
-          onChange={(e) => setPasteText(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUse(); } }}
-          placeholder="Paste MusicBrainz ID or URL"
-          style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
-        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <input
+            type="text"
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUse(); } }}
+            placeholder="Paste MusicBrainz ID or URL"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+          />
+        </div>
         <button
           type="button"
           onClick={handleUse}
@@ -132,14 +134,16 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, pendi
       {searchOpen && (
         <div style={{ marginTop: '0.5rem' }}>
           <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => { setQuery(e.target.value); setResults([]); setHasSearched(false); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(e); } }}
-              placeholder={entityType === 'artist' ? 'Search artist name...' : 'Search release title...'}
-              style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
-            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setResults([]); setHasSearched(false); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(e); } }}
+                placeholder={entityType === 'artist' ? 'Search artist name...' : 'Search release title...'}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+              />
+            </div>
             <button
               type="button"
               onClick={handleSearch}

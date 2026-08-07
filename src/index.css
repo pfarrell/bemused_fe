@@ -1555,12 +1555,6 @@
     display: block !important;
   }
   
-  [style*="flex: 1"] {
-    flex: none !important;
-    width: 100% !important;
-    text-align: center !important;
-  }
-  
   [style*="fontSize: 2.5rem"] {
     font-size: 1.75rem !important;
     text-align: center !important;

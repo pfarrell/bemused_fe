@@ -41,6 +41,7 @@ const SavePlaylistModal = ({ trackIds, onClose }) => {
         style={{
           backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem',
           maxWidth: '400px', width: '100%', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+          boxSizing: 'border-box',
         }}
       >
         <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#1f2937' }}>

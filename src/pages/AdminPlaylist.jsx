@@ -331,20 +331,23 @@ export default function AdminPlaylist() {
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
         }}>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search for tracks..."
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Search for tracks..."
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
             <button
               onClick={handleSearch}
               style={{

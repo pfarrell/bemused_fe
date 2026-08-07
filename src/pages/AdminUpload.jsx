@@ -426,14 +426,16 @@ const AdminUpload = () => {
             ) : (
               <div>
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <input
-                    type="text"
-                    value={artistQuery}
-                    onChange={(e) => { setArtistQuery(e.target.value); setArtistResults([]); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleArtistSearch(e); } }}
-                    placeholder="Search by name or leave blank to use ID3 tag"
-                    style={{ flex: 1, padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
-                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <input
+                      type="text"
+                      value={artistQuery}
+                      onChange={(e) => { setArtistQuery(e.target.value); setArtistResults([]); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleArtistSearch(e); } }}
+                      placeholder="Search by name or leave blank to use ID3 tag"
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                    />
+                  </div>
                   <button
                     type="button"
                     aria-label="Search artists"
@@ -524,14 +526,16 @@ const AdminUpload = () => {
             ) : (
               <div>
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <input
-                    type="text"
-                    value={albumQuery}
-                    onChange={(e) => { setAlbumQuery(e.target.value); setAlbumResults([]); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAlbumSearch(e); } }}
-                    placeholder="Search by title or leave blank to use ID3 tag"
-                    style={{ flex: 1, padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
-                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <input
+                      type="text"
+                      value={albumQuery}
+                      onChange={(e) => { setAlbumQuery(e.target.value); setAlbumResults([]); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAlbumSearch(e); } }}
+                      placeholder="Search by title or leave blank to use ID3 tag"
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                    />
+                  </div>
                   <button
                     type="button"
                     aria-label="Search albums"

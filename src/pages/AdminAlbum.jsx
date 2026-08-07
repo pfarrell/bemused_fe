@@ -914,13 +914,15 @@ const AdminAlbum = () => {
 
         <form onSubmit={handleTransferSearch} style={{ marginBottom: '0.75rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              value={transferQuery}
-              onChange={e => setTransferQuery(e.target.value)}
-              placeholder={transferMode === 'move' ? 'Search for artist...' : 'Search for destination album...'}
-              style={{ flex: 1, padding: '0.5rem', fontSize: '1rem', border: '1px solid #ffc107', borderRadius: '4px' }}
-            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <input
+                type="text"
+                value={transferQuery}
+                onChange={e => setTransferQuery(e.target.value)}
+                placeholder={transferMode === 'move' ? 'Search for artist...' : 'Search for destination album...'}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ffc107', borderRadius: '4px' }}
+              />
+            </div>
             <button
               type="submit"
               disabled={transferSearching}
@@ -1110,20 +1112,23 @@ const AdminAlbum = () => {
               </button>
             </div>
             <form onSubmit={handleAddArtistSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <input
-                type="text"
-                value={addArtistQuery}
-                onChange={(e) => setAddArtistQuery(e.target.value)}
-                placeholder="Search artist name..."
-                autoFocus
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '0.875rem',
-                  border: '1px solid #86efac',
-                  borderRadius: '4px',
-                }}
-              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <input
+                  type="text"
+                  value={addArtistQuery}
+                  onChange={(e) => setAddArtistQuery(e.target.value)}
+                  placeholder="Search artist name..."
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '0.5rem',
+                    fontSize: '0.875rem',
+                    border: '1px solid #86efac',
+                    borderRadius: '4px',
+                  }}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={addArtistSearching || addArtistQuery.length < 2}

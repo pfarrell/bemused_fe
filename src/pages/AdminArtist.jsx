@@ -838,14 +838,16 @@ const AdminArtist = () => {
               </button>
             </div>
             <form onSubmit={handleAddRelationSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <input
-                type="text"
-                value={addRelationQuery}
-                onChange={(e) => setAddRelationQuery(e.target.value)}
-                placeholder={relationTypeToAdd === 'appears_on' ? 'Search album title...' : 'Search artist name...'}
-                autoFocus
-                style={{ flex: 1, padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px' }}
-              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <input
+                  type="text"
+                  value={addRelationQuery}
+                  onChange={(e) => setAddRelationQuery(e.target.value)}
+                  placeholder={relationTypeToAdd === 'appears_on' ? 'Search album title...' : 'Search artist name...'}
+                  autoFocus
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px' }}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={addRelationSearching || addRelationQuery.length < 2}
@@ -1131,7 +1133,7 @@ const AdminArtist = () => {
                         setSelectedSuggestionIds(next);
                       }}
                     />
-                    <span style={{ flex: 1 }}>{stub.name}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>{stub.name}</span>
                     <span style={{ color: '#6b7280', fontSize: '0.7rem' }}>{stub.album_count} {stub.album_count === 1 ? 'album' : 'albums'}</span>
                     <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>{(stub.similarity * 100).toFixed(0)}%</span>
                   </label>
@@ -1161,24 +1163,27 @@ const AdminArtist = () => {
 
         <form onSubmit={handleMergeSearch} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              value={mergeQuery}
-              onChange={(e) => {
-                setMergeQuery(e.target.value);
-                setSelectedMergeTarget(null);
-                setMergeResults([]);
-                setHasSearchedMerge(false);
-              }}
-              placeholder="Search for another artist..."
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ffc107',
-                borderRadius: '4px',
-              }}
-            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <input
+                type="text"
+                value={mergeQuery}
+                onChange={(e) => {
+                  setMergeQuery(e.target.value);
+                  setSelectedMergeTarget(null);
+                  setMergeResults([]);
+                  setHasSearchedMerge(false);
+                }}
+                placeholder="Search for another artist..."
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid #ffc107',
+                  borderRadius: '4px',
+                }}
+              />
+            </div>
             <button
               type="submit"
               disabled={mergeSearching || mergeQuery.length < 2}
