@@ -31,7 +31,7 @@ beforeEach(() => {
     duration: 0,
     playlistFinished: false,
     nextTrackIndex: -1,
-    shuffle: false,
+    playbackMode: 'off',
     shuffleHistory: [],
     drawerOpen: false,
     activityPulseToken: 0,
@@ -205,7 +205,7 @@ describe('reorderPlaylist', () => {
   });
 });
 
-describe('playNext / shuffle', () => {
+describe('playNext / playback modes', () => {
   test('non-shuffle: advances to the next index', () => {
     setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2)], currentTrackIndex: 0, nextTrackIndex: 1 });
     usePlayerStore.getState().playNext();
@@ -221,12 +221,49 @@ describe('playNext / shuffle', () => {
     expect(audioElement.pause).toHaveBeenCalled();
   });
 
-  test('toggleShuffle(on) jumps to a random track and seeds shuffleHistory', () => {
-    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2), track(3)], currentTrackIndex: 0 });
-    usePlayerStore.getState().toggleShuffle();
+  test('cyclePlaybackMode advances off -> shuffle -> repeat-all -> repeat-one -> off', () => {
+    usePlayerStore.setState({ playbackMode: 'off' });
+    const modes = [];
+    for (let i = 0; i < 4; i++) {
+      usePlayerStore.getState().cyclePlaybackMode();
+      modes.push(usePlayerStore.getState().playbackMode);
+    }
+    expect(modes).toEqual(['shuffle', 'repeat-all', 'repeat-one', 'off']);
+  });
+
+  test('entering shuffle mode does not interrupt the currently playing track', () => {
+    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2), track(3)], currentTrackIndex: 1 });
+    usePlayerStore.getState().cyclePlaybackMode();
     const state = usePlayerStore.getState();
-    expect(state.shuffle).toBe(true);
-    expect(state.shuffleHistory).toEqual([state.currentTrackIndex]);
+    expect(state.playbackMode).toBe('shuffle');
+    expect(state.currentTrackIndex).toBe(1);
+    expect(state.shuffleHistory).toEqual([1]);
+  });
+
+  test('repeat-all wraps from the last track back to index 0', () => {
+    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2)], currentTrackIndex: 1, playbackMode: 'repeat-all', nextTrackIndex: 0 });
+    usePlayerStore.getState().playNext();
+    const state = usePlayerStore.getState();
+    expect(state.currentTrackIndex).toBe(0);
+    expect(state.playlistFinished).toBe(false);
+  });
+
+  test('repeat-one replays the same track on auto-advance', () => {
+    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2)], currentTrackIndex: 0, playbackMode: 'repeat-one', nextTrackIndex: 0 });
+    usePlayerStore.getState().playNext();
+    expect(usePlayerStore.getState().currentTrackIndex).toBe(0);
+  });
+
+  test('repeat-one: a manual Next still advances to the real next track', () => {
+    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2), track(3)], currentTrackIndex: 0, playbackMode: 'repeat-one', nextTrackIndex: 0 });
+    usePlayerStore.getState().playNext({ manual: true });
+    expect(usePlayerStore.getState().currentTrackIndex).toBe(1);
+  });
+
+  test('repeat-one: auto-advance (no manual flag) still replays even though a real next track exists', () => {
+    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2), track(3)], currentTrackIndex: 0, playbackMode: 'repeat-one', nextTrackIndex: 0 });
+    usePlayerStore.getState().playNext();
+    expect(usePlayerStore.getState().currentTrackIndex).toBe(0);
   });
 
   test('playPrev() on an empty playlist does not throw and leaves state sane', () => {
@@ -285,7 +322,7 @@ describe('nextTrackIndex', () => {
     setActiveAudio(mockAudioElement(), {
       playlist: [track(1), track(2), track(3)],
       currentTrackIndex: 0,
-      shuffle: true,
+      playbackMode: 'shuffle',
       shuffleHistory: [0],
     });
     usePlayerStore.getState().syncNextTrackIndex();
@@ -295,7 +332,7 @@ describe('nextTrackIndex', () => {
   test('in shuffle mode, is -1 once every track is in shuffleHistory', () => {
     usePlayerStore.setState({
       playlist: [track(1), track(2)],
-      shuffle: true,
+      playbackMode: 'shuffle',
       shuffleHistory: [0, 1],
     });
     usePlayerStore.getState().syncNextTrackIndex();
@@ -306,7 +343,7 @@ describe('nextTrackIndex', () => {
     setActiveAudio(mockAudioElement(), {
       playlist: [track(1), track(2), track(3)],
       currentTrackIndex: 0,
-      shuffle: true,
+      playbackMode: 'shuffle',
       shuffleHistory: [0],
       nextTrackIndex: 2,
     });
@@ -314,6 +351,18 @@ describe('nextTrackIndex', () => {
     const state = usePlayerStore.getState();
     expect(state.currentTrackIndex).toBe(2);
     expect(state.shuffleHistory).toEqual([0, 2]);
+  });
+
+  test('repeat-all: nextTrackIndex wraps to 0 on the last track', () => {
+    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2)], playbackMode: 'repeat-all' });
+    usePlayerStore.getState().playTrackAtIndex(1);
+    expect(usePlayerStore.getState().nextTrackIndex).toBe(0);
+  });
+
+  test('repeat-one: nextTrackIndex is always the current index', () => {
+    setActiveAudio(mockAudioElement(), { playlist: [track(1), track(2), track(3)], playbackMode: 'repeat-one' });
+    usePlayerStore.getState().playTrackAtIndex(1);
+    expect(usePlayerStore.getState().nextTrackIndex).toBe(1);
   });
 });
 

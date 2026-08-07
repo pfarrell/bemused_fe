@@ -10,14 +10,17 @@ const validateTrack = (track) => {
 // playlist index (or -1 if there is none). Shuffle's pick is rolled once here and reused by
 // playNext() rather than rolled again at advance time, so it's knowable ahead of time —
 // required for prefetching the next track before the current one ends.
-const computeNextIndex = ({ shuffle, shuffleHistory, playlist, currentTrackIndex }) => {
+const computeNextIndex = ({ playbackMode, shuffleHistory, playlist, currentTrackIndex }) => {
   if (playlist.length === 0) return -1;
-  if (shuffle) {
+  if (playbackMode === 'repeat-one') return currentTrackIndex;
+  if (playbackMode === 'shuffle') {
     const remaining = playlist.map((_, i) => i).filter((i) => !shuffleHistory.includes(i));
     if (remaining.length === 0) return -1;
     return remaining[Math.floor(Math.random() * remaining.length)];
   }
-  if (currentTrackIndex === playlist.length - 1) return -1;
+  if (currentTrackIndex === playlist.length - 1) {
+    return playbackMode === 'repeat-all' ? 0 : -1;
+  }
   return currentTrackIndex + 1;
 };
 
@@ -63,8 +66,8 @@ export const usePlayerStore = create((set, get) => ({
   pageTracks: [],
   setPageTracks: (tracks) => set({ pageTracks: tracks || [] }),
 
-  // Shuffle state
-  shuffle: false,
+  // Shuffle/repeat state
+  playbackMode: 'off', // 'off' | 'shuffle' | 'repeat-all' | 'repeat-one'
   shuffleHistory: [],
 
   // UI state
@@ -97,11 +100,11 @@ export const usePlayerStore = create((set, get) => ({
 
   // Transport
   playTrackAtIndex: (index) => {
-    const { playlist, shuffle, shuffleHistory, standbyUnlocked } = get();
+    const { playlist, playbackMode, shuffleHistory, standbyUnlocked } = get();
     const audioElement = get().getActiveAudio();
     if (index < 0 || index >= playlist.length || !audioElement) return;
     const track = playlist[index];
-    const nextShuffleHistory = shuffle && !shuffleHistory.includes(index) ? [...shuffleHistory, index] : shuffleHistory;
+    const nextShuffleHistory = playbackMode === 'shuffle' && !shuffleHistory.includes(index) ? [...shuffleHistory, index] : shuffleHistory;
     set({ currentTrackIndex: index, currentTrack: track, playlistFinished: false, shuffleHistory: nextShuffleHistory });
     audioElement.src = track.url;
     audioElement.load();
@@ -144,30 +147,33 @@ export const usePlayerStore = create((set, get) => ({
     audioElement.currentTime = time;
   },
 
-  playNext: () => {
-    const { shuffle, shuffleHistory, nextTrackIndex, playlist, activeSlot } = get();
+  playNext: ({ manual = false } = {}) => {
+    const { playbackMode, shuffleHistory, nextTrackIndex, playlist, activeSlot, currentTrackIndex } = get();
     const audioElement = get().getActiveAudio();
-    if (nextTrackIndex === -1) {
+    const targetIndex = manual && playbackMode === 'repeat-one'
+      ? computeNextIndex({ playbackMode: 'off', shuffleHistory, playlist, currentTrackIndex })
+      : nextTrackIndex;
+    if (targetIndex === -1) {
       set({ playlistFinished: true });
       audioElement?.pause();
       return;
     }
-    if (shuffle) {
-      set({ shuffleHistory: [...shuffleHistory, nextTrackIndex] });
+    if (playbackMode === 'shuffle') {
+      set({ shuffleHistory: [...shuffleHistory, targetIndex] });
     }
 
     const standby = get().getStandbyAudio();
-    const target = playlist[nextTrackIndex];
+    const target = playlist[targetIndex];
     const standbyReady = standbyMatchesTarget(standby, target) && standby.readyState >= 3; // HAVE_FUTURE_DATA
 
     if (!standbyReady) {
-      get().playTrackAtIndex(nextTrackIndex);
+      get().playTrackAtIndex(targetIndex);
       return;
     }
 
     set({
       activeSlot: activeSlot === 'a' ? 'b' : 'a',
-      currentTrackIndex: nextTrackIndex,
+      currentTrackIndex: targetIndex,
       currentTrack: target,
       playlistFinished: false,
       currentTime: 0,
@@ -178,10 +184,10 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   playPrev: () => {
-    const { shuffle, shuffleHistory, playlist, currentTrackIndex } = get();
+    const { playbackMode, shuffleHistory, playlist, currentTrackIndex } = get();
     if (playlist.length === 0) return;
     set({ playlistFinished: false });
-    if (shuffle && shuffleHistory.length > 1) {
+    if (playbackMode === 'shuffle' && shuffleHistory.length > 1) {
       const newHistory = shuffleHistory.slice(0, -1);
       const prevIndex = newHistory[newHistory.length - 1];
       set({ shuffleHistory: newHistory });
@@ -192,21 +198,15 @@ export const usePlayerStore = create((set, get) => ({
     get().playTrackAtIndex(prevIndex);
   },
 
-  toggleShuffle: () => {
-    const { shuffle, currentTrackIndex, playlist } = get();
-    if (!shuffle) {
-      let nextIndex = currentTrackIndex;
-      if (playlist.length > 1) {
-        do {
-          nextIndex = Math.floor(Math.random() * playlist.length);
-        } while (nextIndex === currentTrackIndex);
-      }
-      set({ shuffle: true, shuffleHistory: [nextIndex] });
-      get().playTrackAtIndex(nextIndex);
-    } else {
-      set({ shuffle: false, shuffleHistory: [get().currentTrackIndex] });
-      get().syncNextTrackIndex();
-    }
+  cyclePlaybackMode: () => {
+    const order = ['off', 'shuffle', 'repeat-all', 'repeat-one'];
+    const { playbackMode, currentTrackIndex, shuffleHistory } = get();
+    const next = order[(order.indexOf(playbackMode) + 1) % order.length];
+    set({
+      playbackMode: next,
+      shuffleHistory: next === 'shuffle' && currentTrackIndex >= 0 ? [currentTrackIndex] : shuffleHistory,
+    });
+    get().syncNextTrackIndex();
   },
 
   toggleDrawer: () => set((state) => ({ drawerOpen: !state.drawerOpen })),
@@ -279,7 +279,7 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   removeTrackFromPlaylist: (index) => {
-    const { playlist, currentTrackIndex, shuffle, shuffleHistory } = get();
+    const { playlist, currentTrackIndex, playbackMode, shuffleHistory } = get();
     const audioElement = get().getActiveAudio();
     if (index < 0 || index >= playlist.length || index === currentTrackIndex) return;
 
@@ -288,7 +288,7 @@ export const usePlayerStore = create((set, get) => ({
     if (index < currentTrackIndex) newCurrentIndex -= 1;
 
     let newShuffleHistory = shuffleHistory;
-    if (shuffle && shuffleHistory.includes(index)) {
+    if (playbackMode === 'shuffle' && shuffleHistory.includes(index)) {
       newShuffleHistory = shuffleHistory.filter((i) => i !== index).map((i) => (i > index ? i - 1 : i));
     }
 
