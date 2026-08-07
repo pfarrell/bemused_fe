@@ -244,7 +244,7 @@ export const usePlayerStore = create((set, get) => ({
       throw new Error('Tracks must be provided as an array');
     }
     tracks.forEach(validateTrack);
-    const { playlist, currentTrackIndex, isPlaying } = get();
+    const { playlist, currentTrackIndex, isPlaying, playbackMode } = get();
 
     let newPlaylist;
     let startIndex;
@@ -263,7 +263,13 @@ export const usePlayerStore = create((set, get) => ({
       get().triggerActivityPulse();
     }
     if (!isPlaying) {
-      get().playTrackAtIndex(startIndex);
+      if (playbackMode === 'shuffle' && newPlaylist.length > 1) {
+        const randomIndex = Math.floor(Math.random() * newPlaylist.length);
+        set({ shuffleHistory: [] });
+        get().playTrackAtIndex(randomIndex);
+      } else {
+        get().playTrackAtIndex(startIndex);
+      }
     }
     get().syncNextTrackIndex();
   },

@@ -125,6 +125,32 @@ describe('addTracks', () => {
   test('throws if tracks is not an array', () => {
     expect(() => usePlayerStore.getState().addTracks('nope')).toThrow(/must be provided as an array/);
   });
+
+  test('shuffle mode: auto-starting a fresh queue picks a random track instead of track 0', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    setActiveAudio(mockAudioElement(), {
+      playlist: [],
+      currentTrackIndex: -1,
+      isPlaying: false,
+      playbackMode: 'shuffle',
+    });
+    usePlayerStore.getState().addTracks([track(1), track(2), track(3), track(4), track(5)]);
+    const state = usePlayerStore.getState();
+    expect(state.currentTrackIndex).toBe(4); // Math.floor(0.99 * 5)
+    expect(state.shuffleHistory).toEqual([4]);
+    randomSpy.mockRestore();
+  });
+
+  test('non-shuffle modes still auto-start at the deterministic start index', () => {
+    setActiveAudio(mockAudioElement(), {
+      playlist: [],
+      currentTrackIndex: -1,
+      isPlaying: false,
+      playbackMode: 'off',
+    });
+    usePlayerStore.getState().addTracks([track(1), track(2), track(3)]);
+    expect(usePlayerStore.getState().currentTrackIndex).toBe(0);
+  });
 });
 
 describe('recentlyAddedIndices', () => {
