@@ -2,6 +2,9 @@ import { useRef, useEffect, useState } from 'react';
 import { usePlayerStore } from '../../stores/playerStore';
 import { usePlayerEngine } from '../../hooks/usePlayerEngine';
 import PlaylistDrawer from './PlaylistDrawer';
+import { useContextMenu } from '../../hooks/useContextMenu';
+import ContextMenu from '../ContextMenu';
+import SavePlaylistModal from './SavePlaylistModal';
 
 const HAMBURGER = '☰';
 const PREV = '⏪';
@@ -37,6 +40,7 @@ const MusicPlayerWrapper = ({ className = '' }) => {
   const duration = usePlayerStore((s) => s.duration);
   const playbackMode = usePlayerStore((s) => s.playbackMode);
   const drawerOpen = usePlayerStore((s) => s.drawerOpen);
+  const playlist = usePlayerStore((s) => s.playlist);
   const activityPulseToken = usePlayerStore((s) => s.activityPulseToken);
   const togglePlayPause = usePlayerStore((s) => s.togglePlayPause);
   const playNext = usePlayerStore((s) => s.playNext);
@@ -46,6 +50,14 @@ const MusicPlayerWrapper = ({ className = '' }) => {
   const seek = usePlayerStore((s) => s.seek);
 
   const [pulsing, setPulsing] = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const saveQueueCtx = useContextMenu({ shouldIgnore: () => playlist.length === 0 });
+
+  const handleSaveQueue = (e) => {
+    if (e) e.stopPropagation();
+    saveQueueCtx.close();
+    setSaveModalOpen(true);
+  };
 
   useEffect(() => {
     if (activityPulseToken === 0) return undefined;
@@ -77,6 +89,10 @@ const MusicPlayerWrapper = ({ className = '' }) => {
             className={`player-btn hamburger-btn ${drawerOpen ? 'active' : ''} ${pulsing ? 'activity-pulse' : ''}`}
             title="Toggle Playlist"
             onClick={toggleDrawer}
+            onContextMenu={saveQueueCtx.triggerProps.onContextMenu}
+            onTouchStart={saveQueueCtx.triggerProps.onTouchStart}
+            onTouchMove={saveQueueCtx.triggerProps.onTouchMove}
+            onTouchEnd={saveQueueCtx.triggerProps.onTouchEnd}
           >
             {HAMBURGER}
           </button>
@@ -112,7 +128,31 @@ const MusicPlayerWrapper = ({ className = '' }) => {
         </div>
       </div>
 
-      <PlaylistDrawer />
+      <PlaylistDrawer onSaveQueue={handleSaveQueue} />
+
+      <ContextMenu
+        open={saveQueueCtx.open}
+        position={saveQueueCtx.position}
+        openedViaTouch={saveQueueCtx.openedViaTouch}
+        onDismiss={saveQueueCtx.dismiss}
+        onSwallowTouch={saveQueueCtx.swallowTouch}
+        testId="save-queue-menu-backdrop"
+      >
+        <button
+          onClick={handleSaveQueue}
+          onTouchStart={(e) => { e.stopPropagation(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSaveQueue(); }}
+        >
+          💾 Save as Playlist
+        </button>
+      </ContextMenu>
+
+      {saveModalOpen && (
+        <SavePlaylistModal
+          trackIds={playlist.map((t) => t.id)}
+          onClose={() => setSaveModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

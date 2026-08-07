@@ -3,6 +3,13 @@ import MusicPlayerWrapper from './MusicPlayerWrapper';
 import { usePlayerStore } from '../../stores/playerStore';
 
 vi.mock('./PlaylistDrawer', () => ({ default: () => null }));
+vi.mock('./SavePlaylistModal', () => ({
+  default: ({ onClose }) => (
+    <div data-testid="save-playlist-modal">
+      <button onClick={onClose}>mock-close</button>
+    </div>
+  ),
+}));
 
 beforeEach(() => {
   usePlayerStore.setState({
@@ -98,4 +105,36 @@ test('seeking the range input calls seek with the corresponding time', () => {
   render(<MusicPlayerWrapper />);
   fireEvent.change(screen.getByRole('slider'), { target: { value: '50' } });
   expect(seek).toHaveBeenCalledWith(100); // 50% of 200s
+});
+
+test('right-click on the hamburger icon opens the Save as Playlist menu when the queue has tracks', () => {
+  usePlayerStore.setState({ playlist: [{ id: 1 }] });
+  render(<MusicPlayerWrapper />);
+  fireEvent.contextMenu(screen.getByTitle('Toggle Playlist'));
+  expect(screen.getByText('💾 Save as Playlist')).toBeInTheDocument();
+});
+
+test('Save as Playlist is not offered when the queue is empty', () => {
+  usePlayerStore.setState({ playlist: [] });
+  render(<MusicPlayerWrapper />);
+  fireEvent.contextMenu(screen.getByTitle('Toggle Playlist'));
+  expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
+});
+
+test('clicking Save as Playlist opens the save modal and closes the menu', () => {
+  usePlayerStore.setState({ playlist: [{ id: 1 }, { id: 2 }] });
+  render(<MusicPlayerWrapper />);
+  fireEvent.contextMenu(screen.getByTitle('Toggle Playlist'));
+  fireEvent.click(screen.getByText('💾 Save as Playlist'));
+  expect(screen.getByTestId('save-playlist-modal')).toBeInTheDocument();
+  expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
+});
+
+test('closing the save modal removes it from the DOM', () => {
+  usePlayerStore.setState({ playlist: [{ id: 1 }] });
+  render(<MusicPlayerWrapper />);
+  fireEvent.contextMenu(screen.getByTitle('Toggle Playlist'));
+  fireEvent.click(screen.getByText('💾 Save as Playlist'));
+  fireEvent.click(screen.getByText('mock-close'));
+  expect(screen.queryByTestId('save-playlist-modal')).not.toBeInTheDocument();
 });
