@@ -6,6 +6,23 @@ const FALLBACK_ARTWORK = `${import.meta.env.BASE_URL}icons/icon-512.png`;
 const PREFETCH_THRESHOLD_SECONDS = 15;
 const DEFAULT_TITLE = 'P·Share';
 
+const ARTWORK_MIME_TYPES = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  gif: 'image/gif',
+};
+
+// Cover art filenames come verbatim from external sources (Cover Art Archive, Fanart.tv,
+// embedded ID3 art) with whatever extension they shipped with — usually .jpg, not .png.
+// A MediaMetadata artwork `type` that doesn't match the real file can make WebKit silently
+// drop the artwork, so derive it from the URL instead of assuming PNG.
+const mimeTypeForArtworkUrl = (url) => {
+  const ext = /\.([a-z0-9]+)(?:[?#].*)?$/i.exec(url)?.[1]?.toLowerCase();
+  return ext ? ARTWORK_MIME_TYPES[ext] : undefined;
+};
+
 const setMediaSessionActionHandler = (action, handler) => {
   try {
     navigator.mediaSession.setActionHandler(action, handler);
@@ -151,11 +168,12 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
     const artworkUrl = currentTrack.image_path
       ? apiService.getImageUrl(currentTrack.image_path, 'album_small')
       : FALLBACK_ARTWORK;
+    const artworkType = mimeTypeForArtworkUrl(artworkUrl);
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.title,
       artist: currentTrack.artist?.name || '',
       album: currentTrack.album?.title || '',
-      artwork: [{ src: artworkUrl, sizes: '512x512', type: 'image/png' }],
+      artwork: [{ src: artworkUrl, sizes: '512x512', ...(artworkType ? { type: artworkType } : {}) }],
     });
   }, [currentTrack]);
 
