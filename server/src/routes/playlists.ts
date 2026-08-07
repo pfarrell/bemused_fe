@@ -102,19 +102,34 @@ playlists.get('/', async (c) => {
   })))
 })
 
-// POST /playlists - Create a new playlist
+// POST /playlists - Create a new playlist, optionally seeded with tracks
 playlists.post('/', async (c) => {
-  const { name } = await c.req.json()
+  const { name, track_ids } = await c.req.json()
 
-  const result = await db
-    .insertInto('playlists')
-    .values({
-      name,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    .returningAll()
-    .executeTakeFirst()
+  const result = await db.transaction().execute(async (trx) => {
+    const playlist = await trx
+      .insertInto('playlists')
+      .values({
+        name,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returningAll()
+      .executeTakeFirst()
+
+    if (playlist && Array.isArray(track_ids) && track_ids.length > 0) {
+      await trx
+        .insertInto('playlist_tracks')
+        .values(track_ids.map((track_id: number, i: number) => ({
+          playlist_id: playlist.id,
+          track_id,
+          order: i + 1,
+        })))
+        .execute()
+    }
+
+    return playlist
+  })
 
   return c.json(result)
 })
