@@ -121,7 +121,7 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   togglePlayPause: () => {
-    const { playlistFinished, playlist, pageTracks } = get();
+    const { playlistFinished, playlist, pageTracks, playbackMode, currentTrackIndex } = get();
     const audioElement = get().getActiveAudio();
     if (!audioElement) return;
     if (audioElement.paused) {
@@ -131,8 +131,17 @@ export const usePlayerStore = create((set, get) => ({
         }
         return;
       }
-      if (playlistFinished) {
-        get().playTrackAtIndex(0);
+      if (playlistFinished || currentTrackIndex === -1) {
+        if (playbackMode === 'shuffle' && playlist.length > 1) {
+          let startIndex = currentTrackIndex;
+          do {
+            startIndex = Math.floor(Math.random() * playlist.length);
+          } while (startIndex === currentTrackIndex);
+          set({ shuffleHistory: [] });
+          get().playTrackAtIndex(startIndex);
+        } else {
+          get().playTrackAtIndex(0);
+        }
       } else {
         audioElement.play().catch((error) => console.error('Playback failed:', error));
       }

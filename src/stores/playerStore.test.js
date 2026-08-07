@@ -562,4 +562,47 @@ describe('togglePlayPause with an empty playlist', () => {
     expect(state.playlist).toHaveLength(1);
     expect(audioElement.play).toHaveBeenCalled();
   });
+
+  test('shuffle mode: resuming a finished queue picks a fresh random track and clears shuffleHistory', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, {
+      playlist: [track(1), track(2), track(3)],
+      currentTrackIndex: 2,
+      playlistFinished: true,
+      playbackMode: 'shuffle',
+      shuffleHistory: [0, 1, 2],
+    });
+    usePlayerStore.getState().togglePlayPause();
+    const state = usePlayerStore.getState();
+    expect(state.playlistFinished).toBe(false);
+    expect(state.shuffleHistory).toEqual([state.currentTrackIndex]);
+    expect(audioElement.play).toHaveBeenCalled();
+  });
+
+  test('non-shuffle modes: resuming a finished queue restarts from track 0', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, {
+      playlist: [track(1), track(2)],
+      currentTrackIndex: 1,
+      playlistFinished: true,
+      playbackMode: 'repeat-all',
+    });
+    usePlayerStore.getState().togglePlayPause();
+    expect(usePlayerStore.getState().currentTrackIndex).toBe(0);
+  });
+
+  test('shuffle mode: a plain mid-track pause (not finished) resumes the same track in place', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, {
+      playlist: [track(1), track(2)],
+      currentTrackIndex: 0,
+      playlistFinished: false,
+      playbackMode: 'shuffle',
+    });
+    usePlayerStore.getState().togglePlayPause();
+    const state = usePlayerStore.getState();
+    expect(state.currentTrackIndex).toBe(0);
+    expect(audioElement.play).toHaveBeenCalled();
+    expect(audioElement.load).not.toHaveBeenCalled(); // resumed in place, not reloaded via playTrackAtIndex
+  });
 });
