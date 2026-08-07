@@ -236,3 +236,13 @@ test('Save as Playlist is not offered when the queue is empty', () => {
   fireEvent.contextMenu(document.querySelector('.music-player-playlist-container'));
   expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
 });
+
+test('a long-press starting on a track row does not open the background Save as Playlist menu', () => {
+  vi.useFakeTimers();
+  renderDrawer();
+  const row = screen.getByText(/Track 1/).closest('.track-item');
+  fireEvent.touchStart(row, { touches: [{ clientX: 50, clientY: 50 }] });
+  act(() => { vi.advanceTimersByTime(600); });
+  expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
+  vi.useRealTimers();
+});

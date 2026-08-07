@@ -69,7 +69,6 @@ const SavePlaylistModal = ({ trackIds, onClose }) => {
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
             onClick={onClose}
-            disabled={submitting}
             style={{
               padding: '0.625rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
               border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',

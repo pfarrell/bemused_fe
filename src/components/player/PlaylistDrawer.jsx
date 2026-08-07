@@ -42,7 +42,7 @@ const PlaylistDrawer = ({ onSaveQueue }) => {
   const handleSaveQueue = (e) => {
     if (e) e.stopPropagation();
     bgCtx.close();
-    onSaveQueue();
+    onSaveQueue?.();
   };
 
   if (!drawerOpen) return null;

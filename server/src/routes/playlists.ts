@@ -117,10 +117,18 @@ playlists.post('/', async (c) => {
       .returningAll()
       .executeTakeFirst()
 
-    if (playlist && Array.isArray(track_ids) && track_ids.length > 0) {
+    if (!playlist) {
+      throw new Error('Failed to create playlist')
+    }
+
+    const ids = Array.isArray(track_ids)
+      ? track_ids.filter((id: unknown): id is number => Number.isInteger(id)).slice(0, 1000)
+      : []
+
+    if (ids.length > 0) {
       await trx
         .insertInto('playlist_tracks')
-        .values(track_ids.map((track_id: number, i: number) => ({
+        .values(ids.map((track_id: number, i: number) => ({
           playlist_id: playlist.id,
           track_id,
           order: i + 1,
