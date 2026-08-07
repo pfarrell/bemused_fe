@@ -88,7 +88,7 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
       setMediaSessionActionHandler('play', () => usePlayerStore.getState().togglePlayPause());
       setMediaSessionActionHandler('pause', () => usePlayerStore.getState().togglePlayPause());
       setMediaSessionActionHandler('previoustrack', () => usePlayerStore.getState().playPrev());
-      setMediaSessionActionHandler('nexttrack', () => usePlayerStore.getState().playNext());
+      setMediaSessionActionHandler('nexttrack', () => usePlayerStore.getState().playNext({ manual: true }));
       setMediaSessionActionHandler('seekto', (details) => {
         if (details.seekTime != null) usePlayerStore.getState().seek(details.seekTime);
       });

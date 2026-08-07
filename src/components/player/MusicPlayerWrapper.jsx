@@ -7,8 +7,17 @@ const HAMBURGER = '☰';
 const PREV = '⏪';
 const NEXT = '⏩';
 const SHUFFLE = '\u{1F500}';
+const REPEAT_ALL = '\u{1F501}';
+const REPEAT_ONE = '\u{1F502}';
 const PLAY = '⏵';
 const PAUSE = '⏸';
+
+const PLAYBACK_MODE_DISPLAY = {
+  off: { glyph: SHUFFLE, title: 'Shuffle: Off' },
+  shuffle: { glyph: SHUFFLE, title: 'Shuffle' },
+  'repeat-all': { glyph: REPEAT_ALL, title: 'Repeat All' },
+  'repeat-one': { glyph: REPEAT_ONE, title: 'Repeat One' },
+};
 
 const formatTime = (seconds) => {
   if (!seconds || !Number.isFinite(seconds)) return '0:00';
@@ -26,13 +35,13 @@ const MusicPlayerWrapper = ({ className = '' }) => {
   const isBuffering = usePlayerStore((s) => s.isBuffering);
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
-  const shuffle = usePlayerStore((s) => s.shuffle);
+  const playbackMode = usePlayerStore((s) => s.playbackMode);
   const drawerOpen = usePlayerStore((s) => s.drawerOpen);
   const activityPulseToken = usePlayerStore((s) => s.activityPulseToken);
   const togglePlayPause = usePlayerStore((s) => s.togglePlayPause);
   const playNext = usePlayerStore((s) => s.playNext);
   const playPrev = usePlayerStore((s) => s.playPrev);
-  const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
+  const cyclePlaybackMode = usePlayerStore((s) => s.cyclePlaybackMode);
   const toggleDrawer = usePlayerStore((s) => s.toggleDrawer);
   const seek = usePlayerStore((s) => s.seek);
 
@@ -55,6 +64,7 @@ const MusicPlayerWrapper = ({ className = '' }) => {
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const { glyph: shuffleGlyph, title: shuffleTitle } = PLAYBACK_MODE_DISPLAY[playbackMode];
 
   return (
     <div className={`music-player-wrapper ${className}`}>
@@ -91,13 +101,13 @@ const MusicPlayerWrapper = ({ className = '' }) => {
           <button className="player-btn play-btn" title="Play/Pause" onClick={togglePlayPause}>
             {isPlaying ? PAUSE : PLAY}
           </button>
-          <button className="player-btn next-btn" title="Next" onClick={playNext}>{NEXT}</button>
+          <button className="player-btn next-btn" title="Next" onClick={() => playNext({ manual: true })}>{NEXT}</button>
           <button
-            className={`player-btn shuffle-btn ${shuffle ? 'active' : ''}`}
-            title="Shuffle"
-            onClick={toggleShuffle}
+            className={`player-btn shuffle-btn ${playbackMode !== 'off' ? 'active' : ''}`}
+            title={shuffleTitle}
+            onClick={cyclePlaybackMode}
           >
-            {SHUFFLE}
+            {shuffleGlyph}
           </button>
         </div>
       </div>

@@ -7,7 +7,7 @@ vi.mock('./PlaylistDrawer', () => ({ default: () => null }));
 beforeEach(() => {
   usePlayerStore.setState({
     audioElementA: null, audioElementB: null, activeSlot: 'a', isPlaying: false, isBuffering: false, currentTime: 0, duration: 0,
-    shuffle: false, drawerOpen: false, activityPulseToken: 0, playlist: [], currentTrackIndex: -1,
+    playbackMode: 'off', drawerOpen: false, activityPulseToken: 0, playlist: [], currentTrackIndex: -1,
   });
 });
 
@@ -34,6 +34,48 @@ test('next/prev buttons call playNext/playPrev', () => {
   fireEvent.click(screen.getByTitle('Previous'));
   expect(playNext).toHaveBeenCalled();
   expect(playPrev).toHaveBeenCalled();
+});
+
+test('next button calls playNext with manual: true', () => {
+  const playNext = vi.fn();
+  usePlayerStore.setState({ playNext });
+  render(<MusicPlayerWrapper />);
+  fireEvent.click(screen.getByTitle('Next'));
+  expect(playNext).toHaveBeenCalledWith({ manual: true });
+});
+
+test('shuffle button shows the off glyph and calls cyclePlaybackMode', () => {
+  const cyclePlaybackMode = vi.fn();
+  usePlayerStore.setState({ playbackMode: 'off', cyclePlaybackMode });
+  render(<MusicPlayerWrapper />);
+  const button = screen.getByTitle('Shuffle: Off');
+  expect(button).not.toHaveClass('active');
+  fireEvent.click(button);
+  expect(cyclePlaybackMode).toHaveBeenCalled();
+});
+
+test('shuffle button shows the shuffle glyph and title when active', () => {
+  usePlayerStore.setState({ playbackMode: 'shuffle' });
+  render(<MusicPlayerWrapper />);
+  const button = screen.getByTitle('Shuffle');
+  expect(button).toHaveClass('active');
+  expect(button.textContent).toBe('\u{1F500}');
+});
+
+test('shuffle button shows the repeat-all glyph and title', () => {
+  usePlayerStore.setState({ playbackMode: 'repeat-all' });
+  render(<MusicPlayerWrapper />);
+  const button = screen.getByTitle('Repeat All');
+  expect(button).toHaveClass('active');
+  expect(button.textContent).toBe('\u{1F501}');
+});
+
+test('shuffle button shows the repeat-one glyph and title', () => {
+  usePlayerStore.setState({ playbackMode: 'repeat-one' });
+  render(<MusicPlayerWrapper />);
+  const button = screen.getByTitle('Repeat One');
+  expect(button).toHaveClass('active');
+  expect(button.textContent).toBe('\u{1F502}');
 });
 
 test('hamburger button toggles the drawer', () => {
