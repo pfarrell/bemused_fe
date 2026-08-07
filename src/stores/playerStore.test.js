@@ -574,6 +574,7 @@ describe('togglePlayPause with an empty playlist', () => {
     });
     usePlayerStore.getState().togglePlayPause();
     const state = usePlayerStore.getState();
+    expect(state.currentTrackIndex).not.toBe(2);
     expect(state.playlistFinished).toBe(false);
     expect(state.shuffleHistory).toEqual([state.currentTrackIndex]);
     expect(audioElement.play).toHaveBeenCalled();

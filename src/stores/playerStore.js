@@ -55,7 +55,7 @@ export const usePlayerStore = create((set, get) => ({
   duration: 0,
   playlistFinished: false,
   // The playlist index that will play after the current track, kept in sync by every action
-  // that mutates playlist/currentTrackIndex/shuffle/shuffleHistory. -1 means there is no next track.
+  // that mutates playlist/currentTrackIndex/playbackMode/shuffleHistory. -1 means there is no next track.
   nextTrackIndex: -1,
   // Whether the standby element has been unlocked for iOS. Set to true after the first playTrackAtIndex call.
   standbyUnlocked: false,
@@ -133,7 +133,7 @@ export const usePlayerStore = create((set, get) => ({
       }
       if (playlistFinished || currentTrackIndex === -1) {
         if (playbackMode === 'shuffle' && playlist.length > 1) {
-          let startIndex = currentTrackIndex;
+          let startIndex;
           do {
             startIndex = Math.floor(Math.random() * playlist.length);
           } while (startIndex === currentTrackIndex);

@@ -121,7 +121,7 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
 
   // Re-targets the prefetch if a playlist mutation changes what "next" resolves to while we're
   // already within the prefetch window — e.g. reordering or removing a track from the queue, or
-  // toggling shuffle, in the last 15s of the current track.
+  // cycling the playback mode, in the last 15s of the current track.
   useEffect(() => {
     const audio = usePlayerStore.getState().getActiveAudio();
     if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
