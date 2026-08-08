@@ -6,7 +6,7 @@ import { apiService } from '../services/api';
 
 vi.mock('../services/api', () => ({
   apiService: {
-    getUploadStatus: vi.fn().mockResolvedValue({ data: { stats: { pending: 0, processing: 0, completed: 0, failed: 0 } } }),
+    getUploadStatus: vi.fn().mockResolvedValue({ data: { stats: { pending: '0', processing: '0', completed: '0', failed: '0' } } }),
     getRecentUploads: vi.fn().mockResolvedValue({ data: [] }),
     searchAdminArtists: vi.fn(),
     searchAdminAlbums: vi.fn(),
@@ -246,7 +246,7 @@ describe('AdminUpload — clearing failed uploads', () => {
   });
 
   test('Clear All Failed is disabled when there are no failed uploads', async () => {
-    apiService.getUploadStatus.mockResolvedValue({ data: { stats: { pending: 0, processing: 0, completed: 0, failed: 0 } } });
+    apiService.getUploadStatus.mockResolvedValue({ data: { stats: { pending: '0', processing: '0', completed: '0', failed: '0' } } });
     renderUpload();
 
     expect(await screen.findByText('Clear All Failed')).toBeDisabled();
@@ -254,7 +254,7 @@ describe('AdminUpload — clearing failed uploads', () => {
 
   test('Clear All Failed confirms, then clears and refreshes', async () => {
     const user = userEvent.setup();
-    apiService.getUploadStatus.mockResolvedValue({ data: { stats: { pending: 0, processing: 0, completed: 0, failed: 1 } } });
+    apiService.getUploadStatus.mockResolvedValue({ data: { stats: { pending: '0', processing: '0', completed: '0', failed: '1' } } });
     apiService.getRecentUploads.mockResolvedValue({ data: [failedUpload] });
     apiService.clearFailedUploads.mockResolvedValue({ data: { success: true, deleted: 1 } });
     window.confirm = vi.fn(() => true);

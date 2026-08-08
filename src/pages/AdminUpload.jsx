@@ -238,6 +238,12 @@ const AdminUpload = () => {
     return new Date(dateString).toLocaleString();
   };
 
+  // stats.failed comes back from Postgres as a string (int8 count with no
+  // pg type parser override), so a strict `=== 0` comparison never matches
+  // in production. Coerce to a number once here rather than repeating the
+  // fragile comparison at each call site.
+  const noFailedUploads = !stats || Number(stats.failed) === 0;
+
   const handleArtistSearch = async (e) => {
     if (e?.preventDefault) e.preventDefault();
     if (artistQuery.length < 2) return;
@@ -720,37 +726,38 @@ const AdminUpload = () => {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Recent Uploads</h2>
-          <button
-            onClick={loadRecentUploads}
-            disabled={loadingRecent}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              cursor: loadingRecent ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {loadingRecent ? 'Refreshing...' : 'Refresh'}
-          </button>
-          <button
-            onClick={handleClearFailed}
-            disabled={!stats || stats.failed === 0}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: (!stats || stats.failed === 0) ? '#d1d5db' : '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              cursor: (!stats || stats.failed === 0) ? 'not-allowed' : 'pointer',
-              marginLeft: '0.5rem',
-            }}
-          >
-            Clear All Failed
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={loadRecentUploads}
+              disabled={loadingRecent}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                cursor: loadingRecent ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {loadingRecent ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button
+              onClick={handleClearFailed}
+              disabled={noFailedUploads}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: noFailedUploads ? '#d1d5db' : '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                cursor: noFailedUploads ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Clear All Failed
+            </button>
+          </div>
         </div>
 
         {recentUploads.length > 0 ? (
