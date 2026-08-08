@@ -10,7 +10,7 @@ export default function AdminCollection() {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [draggedItem, setDraggedItem] = useState(null); // { type: 'album' | 'stub', id }
 
   // Search to add albums
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,8 +128,13 @@ export default function AdminCollection() {
     }
   };
 
-  const handleDragStart = (e, index) => {
-    setDraggedIndex(index);
+  const buildMergedItems = () => [
+    ...albums.map((album) => ({ type: 'album', order: album.order ?? 0, data: album })),
+    ...stubs.map((stub) => ({ type: 'stub', order: stub.order ?? 0, data: stub })),
+  ].sort((a, b) => a.order - b.order);
+
+  const handleDragStart = (e, item) => {
+    setDraggedItem({ type: item.type, id: item.data.id });
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -138,22 +143,32 @@ export default function AdminCollection() {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = async (e, dropIndex) => {
+  const handleDrop = async (e, targetItem) => {
     e.preventDefault();
-    if (draggedIndex === null || draggedIndex === dropIndex) return;
+    if (!draggedItem) return;
+    if (draggedItem.type === targetItem.type && draggedItem.id === targetItem.data.id) return;
 
-    const newAlbums = [...albums];
-    const [moved] = newAlbums.splice(draggedIndex, 1);
-    newAlbums.splice(dropIndex, 0, moved);
-    setAlbums(newAlbums);
-    setDraggedIndex(null);
+    const current = buildMergedItems();
+    const fromIndex = current.findIndex((i) => i.type === draggedItem.type && i.data.id === draggedItem.id);
+    const toIndex = current.findIndex((i) => i.type === targetItem.type && i.data.id === targetItem.data.id);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const reordered = [...current];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    const withNewOrder = reordered.map((item, i) => ({ ...item, order: i + 1 }));
+    setAlbums(withNewOrder.filter((i) => i.type === 'album').map((i) => ({ ...i.data, order: i.order })));
+    setStubs(withNewOrder.filter((i) => i.type === 'stub').map((i) => ({ ...i.data, order: i.order })));
+    setDraggedItem(null);
 
     try {
-      const album_orders = newAlbums.map((a, i) => ({ album_id: a.id, order: i + 1 }));
-      await apiService.reorderCollectionAlbums(id, album_orders);
+      const album_orders = withNewOrder.filter((i) => i.type === 'album').map((i) => ({ album_id: i.data.id, order: i.order }));
+      const stub_orders = withNewOrder.filter((i) => i.type === 'stub').map((i) => ({ stub_id: i.data.id, order: i.order }));
+      await apiService.reorderCollectionAlbums(id, album_orders, stub_orders);
     } catch (err) {
-      console.error('Failed to reorder albums:', err);
-      alert('Failed to save album order');
+      console.error('Failed to reorder collection:', err);
+      alert('Failed to save order');
       loadCollection();
     }
   };
@@ -467,27 +482,23 @@ export default function AdminCollection() {
             No albums in this collection. Use the search above to add albums.
           </div>
         ) : (
-          [
-            ...albums.map((album, albumIndex) => ({ type: 'album', order: album.order ?? albumIndex, albumIndex, data: album })),
-            ...stubs.map((stub) => ({ type: 'stub', order: stub.order ?? 0, data: stub })),
-          ]
-            .sort((a, b) => a.order - b.order)
-            .map((item) => item.type === 'album' ? (
+          buildMergedItems().map((item, index) => item.type === 'album' ? (
               <div
                 key={`album-${item.data.id}`}
                 draggable
-                onDragStart={(e) => handleDragStart(e, item.albumIndex)}
+                onDragStart={(e) => handleDragStart(e, item)}
                 onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, item.albumIndex)}
+                onDrop={(e) => handleDrop(e, item)}
                 style={{
                   padding: '1rem', borderBottom: '1px solid #e5e7eb',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  cursor: 'move', backgroundColor: draggedIndex === item.albumIndex ? '#f3f4f6' : 'white',
+                  cursor: 'move',
+                  backgroundColor: draggedItem?.type === 'album' && draggedItem?.id === item.data.id ? '#f3f4f6' : 'white',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
                   <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
-                    {item.albumIndex + 1}
+                    {index + 1}
                   </span>
                   <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
                   {item.data.image_path && (
@@ -523,13 +534,22 @@ export default function AdminCollection() {
             ) : (
               <div
                 key={`stub-${item.data.id}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, item)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, item)}
                 style={{
                   padding: '1rem', borderBottom: '1px solid #e5e7eb',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  backgroundColor: '#f9fafb',
+                  cursor: 'move',
+                  backgroundColor: draggedItem?.type === 'stub' && draggedItem?.id === item.data.id ? '#f3f4f6' : '#f9fafb',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                  <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+                    {index + 1}
+                  </span>
+                  <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
                   <div style={{
                     width: '40px', height: '40px', borderRadius: '4px', border: '2px dashed #9ca3af',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af',

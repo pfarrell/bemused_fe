@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminCollection from './AdminCollection';
@@ -13,6 +13,8 @@ vi.mock('../services/api', () => ({
     removeStubFromCollection: vi.fn(),
     resolveStub: vi.fn(),
     addAlbumToCollection: vi.fn(),
+    removeAlbumFromCollection: vi.fn(),
+    reorderCollectionAlbums: vi.fn(),
     getImageUrl: () => 'http://example.com/image.jpg',
   },
 }));
@@ -165,5 +167,72 @@ describe('AdminCollection — placeholder stub', () => {
 
     expect(apiService.addAlbumToCollection).toHaveBeenCalledWith('7', 55);
     expect(apiService.resolveStub).not.toHaveBeenCalled();
+  });
+});
+
+describe('AdminCollection — interleaved drag-reorder', () => {
+  test('dragging a stub between two albums saves an interleaved order', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 3, artist: { name: 'X' } },
+        ],
+        stubs: [{ id: 9, title: 'Missing', artist_name: 'Y', order: 2 }],
+      },
+    });
+    apiService.reorderCollectionAlbums = vi.fn().mockResolvedValue({});
+    renderAdminCollection();
+
+    const stubRow = (await screen.findByText('Missing')).closest('[draggable]');
+    const albumARow = screen.getByText('A').closest('[draggable]');
+
+    // jsdom's synthetic drag events don't provide a dataTransfer object by default;
+    // the component's handlers set effectAllowed/dropEffect on it, so without this
+    // fireEvent throws "Cannot set properties of undefined" instead of exercising the drop.
+    const dataTransfer = { effectAllowed: '', dropEffect: '' };
+    // Drag the stub to where album A currently is (position 1)
+    fireEvent.dragStart(stubRow, { dataTransfer });
+    fireEvent.dragOver(albumARow, { dataTransfer });
+    fireEvent.drop(albumARow, { dataTransfer });
+
+    expect(apiService.reorderCollectionAlbums).toHaveBeenCalledWith(
+      '7',
+      expect.arrayContaining([
+        expect.objectContaining({ album_id: 1 }),
+        expect.objectContaining({ album_id: 2 }),
+      ]),
+      expect.arrayContaining([expect.objectContaining({ stub_id: 9, order: 1 })])
+    );
+  });
+
+  test('dragging an album past a stub updates both orders together', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 3, artist: { name: 'X' } },
+        ],
+        stubs: [{ id: 9, title: 'Missing', artist_name: 'Y', order: 2 }],
+      },
+    });
+    apiService.reorderCollectionAlbums = vi.fn().mockResolvedValue({});
+    renderAdminCollection();
+
+    const albumARow = (await screen.findByText('A')).closest('[draggable]');
+    const albumBRow = screen.getByText('B').closest('[draggable]');
+
+    const dataTransfer = { effectAllowed: '', dropEffect: '' };
+    // Drag album A past album B (to the end)
+    fireEvent.dragStart(albumARow, { dataTransfer });
+    fireEvent.dragOver(albumBRow, { dataTransfer });
+    fireEvent.drop(albumBRow, { dataTransfer });
+
+    const [, albumOrders, stubOrders] = apiService.reorderCollectionAlbums.mock.calls[0];
+    const orderOf = (arr, key, id) => arr.find(x => x[key] === id)?.order;
+    expect(orderOf(albumOrders, 'album_id', 2)).toBeLessThan(orderOf(albumOrders, 'album_id', 1));
+    expect(stubOrders[0].order).toBeGreaterThan(0);
   });
 });
