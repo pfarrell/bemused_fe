@@ -205,6 +205,17 @@ interface CollectionAlbumTable {
   order: number | null
 }
 
+interface AlbumStubTable {
+  id: Generated<number>
+  title: string
+  artist_name: string | null
+  user_id: number | null
+  collection_id: number | null
+  order: number | null
+  created_at: ColumnType<Date, string | Date | undefined, never>
+  updated_at: ColumnType<Date, string | Date | undefined, string | Date>
+}
+
 interface TagTable {
   id: Generated<number>
   name: string
@@ -288,6 +299,7 @@ export interface Database {
   images: ImageTable
   collections: CollectionTable
   collection_albums: CollectionAlbumTable
+  album_stubs: AlbumStubTable
   tags: TagTable
   albums_tags: AlbumTagTable
   artists_tags: ArtistTagTable
