@@ -209,6 +209,46 @@ collections.delete('/:id/stubs/:stubId', async (c) => {
   return c.json({ success: true })
 })
 
+// POST /collection/:id/stubs/:stubId/resolve — replace a stub with a real album at the same position
+collections.post('/:id/stubs/:stubId/resolve', async (c) => {
+  const collectionId = parseInt(c.req.param('id'))
+  const stubId = parseInt(c.req.param('stubId'))
+  const { album_id } = await c.req.json()
+
+  const stub = await db
+    .selectFrom('album_stubs')
+    .selectAll()
+    .where('id', '=', stubId)
+    .where('collection_id', '=', collectionId)
+    .executeTakeFirst()
+
+  if (!stub) {
+    return c.json({ error: 'Stub not found' }, 404)
+  }
+
+  const existing = await db
+    .selectFrom('collection_albums')
+    .select('id')
+    .where('collection_id', '=', collectionId)
+    .where('album_id', '=', album_id)
+    .executeTakeFirst()
+
+  if (existing) {
+    return c.json({ error: 'This album is already in the collection' }, 409)
+  }
+
+  await db.transaction().execute(async (trx) => {
+    await trx
+      .insertInto('collection_albums')
+      .values({ collection_id: collectionId, album_id, order: stub.order })
+      .execute()
+    await trx.deleteFrom('album_stubs').where('id', '=', stubId).execute()
+  })
+
+  await db.updateTable('collections').set({ updated_at: new Date() }).where('id', '=', collectionId).execute()
+  return c.json({ success: true })
+})
+
 // DELETE /collection/:id/albums/:albumId
 collections.delete('/:id/albums/:albumId', async (c) => {
   const collectionId = parseInt(c.req.param('id'))
