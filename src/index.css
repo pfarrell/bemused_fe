@@ -168,6 +168,29 @@
   color: #2563eb;
 }
 
+.album-stub-card {
+  cursor: default;
+  border: 2px dashed #9ca3af;
+  box-shadow: none;
+}
+
+.album-stub-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.album-stub-card-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+}
+
+.album-stub-card-glyph {
+  font-size: 2rem;
+  color: #9ca3af;
+}
+
 /* =================================
    SEARCH RESULTS STYLES
    ================================= */
