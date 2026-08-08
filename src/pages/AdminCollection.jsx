@@ -543,7 +543,7 @@ export default function AdminCollection() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
-                    onClick={() => { setResolvingStubId(item.data.id); setShowSearch(true); }}
+                    onClick={() => { setResolvingStubId(item.data.id); setShowSearch(true); setSearchQuery(''); setSearchResults([]); }}
                     style={{
                       padding: '0.5rem 1rem', backgroundColor: '#3b82f6', color: 'white',
                       border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',

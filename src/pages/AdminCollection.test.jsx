@@ -118,6 +118,29 @@ describe('AdminCollection — placeholder stub', () => {
     expect(apiService.resolveStub).toHaveBeenCalledWith('7', 9, 42);
   });
 
+  test('clicking Resolve clears a prior unrelated search so stale results are not shown', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, stubs: [{ id: 9, title: 'Abbey Road', artist_name: 'The Beatles', order: 1 }] },
+    });
+    apiService.search = vi.fn().mockResolvedValue({
+      data: { results: [{ type: 'album', data: { id: 55, title: 'Let It Be', artist: { name: 'The Beatles' } } }] },
+    });
+    renderAdminCollection();
+
+    // Search for something unrelated via the normal Add Album flow first.
+    await user.click(await screen.findByText('+ Add Album'));
+    await user.type(screen.getByPlaceholderText('Search for albums...'), 'Let It Be');
+    await user.click(screen.getByText('Search', { selector: 'button' }));
+    expect(await screen.findByText('Let It Be')).toBeInTheDocument();
+
+    // Now click Resolve on the stub without closing the search panel first.
+    await user.click(screen.getByText('Resolve'));
+
+    expect(screen.queryByText('Let It Be')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search for albums...')).toHaveValue('');
+  });
+
   test('cancelling Resolve by closing the search panel does not leave resolve-mode active for the next add', async () => {
     const user = userEvent.setup();
     apiService.getCollection.mockResolvedValue({
