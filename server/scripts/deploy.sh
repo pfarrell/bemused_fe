@@ -74,6 +74,16 @@ ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "sudo systemctl restart bemu
 echo "✅ Service restarted"
 echo ""
 
+# Restart the upload queue worker
+# It's a long-running process pinned to whatever release was `current` when it
+# started (Node resolves the `current` symlink once at startup, not per-require).
+# Without this, old release directories it still depends on eventually get
+# pruned by the cleanup step below, breaking any lazily-required module.
+echo "🔄 Restarting bemused-queue-worker service..."
+ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "sudo systemctl restart bemused-queue-worker"
+echo "✅ Worker restarted"
+echo ""
+
 # Clean up old releases (keep last 5)
 echo "🧹 Cleaning up old releases..."
 ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "cd ${DEPLOY_BASE}/releases && ls -t | tail -n +6 | xargs -r rm -rf"
