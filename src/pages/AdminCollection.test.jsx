@@ -236,3 +236,68 @@ describe('AdminCollection — interleaved drag-reorder', () => {
     expect(stubOrders[0].order).toBeGreaterThan(0);
   });
 });
+
+describe('AdminCollection — optimistic order for newly added/resolved albums', () => {
+  // The row's position label (index + 1) is rendered right next to the title, and
+  // reflects buildMergedItems()'s sort by `order` — so reading it back after an
+  // optimistic update tells us what `order` the item actually landed on locally.
+  const positionOf = (row) => row.querySelector('span').textContent;
+
+  test('adding a real album via search places it after existing albums/stubs, not at the top', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 3, artist: { name: 'X' } },
+        ],
+        stubs: [{ id: 9, title: 'Missing', artist_name: 'Y', order: 2 }],
+      },
+    });
+    apiService.search = vi.fn().mockResolvedValue({
+      data: { results: [{ type: 'album', data: { id: 42, title: 'C', artist: { name: 'Z' } } }] },
+    });
+    apiService.addAlbumToCollection = vi.fn().mockResolvedValue({});
+    renderAdminCollection();
+
+    await user.click(await screen.findByText('+ Add Album'));
+    await user.type(screen.getByPlaceholderText('Search for albums...'), 'C');
+    await user.click(screen.getByText('Search', { selector: 'button' }));
+    await user.click(await screen.findByText('Add', { selector: 'button' }));
+
+    // Existing max order across albums (1, 3) and stubs (2) is 3, so the new
+    // album should land at order 4 — last of four items — not order 0/top.
+    const row = (await screen.findByText('C')).closest('[draggable]');
+    expect(positionOf(row)).toBe('4');
+  });
+
+  test('resolving a stub gives the new album the stub\'s former order, preserving its position', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 3, artist: { name: 'X' } },
+        ],
+        stubs: [{ id: 9, title: 'Abbey Road', artist_name: 'The Beatles', order: 2 }],
+      },
+    });
+    apiService.search = vi.fn().mockResolvedValue({
+      data: { results: [{ type: 'album', data: { id: 42, title: 'Abbey Road', artist: { name: 'The Beatles' } } }] },
+    });
+    apiService.resolveStub = vi.fn().mockResolvedValue({});
+    renderAdminCollection();
+
+    await user.click(await screen.findByText('Resolve'));
+    await user.type(screen.getByPlaceholderText('Search for albums...'), 'Abbey Road');
+    await user.click(screen.getByText('Search', { selector: 'button' }));
+    await user.click(await screen.findByText('Add', { selector: 'button' }));
+
+    // The stub had order 2 (between A at order 1 and B at order 3); the resolved
+    // album must keep that order, landing in the middle, not at order 0/top.
+    const row = (await screen.findByText('Abbey Road')).closest('[draggable]');
+    expect(positionOf(row)).toBe('2');
+  });
+});

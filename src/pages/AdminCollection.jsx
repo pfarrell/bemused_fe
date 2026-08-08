@@ -67,7 +67,12 @@ export default function AdminCollection() {
     }
     try {
       await apiService.addAlbumToCollection(id, album.id);
-      setAlbums([...albums, { ...album, artist: album.artist || { id: null, name: album.artist_name || '' } }]);
+      const maxOrder = Math.max(
+        0,
+        ...albums.map(a => a.order ?? 0),
+        ...stubs.map(s => s.order ?? 0),
+      );
+      setAlbums([...albums, { ...album, order: maxOrder + 1, artist: album.artist || { id: null, name: album.artist_name || '' } }]);
       setShowSearch(false);
       setSearchQuery('');
       setSearchResults([]);
@@ -80,8 +85,9 @@ export default function AdminCollection() {
   const handleResolveStub = async (album) => {
     try {
       await apiService.resolveStub(id, resolvingStubId, album.id);
+      const resolvedStub = stubs.find(s => s.id === resolvingStubId);
       setStubs(stubs.filter(s => s.id !== resolvingStubId));
-      setAlbums([...albums, { ...album, artist: album.artist || { id: null, name: album.artist_name || '' } }]);
+      setAlbums([...albums, { ...album, order: resolvedStub?.order, artist: album.artist || { id: null, name: album.artist_name || '' } }]);
       setResolvingStubId(null);
       setShowSearch(false);
       setSearchQuery('');
