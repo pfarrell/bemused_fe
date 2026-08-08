@@ -114,6 +114,8 @@ export const apiService = {
   getUploadStatus: () => api.get('/admin/upload/status'),
   getRecentUploads: (limit = 50) => api.get(`/admin/upload/recent?limit=${limit}`),
   retryUpload: (id) => api.post(`/admin/upload/${id}/retry`),
+  dismissUpload: (id) => api.delete(`/admin/upload/${id}`),
+  clearFailedUploads: () => api.delete('/admin/upload/failed'),
 
   // Playlists
   getPlaylists: () => api.get('/playlists'),

@@ -270,4 +270,47 @@ upload.post('/:id/retry', async (c) => {
   }
 })
 
+// DELETE /admin/upload/failed - clear every failed upload_queue row.
+// Registered before /:id so 'failed' can never be misrouted there.
+// Never touches the filesystem — file_path is left alone.
+upload.delete('/failed', async (c) => {
+  try {
+    const result = await db
+      .deleteFrom('upload_queue')
+      .where('status', '=', 'failed')
+      .executeTakeFirst()
+
+    return c.json({ success: true, deleted: Number(result.numDeletedRows) })
+  } catch (error) {
+    console.error('Clear failed uploads error:', error)
+    return c.json({ error: 'Failed to clear failed uploads' }, 500)
+  }
+})
+
+// DELETE /admin/upload/:id - dismiss a single failed upload_queue row.
+// Scoped to status='failed' so a pending/processing job can't be deleted
+// out from under itself. Never touches the filesystem.
+upload.delete('/:id', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  if (isNaN(id)) return c.json({ error: 'Invalid id' }, 400)
+
+  try {
+    const deleted = await db
+      .deleteFrom('upload_queue')
+      .where('id', '=', id)
+      .where('status', '=', 'failed')
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!deleted) {
+      return c.json({ error: 'Upload not found, or not in a dismissable state' }, 404)
+    }
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Dismiss upload error:', error)
+    return c.json({ error: 'Failed to dismiss upload' }, 500)
+  }
+})
+
 export default upload
