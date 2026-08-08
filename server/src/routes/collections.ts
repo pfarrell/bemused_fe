@@ -325,16 +325,26 @@ collections.delete('/:id/notes/:noteId', async (c) => {
 // PATCH /collection/:id/albums/reorder
 collections.patch('/:id/albums/reorder', async (c) => {
   const collectionId = parseInt(c.req.param('id'))
-  const { album_orders } = await c.req.json() // [{ album_id, order }]
+  const { album_orders, stub_orders } = await c.req.json() // [{ album_id, order }], [{ stub_id, order }]
 
-  for (const { album_id, order } of album_orders) {
-    await db
-      .updateTable('collection_albums')
-      .set({ order })
-      .where('collection_id', '=', collectionId)
-      .where('album_id', '=', album_id)
-      .execute()
-  }
+  await db.transaction().execute(async (trx) => {
+    for (const { album_id, order } of album_orders || []) {
+      await trx
+        .updateTable('collection_albums')
+        .set({ order })
+        .where('collection_id', '=', collectionId)
+        .where('album_id', '=', album_id)
+        .execute()
+    }
+    for (const { stub_id, order } of stub_orders || []) {
+      await trx
+        .updateTable('album_stubs')
+        .set({ order })
+        .where('collection_id', '=', collectionId)
+        .where('id', '=', stub_id)
+        .execute()
+    }
+  })
 
   return c.json({ success: true })
 })

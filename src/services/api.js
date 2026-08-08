@@ -136,7 +136,8 @@ export const apiService = {
   removeAlbumFromCollection: (collectionId, albumId) => api.delete(`/collection/${collectionId}/albums/${albumId}`),
   removeStubFromCollection: (collectionId, stubId) =>
     api.delete(`/collection/${collectionId}/stubs/${stubId}`),
-  reorderCollectionAlbums: (collectionId, album_orders) => api.patch(`/collection/${collectionId}/albums/reorder`, { album_orders }),
+  reorderCollectionAlbums: (collectionId, album_orders, stub_orders = []) =>
+    api.patch(`/collection/${collectionId}/albums/reorder`, { album_orders, stub_orders }),
   resolveStub: (collectionId, stubId, albumId) =>
     api.post(`/collection/${collectionId}/stubs/${stubId}/resolve`, { album_id: albumId }),
   downloadCollectionImage: (id, image_url, image_name) => api.post(`/admin/collection/${id}/image`, { image_url, image_name }),
