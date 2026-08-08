@@ -10,6 +10,8 @@ vi.mock('../services/api', () => ({
     updateCollection: vi.fn(),
     search: vi.fn(),
     addStubToCollection: vi.fn(),
+    removeStubFromCollection: vi.fn(),
+    resolveStub: vi.fn(),
     getImageUrl: () => 'http://example.com/image.jpg',
   },
 }));
@@ -80,5 +82,38 @@ describe('AdminCollection — placeholder stub', () => {
 
     expect(apiService.addStubToCollection).toHaveBeenCalledWith('7', 'Abbey Road', 'The Beatles');
     expect(await screen.findByText('Abbey Road')).toBeInTheDocument();
+  });
+
+  test('removes a stub', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, stubs: [{ id: 9, title: 'Missing Album', artist_name: 'Missing Artist', order: 1 }] },
+    });
+    apiService.removeStubFromCollection = vi.fn().mockResolvedValue({});
+    window.confirm = vi.fn(() => true);
+    renderAdminCollection();
+
+    await user.click(await screen.findByText('Remove Placeholder'));
+    expect(apiService.removeStubFromCollection).toHaveBeenCalledWith('7', 9);
+    expect(screen.queryByText('Missing Album')).not.toBeInTheDocument();
+  });
+
+  test('resolves a stub into a real album', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, stubs: [{ id: 9, title: 'Abbey Road', artist_name: 'The Beatles', order: 1 }] },
+    });
+    apiService.search = vi.fn().mockResolvedValue({
+      data: { results: [{ type: 'album', data: { id: 42, title: 'Abbey Road', artist: { name: 'The Beatles' } } }] },
+    });
+    apiService.resolveStub = vi.fn().mockResolvedValue({});
+    renderAdminCollection();
+
+    await user.click(await screen.findByText('Resolve'));
+    await user.type(screen.getByPlaceholderText('Search for albums...'), 'Abbey Road');
+    await user.click(screen.getByText('Search', { selector: 'button' }));
+    await user.click(await screen.findByText('Add', { selector: 'button' }));
+
+    expect(apiService.resolveStub).toHaveBeenCalledWith('7', 9, 42);
   });
 });

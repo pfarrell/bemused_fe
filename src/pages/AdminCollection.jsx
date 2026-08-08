@@ -22,6 +22,7 @@ export default function AdminCollection() {
   const [showStubForm, setShowStubForm] = useState(false);
   const [stubTitle, setStubTitle] = useState('');
   const [stubArtistName, setStubArtistName] = useState('');
+  const [resolvingStubId, setResolvingStubId] = useState(null);
 
   // Image download
   const [imageUrl, setImageUrl] = useState('');
@@ -57,6 +58,9 @@ export default function AdminCollection() {
   };
 
   const handleAddAlbum = async (album) => {
+    if (resolvingStubId) {
+      return handleResolveStub(album);
+    }
     if (albums.some(a => a.id === album.id)) {
       alert('This album is already in the collection');
       return;
@@ -70,6 +74,32 @@ export default function AdminCollection() {
     } catch (err) {
       console.error('Failed to add album:', err);
       alert('Failed to add album');
+    }
+  };
+
+  const handleResolveStub = async (album) => {
+    try {
+      await apiService.resolveStub(id, resolvingStubId, album.id);
+      setStubs(stubs.filter(s => s.id !== resolvingStubId));
+      setAlbums([...albums, { ...album, artist: album.artist || { id: null, name: album.artist_name || '' } }]);
+      setResolvingStubId(null);
+      setShowSearch(false);
+      setSearchQuery('');
+      setSearchResults([]);
+    } catch (err) {
+      console.error('Failed to resolve stub:', err);
+      alert(err.response?.data?.error || 'Failed to resolve placeholder');
+    }
+  };
+
+  const handleRemoveStub = async (stubId) => {
+    if (!confirm('Remove this placeholder?')) return;
+    try {
+      await apiService.removeStubFromCollection(id, stubId);
+      setStubs(stubs.filter(s => s.id !== stubId));
+    } catch (err) {
+      console.error('Failed to remove stub:', err);
+      alert('Failed to remove placeholder');
     }
   };
 
@@ -429,91 +459,112 @@ export default function AdminCollection() {
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', overflow: 'hidden'
       }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', fontWeight: '600' }}>
-          Albums ({albums.length})
+          Albums ({albums.length}){stubs.length > 0 && `, ${stubs.length} placeholder${stubs.length === 1 ? '' : 's'}`}
         </div>
 
-        {albums.length === 0 ? (
+        {albums.length === 0 && stubs.length === 0 ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
             No albums in this collection. Use the search above to add albums.
           </div>
         ) : (
-          albums.map((album, index) => (
-            <div
-              key={album.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, index)}
-              style={{
-                padding: '1rem', borderBottom: '1px solid #e5e7eb',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                cursor: 'move', backgroundColor: draggedIndex === index ? '#f3f4f6' : 'white',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
-                  {index + 1}
-                </span>
-                <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
-                {album.image_path && (
-                  <img
-                    src={apiService.getImageUrl(album.image_path, 'album_small')}
-                    alt={album.title}
-                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
-                    onError={(e) => {
-                      if (e.target.src.includes('/sm/')) {
-                        e.target.src = e.target.src.replace('/sm/', '/');
-                        e.target.onerror = null;
-                      }
-                    }}
-                  />
-                )}
-                <div>
-                  <div style={{ fontWeight: '500' }}>{album.title}</div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                    {album.artist?.name}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => handleRemoveAlbum(album.id)}
+          [
+            ...albums.map((album, albumIndex) => ({ type: 'album', order: album.order ?? albumIndex, albumIndex, data: album })),
+            ...stubs.map((stub) => ({ type: 'stub', order: stub.order ?? 0, data: stub })),
+          ]
+            .sort((a, b) => a.order - b.order)
+            .map((item) => item.type === 'album' ? (
+              <div
+                key={`album-${item.data.id}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, item.albumIndex)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, item.albumIndex)}
                 style={{
-                  padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
-                  border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
+                  padding: '1rem', borderBottom: '1px solid #e5e7eb',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  cursor: 'move', backgroundColor: draggedIndex === item.albumIndex ? '#f3f4f6' : 'white',
                 }}
               >
-                Remove
-              </button>
-            </div>
-          ))
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                  <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+                    {item.albumIndex + 1}
+                  </span>
+                  <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
+                  {item.data.image_path && (
+                    <img
+                      src={apiService.getImageUrl(item.data.image_path, 'album_small')}
+                      alt={item.data.title}
+                      style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+                      onError={(e) => {
+                        if (e.target.src.includes('/sm/')) {
+                          e.target.src = e.target.src.replace('/sm/', '/');
+                          e.target.onerror = null;
+                        }
+                      }}
+                    />
+                  )}
+                  <div>
+                    <div style={{ fontWeight: '500' }}>{item.data.title}</div>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      {item.data.artist?.name}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRemoveAlbum(item.data.id)}
+                  style={{
+                    padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
+                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div
+                key={`stub-${item.data.id}`}
+                style={{
+                  padding: '1rem', borderBottom: '1px solid #e5e7eb',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  backgroundColor: '#f9fafb',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '4px', border: '2px dashed #9ca3af',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af',
+                  }}>▢</div>
+                  <div>
+                    <div style={{ fontWeight: '500' }}>{item.data.title}</div>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      {item.data.artist_name}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => { setResolvingStubId(item.data.id); setShowSearch(true); }}
+                    style={{
+                      padding: '0.5rem 1rem', backgroundColor: '#3b82f6', color: 'white',
+                      border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
+                    }}
+                  >
+                    Resolve
+                  </button>
+                  <button
+                    onClick={() => handleRemoveStub(item.data.id)}
+                    style={{
+                      padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
+                      border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
+                    }}
+                  >
+                    Remove Placeholder
+                  </button>
+                </div>
+              </div>
+            ))
         )}
       </div>
-
-      {/* Placeholder stubs (Remove/Resolve controls added in a later task) */}
-      {stubs.length > 0 && (
-        <div style={{
-          backgroundColor: 'white', borderRadius: '0.5rem', marginTop: '2rem',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', overflow: 'hidden'
-        }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', fontWeight: '600' }}>
-            Placeholder Stubs ({stubs.length})
-          </div>
-          {stubs.map((stub) => (
-            <div
-              key={stub.id}
-              style={{
-                padding: '1rem', borderBottom: '1px solid #e5e7eb',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: '500' }}>{stub.title}</div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{stub.artist_name}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
