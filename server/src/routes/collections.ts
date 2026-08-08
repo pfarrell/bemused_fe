@@ -74,7 +74,18 @@ collections.get('/:id', async (c) => {
 
   // Preserve order from collection_albums
   const byId = new Map(albums.map((a) => [a.id, a]))
-  const orderedAlbums = albumIds.map((id) => byId.get(id)).filter(Boolean)
+  const orderByAlbumId = new Map(caRows.map((r) => [r.album_id, r.order]))
+  const orderedAlbums = albumIds
+    .map((id) => byId.get(id))
+    .filter(Boolean)
+    .map((album) => ({ ...album, order: orderByAlbumId.get(album!.id) ?? 0 }))
+
+  const stubs = await db
+    .selectFrom('album_stubs')
+    .select(['id', 'title', 'artist_name', 'order'])
+    .where('collection_id', '=', id)
+    .orderBy('order', 'asc')
+    .execute()
 
   const noteRows = await notesService.listNotesByTarget('collection', id)
   const authorTokens = new Map<number, string>()
@@ -108,7 +119,7 @@ collections.get('/:id', async (c) => {
     }
   }))
 
-  return c.json({ collection, albums: orderedAlbums, notes, summary: summary ?? {} })
+  return c.json({ collection, albums: orderedAlbums, stubs, notes, summary: summary ?? {} })
 })
 
 // POST /collections
