@@ -191,6 +191,24 @@ collections.post('/:id/stubs', async (c) => {
   return c.json({ stub })
 })
 
+// DELETE /collection/:id/stubs/:stubId
+collections.delete('/:id/stubs/:stubId', async (c) => {
+  const collectionId = parseInt(c.req.param('id'))
+  const stubId = parseInt(c.req.param('stubId'))
+
+  const result = await db
+    .deleteFrom('album_stubs')
+    .where('id', '=', stubId)
+    .where('collection_id', '=', collectionId)
+    .executeTakeFirst()
+
+  if (result.numDeletedRows === 0n) {
+    return c.json({ error: 'Stub not found' }, 404)
+  }
+
+  return c.json({ success: true })
+})
+
 // DELETE /collection/:id/albums/:albumId
 collections.delete('/:id/albums/:albumId', async (c) => {
   const collectionId = parseInt(c.req.param('id'))
