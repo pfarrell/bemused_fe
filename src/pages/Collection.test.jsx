@@ -55,6 +55,27 @@ describe('Collection page — wikipedia summary', () => {
   });
 });
 
+describe('Collection page — stubs', () => {
+  test('renders stub entries with a dashed border alongside real albums', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        collection: baseCollection,
+        albums: [
+          { id: 1, title: 'A', image_path: 'a.jpg', order: 1, artist: { id: 1, name: 'Artist A' } },
+        ],
+        stubs: [
+          { id: 1, title: 'Missing Album', artist_name: 'Missing Artist', order: 2 },
+        ],
+        notes: [],
+        summary: null,
+      },
+    });
+    renderCollection();
+    expect(await screen.findByText('Missing Album')).toBeInTheDocument();
+    expect(screen.getByText('Missing Artist')).toBeInTheDocument();
+  });
+});
+
 describe('Collection page — cover collage', () => {
   test('shows a 2x2 collage of the first 4 albums with covers when there is no custom image', async () => {
     apiService.getCollection.mockResolvedValue({

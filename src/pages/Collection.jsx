@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import AlbumCard from '../components/AlbumCard';
+import AlbumStubCard from '../components/AlbumStubCard';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import NotesSection from '../components/NotesSection';
@@ -54,7 +55,7 @@ export default function Collection() {
   if (error) return <Retry message={error} onRetry={loadCollection} />;
   if (!collectionData) return <div>Collection not found</div>;
 
-  const { collection, albums, notes, summary } = collectionData;
+  const { collection, albums, stubs, notes, summary } = collectionData;
   const canEdit = isAdmin || (user && collection.user_id === user.id);
 
   return (
@@ -161,18 +162,25 @@ export default function Collection() {
       )}
 
       {/* Albums Grid */}
-      {albums && albums.length > 0 ? (
+      {(albums?.length > 0 || stubs?.length > 0) ? (
         <div className="artist-grid">
           <div className="artist-grid-container">
-            {albums.map((album) => (
-              <AlbumCard
-                key={album.id}
-                album={album}
-                artist={album.artist}
-                imageUrl={apiService.getImageUrl(album.image_path, 'album_small')}
-                onClick={() => navigate(`/album/${album.id}`)}
-              />
-            ))}
+            {[
+              ...(albums || []).map((album) => ({ type: 'album', order: album.order ?? 0, data: album })),
+              ...(stubs || []).map((stub) => ({ type: 'stub', order: stub.order ?? 0, data: stub })),
+            ]
+              .sort((a, b) => a.order - b.order)
+              .map((item) => item.type === 'album' ? (
+                <AlbumCard
+                  key={`album-${item.data.id}`}
+                  album={item.data}
+                  artist={item.data.artist}
+                  imageUrl={apiService.getImageUrl(item.data.image_path, 'album_small')}
+                  onClick={() => navigate(`/album/${item.data.id}`)}
+                />
+              ) : (
+                <AlbumStubCard key={`stub-${item.data.id}`} stub={item.data} />
+              ))}
           </div>
         </div>
       ) : (
