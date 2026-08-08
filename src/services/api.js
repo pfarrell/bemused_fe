@@ -131,6 +131,8 @@ export const apiService = {
   createCollection: (name) => api.post('/collections', { name }),
   updateCollection: (id, data) => api.put(`/collection/${id}`, data),
   addAlbumToCollection: (collectionId, albumId) => api.post(`/collection/${collectionId}/albums`, { album_id: albumId }),
+  addStubToCollection: (collectionId, title, artist_name) =>
+    api.post(`/collection/${collectionId}/stubs`, { title, artist_name }),
   removeAlbumFromCollection: (collectionId, albumId) => api.delete(`/collection/${collectionId}/albums/${albumId}`),
   reorderCollectionAlbums: (collectionId, album_orders) => api.patch(`/collection/${collectionId}/albums/reorder`, { album_orders }),
   downloadCollectionImage: (id, image_url, image_name) => api.post(`/admin/collection/${id}/image`, { image_url, image_name }),

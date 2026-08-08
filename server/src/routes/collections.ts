@@ -157,6 +157,40 @@ collections.post('/:id/albums', async (c) => {
   return c.json({ success: true })
 })
 
+// POST /collection/:id/stubs — add a placeholder for an album not yet owned
+collections.post('/:id/stubs', async (c) => {
+  const collectionId = parseInt(c.req.param('id'))
+  const { title, artist_name } = await c.req.json()
+  const user = c.get('user')
+
+  if (!title || !title.trim()) {
+    return c.json({ error: 'Title is required' }, 400)
+  }
+
+  const [maxAlbumOrder, maxStubOrder] = await Promise.all([
+    db.selectFrom('collection_albums').select(db.fn.max('order').as('max_order')).where('collection_id', '=', collectionId).executeTakeFirst(),
+    db.selectFrom('album_stubs').select(db.fn.max('order').as('max_order')).where('collection_id', '=', collectionId).executeTakeFirst(),
+  ])
+  const nextOrder = Math.max(maxAlbumOrder?.max_order ?? 0, maxStubOrder?.max_order ?? 0) + 1
+
+  const stub = await db
+    .insertInto('album_stubs')
+    .values({
+      title: title.trim(),
+      artist_name: artist_name?.trim() || null,
+      user_id: user?.id ?? null,
+      collection_id: collectionId,
+      order: nextOrder,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow()
+
+  await db.updateTable('collections').set({ updated_at: new Date() }).where('id', '=', collectionId).execute()
+  return c.json({ stub })
+})
+
 // DELETE /collection/:id/albums/:albumId
 collections.delete('/:id/albums/:albumId', async (c) => {
   const collectionId = parseInt(c.req.param('id'))
