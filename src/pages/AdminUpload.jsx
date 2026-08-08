@@ -202,6 +202,29 @@ const AdminUpload = () => {
     }
   };
 
+  const handleDismiss = async (id) => {
+    try {
+      await apiService.dismissUpload(id);
+      setRecentUploads(recentUploads.filter((u) => u.id !== id));
+      loadStats();
+    } catch (error) {
+      console.error('Failed to dismiss upload:', error);
+      loadRecentUploads();
+    }
+  };
+
+  const handleClearFailed = async () => {
+    if (!confirm('Clear all failed uploads? This cannot be undone.')) return;
+    try {
+      await apiService.clearFailedUploads();
+      setRecentUploads(recentUploads.filter((u) => u.status !== 'failed'));
+      loadStats();
+    } catch (error) {
+      console.error('Failed to clear failed uploads:', error);
+      loadRecentUploads();
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed': return '#10b981';
@@ -712,6 +735,22 @@ const AdminUpload = () => {
           >
             {loadingRecent ? 'Refreshing...' : 'Refresh'}
           </button>
+          <button
+            onClick={handleClearFailed}
+            disabled={!stats || stats.failed === 0}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: (!stats || stats.failed === 0) ? '#d1d5db' : '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              cursor: (!stats || stats.failed === 0) ? 'not-allowed' : 'pointer',
+              marginLeft: '0.5rem',
+            }}
+          >
+            Clear All Failed
+          </button>
         </div>
 
         {recentUploads.length > 0 ? (
@@ -758,23 +797,42 @@ const AdminUpload = () => {
                       {upload.error_message || '-'}
                     </td>
                     <td style={{ padding: '0.75rem' }}>
-                      {(upload.status === 'failed' || upload.status === 'processing') && (
-                        <button
-                          onClick={() => handleRetry(upload.id)}
-                          style={{
-                            padding: '0.35rem 0.75rem',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Retry
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {(upload.status === 'failed' || upload.status === 'processing') && (
+                          <button
+                            onClick={() => handleRetry(upload.id)}
+                            style={{
+                              padding: '0.35rem 0.75rem',
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Retry
+                          </button>
+                        )}
+                        {upload.status === 'failed' && (
+                          <button
+                            onClick={() => handleDismiss(upload.id)}
+                            style={{
+                              padding: '0.35rem 0.75rem',
+                              backgroundColor: '#6b7280',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Dismiss
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import AdminUpload from './AdminUpload';
@@ -11,6 +11,8 @@ vi.mock('../services/api', () => ({
     searchAdminArtists: vi.fn(),
     searchAdminAlbums: vi.fn(),
     uploadTracks: vi.fn(),
+    dismissUpload: vi.fn(),
+    clearFailedUploads: vi.fn(),
   },
 }));
 
@@ -205,5 +207,64 @@ describe('AdminUpload — Various artists compilation checkbox', () => {
     await screen.findByText(/Successfully queued/);
     const formData = apiService.uploadTracks.mock.calls[0][0];
     expect(formData.get('artist_id')).toBe('161');
+  });
+});
+
+describe('AdminUpload — clearing failed uploads', () => {
+  const failedUpload = {
+    id: 42, status: 'failed', original_filename: 'bad.mp3',
+    error_message: 'boom', created_at: '2026-08-01T00:00:00Z',
+  };
+  const processingUpload = {
+    id: 43, status: 'processing', original_filename: 'working.mp3',
+    error_message: null, created_at: '2026-08-01T00:00:00Z',
+  };
+
+  test('shows Dismiss only on failed rows, not processing rows', async () => {
+    apiService.getRecentUploads.mockResolvedValue({ data: [failedUpload, processingUpload] });
+    renderUpload();
+
+    await screen.findByText('bad.mp3');
+    const failedRow = screen.getByText('bad.mp3').closest('tr');
+    const processingRow = screen.getByText('working.mp3').closest('tr');
+
+    expect(within(failedRow).getByText('Dismiss')).toBeInTheDocument();
+    expect(within(processingRow).queryByText('Dismiss')).not.toBeInTheDocument();
+  });
+
+  test('clicking Dismiss removes the row and calls apiService.dismissUpload', async () => {
+    const user = userEvent.setup();
+    apiService.getRecentUploads.mockResolvedValue({ data: [failedUpload] });
+    apiService.dismissUpload.mockResolvedValue({ data: { success: true } });
+    renderUpload();
+
+    await screen.findByText('bad.mp3');
+    await user.click(screen.getByText('Dismiss'));
+
+    expect(apiService.dismissUpload).toHaveBeenCalledWith(42);
+    expect(screen.queryByText('bad.mp3')).not.toBeInTheDocument();
+  });
+
+  test('Clear All Failed is disabled when there are no failed uploads', async () => {
+    apiService.getUploadStatus.mockResolvedValue({ data: { stats: { pending: 0, processing: 0, completed: 0, failed: 0 } } });
+    renderUpload();
+
+    expect(await screen.findByText('Clear All Failed')).toBeDisabled();
+  });
+
+  test('Clear All Failed confirms, then clears and refreshes', async () => {
+    const user = userEvent.setup();
+    apiService.getUploadStatus.mockResolvedValue({ data: { stats: { pending: 0, processing: 0, completed: 0, failed: 1 } } });
+    apiService.getRecentUploads.mockResolvedValue({ data: [failedUpload] });
+    apiService.clearFailedUploads.mockResolvedValue({ data: { success: true, deleted: 1 } });
+    window.confirm = vi.fn(() => true);
+    renderUpload();
+
+    await screen.findByText('bad.mp3');
+    await user.click(screen.getByText('Clear All Failed'));
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(apiService.clearFailedUploads).toHaveBeenCalled();
+    expect(screen.queryByText('bad.mp3')).not.toBeInTheDocument();
   });
 });
