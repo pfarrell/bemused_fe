@@ -9,6 +9,7 @@ vi.mock('../services/api', () => ({
     getCollection: vi.fn(),
     updateCollection: vi.fn(),
     search: vi.fn(),
+    addStubToCollection: vi.fn(),
     getImageUrl: () => 'http://example.com/image.jpg',
   },
 }));
@@ -57,5 +58,27 @@ describe('AdminCollection — wikipedia field', () => {
       '7',
       expect.objectContaining({ wikipedia: 'Kind_of_Blue' })
     ));
+  });
+});
+
+describe('AdminCollection — placeholder stub', () => {
+  test('adds a placeholder stub via the "Add a placeholder" form', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, stubs: [] },
+    });
+    apiService.addStubToCollection = vi.fn().mockResolvedValue({
+      data: { stub: { id: 1, title: 'Abbey Road', artist_name: 'The Beatles', order: 1 } },
+    });
+    renderAdminCollection();
+
+    await user.click(await screen.findByText('+ Add Album'));
+    await user.click(screen.getByText(/Add a placeholder instead/i));
+    await user.type(screen.getByLabelText('Title'), 'Abbey Road');
+    await user.type(screen.getByLabelText('Artist'), 'The Beatles');
+    await user.click(screen.getByRole('button', { name: 'Add Placeholder' }));
+
+    expect(apiService.addStubToCollection).toHaveBeenCalledWith('7', 'Abbey Road', 'The Beatles');
+    expect(await screen.findByText('Abbey Road')).toBeInTheDocument();
   });
 });

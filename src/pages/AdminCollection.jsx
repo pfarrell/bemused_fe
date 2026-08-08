@@ -17,6 +17,12 @@ export default function AdminCollection() {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
 
+  // Placeholder stubs
+  const [stubs, setStubs] = useState([]);
+  const [showStubForm, setShowStubForm] = useState(false);
+  const [stubTitle, setStubTitle] = useState('');
+  const [stubArtistName, setStubArtistName] = useState('');
+
   // Image download
   const [imageUrl, setImageUrl] = useState('');
   const [imageName, setImageName] = useState('');
@@ -32,6 +38,7 @@ export default function AdminCollection() {
       const response = await apiService.getCollection(id);
       setCollectionData(response.data.collection);
       setAlbums(response.data.albums || []);
+      setStubs(response.data.stubs || []);
     } catch (err) {
       console.error('Failed to load collection:', err);
     } finally {
@@ -63,6 +70,20 @@ export default function AdminCollection() {
     } catch (err) {
       console.error('Failed to add album:', err);
       alert('Failed to add album');
+    }
+  };
+
+  const handleAddStub = async () => {
+    if (!stubTitle.trim()) return;
+    try {
+      const response = await apiService.addStubToCollection(id, stubTitle.trim(), stubArtistName.trim());
+      setStubs([...stubs, response.data.stub]);
+      setShowStubForm(false);
+      setStubTitle('');
+      setStubArtistName('');
+    } catch (err) {
+      console.error('Failed to add stub:', err);
+      alert('Failed to add placeholder');
     }
   };
 
@@ -352,6 +373,53 @@ export default function AdminCollection() {
               ))}
             </div>
           )}
+
+          {!showStubForm ? (
+            <button
+              type="button"
+              onClick={() => setShowStubForm(true)}
+              style={{
+                marginTop: '0.75rem', padding: 0, background: 'none', border: 'none',
+                color: '#3b82f6', cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'underline',
+              }}
+            >
+              Can't find it? Add a placeholder instead
+            </button>
+          ) : (
+            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e5e7eb' }}>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label htmlFor="stub-title" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Title</label>
+                <input
+                  id="stub-title"
+                  type="text"
+                  value={stubTitle}
+                  onChange={(e) => setStubTitle(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label htmlFor="stub-artist" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Artist</label>
+                <input
+                  id="stub-artist"
+                  type="text"
+                  value={stubArtistName}
+                  onChange={(e) => setStubArtistName(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddStub}
+                disabled={!stubTitle.trim()}
+                style={{
+                  padding: '0.5rem 1rem', backgroundColor: stubTitle.trim() ? '#10b981' : '#d1d5db', color: 'white',
+                  border: 'none', borderRadius: '4px', cursor: stubTitle.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Add Placeholder
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -420,6 +488,32 @@ export default function AdminCollection() {
           ))
         )}
       </div>
+
+      {/* Placeholder stubs (Remove/Resolve controls added in a later task) */}
+      {stubs.length > 0 && (
+        <div style={{
+          backgroundColor: 'white', borderRadius: '0.5rem', marginTop: '2rem',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', overflow: 'hidden'
+        }}>
+          <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', fontWeight: '600' }}>
+            Placeholder Stubs ({stubs.length})
+          </div>
+          {stubs.map((stub) => (
+            <div
+              key={stub.id}
+              style={{
+                padding: '1rem', borderBottom: '1px solid #e5e7eb',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: '500' }}>{stub.title}</div>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{stub.artist_name}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
