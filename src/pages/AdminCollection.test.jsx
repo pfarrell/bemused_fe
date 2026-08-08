@@ -12,6 +12,7 @@ vi.mock('../services/api', () => ({
     addStubToCollection: vi.fn(),
     removeStubFromCollection: vi.fn(),
     resolveStub: vi.fn(),
+    addAlbumToCollection: vi.fn(),
     getImageUrl: () => 'http://example.com/image.jpg',
   },
 }));
@@ -115,5 +116,31 @@ describe('AdminCollection — placeholder stub', () => {
     await user.click(await screen.findByText('Add', { selector: 'button' }));
 
     expect(apiService.resolveStub).toHaveBeenCalledWith('7', 9, 42);
+  });
+
+  test('cancelling Resolve by closing the search panel does not leave resolve-mode active for the next add', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, stubs: [{ id: 9, title: 'Abbey Road', artist_name: 'The Beatles', order: 1 }] },
+    });
+    apiService.search = vi.fn().mockResolvedValue({
+      data: { results: [{ type: 'album', data: { id: 55, title: 'Let It Be', artist: { name: 'The Beatles' } } }] },
+    });
+    apiService.addAlbumToCollection = vi.fn().mockResolvedValue({});
+    apiService.resolveStub = vi.fn().mockResolvedValue({});
+    renderAdminCollection();
+
+    // Enter resolve mode for the stub, then back out without picking a result.
+    await user.click(await screen.findByText('Resolve'));
+    await user.click(screen.getByText('Close Search'));
+
+    // Now use the normal Add Album flow to add an unrelated album.
+    await user.click(await screen.findByText('+ Add Album'));
+    await user.type(screen.getByPlaceholderText('Search for albums...'), 'Let It Be');
+    await user.click(screen.getByText('Search', { selector: 'button' }));
+    await user.click(await screen.findByText('Add', { selector: 'button' }));
+
+    expect(apiService.addAlbumToCollection).toHaveBeenCalledWith('7', 55);
+    expect(apiService.resolveStub).not.toHaveBeenCalled();
   });
 });

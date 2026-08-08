@@ -333,7 +333,7 @@ export default function AdminCollection() {
       {/* Add Album */}
       <div style={{ marginBottom: '1rem' }}>
         <button
-          onClick={() => setShowSearch(!showSearch)}
+          onClick={() => { setShowSearch(!showSearch); setResolvingStubId(null); }}
           style={{
             padding: '0.5rem 1rem', backgroundColor: '#10b981', color: 'white',
             border: 'none', borderRadius: '4px', cursor: 'pointer',
