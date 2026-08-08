@@ -150,13 +150,11 @@ collections.post('/:id/albums', async (c) => {
   const collectionId = parseInt(c.req.param('id'))
   const { album_id } = await c.req.json()
 
-  const maxOrderResult = await db
-    .selectFrom('collection_albums')
-    .select(db.fn.max('order').as('max_order'))
-    .where('collection_id', '=', collectionId)
-    .executeTakeFirst()
-
-  const nextOrder = (maxOrderResult?.max_order ?? 0) + 1
+  const [maxAlbumOrder, maxStubOrder] = await Promise.all([
+    db.selectFrom('collection_albums').select(db.fn.max('order').as('max_order')).where('collection_id', '=', collectionId).executeTakeFirst(),
+    db.selectFrom('album_stubs').select(db.fn.max('order').as('max_order')).where('collection_id', '=', collectionId).executeTakeFirst(),
+  ])
+  const nextOrder = Math.max(maxAlbumOrder?.max_order ?? 0, maxStubOrder?.max_order ?? 0) + 1
 
   await db
     .insertInto('collection_albums')
