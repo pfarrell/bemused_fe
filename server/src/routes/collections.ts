@@ -4,6 +4,8 @@ import type { Variables } from '../types.js'
 import { notesService } from '../services/notesService.js'
 import { createRecallNote, getRecallItem, decryptRecallToken, appendBacklink, stripBacklink } from '../services/recallService.js'
 import { getCollectionSummary } from '../services/wikipedia.js'
+import { requireAuth } from '../middleware/auth.js'
+import { canModify } from '../utils/ownership.js'
 
 const collections = new Hono<{ Variables: Variables }>()
 
@@ -123,13 +125,14 @@ collections.get('/:id', async (c) => {
 })
 
 // POST /collections
-collections.post('/', async (c) => {
+collections.post('/', requireAuth, async (c) => {
+  const user = c.get('user')!
   const { name } = await c.req.json()
   if (!name?.trim()) return c.json({ error: 'Name is required' }, 400)
 
   const result = await db
     .insertInto('collections')
-    .values({ name: name.trim(), created_at: new Date(), updated_at: new Date() })
+    .values({ name: name.trim(), user_id: user.id, created_at: new Date(), updated_at: new Date() })
     .returningAll()
     .executeTakeFirst()
 
@@ -137,8 +140,14 @@ collections.post('/', async (c) => {
 })
 
 // PUT /collection/:id
-collections.put('/:id', async (c) => {
+collections.put('/:id', requireAuth, async (c) => {
   const id = parseInt(c.req.param('id'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', id).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
+
   const { name, image_path, wikipedia } = await c.req.json()
 
   await db.updateTable('collections').set({ name, image_path, wikipedia }).where('id', '=', id).execute()
@@ -146,8 +155,14 @@ collections.put('/:id', async (c) => {
 })
 
 // POST /collection/:id/albums
-collections.post('/:id/albums', async (c) => {
+collections.post('/:id/albums', requireAuth, async (c) => {
   const collectionId = parseInt(c.req.param('id'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', collectionId).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
+
   const { album_id } = await c.req.json()
 
   const [maxAlbumOrder, maxStubOrder] = await Promise.all([
@@ -167,10 +182,15 @@ collections.post('/:id/albums', async (c) => {
 })
 
 // POST /collection/:id/stubs — add a placeholder for an album not yet owned
-collections.post('/:id/stubs', async (c) => {
+collections.post('/:id/stubs', requireAuth, async (c) => {
   const collectionId = parseInt(c.req.param('id'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', collectionId).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
+
   const { title, artist_name } = await c.req.json()
-  const user = c.get('user')
 
   if (!title || !title.trim()) {
     return c.json({ error: 'Title is required' }, 400)
@@ -187,7 +207,7 @@ collections.post('/:id/stubs', async (c) => {
     .values({
       title: title.trim(),
       artist_name: artist_name?.trim() || null,
-      user_id: user?.id ?? null,
+      user_id: user.id,
       collection_id: collectionId,
       order: nextOrder,
       created_at: new Date(),
@@ -201,9 +221,14 @@ collections.post('/:id/stubs', async (c) => {
 })
 
 // DELETE /collection/:id/stubs/:stubId
-collections.delete('/:id/stubs/:stubId', async (c) => {
+collections.delete('/:id/stubs/:stubId', requireAuth, async (c) => {
   const collectionId = parseInt(c.req.param('id'))
   const stubId = parseInt(c.req.param('stubId'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', collectionId).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
 
   const result = await db
     .deleteFrom('album_stubs')
@@ -219,9 +244,15 @@ collections.delete('/:id/stubs/:stubId', async (c) => {
 })
 
 // POST /collection/:id/stubs/:stubId/resolve — replace a stub with a real album at the same position
-collections.post('/:id/stubs/:stubId/resolve', async (c) => {
+collections.post('/:id/stubs/:stubId/resolve', requireAuth, async (c) => {
   const collectionId = parseInt(c.req.param('id'))
   const stubId = parseInt(c.req.param('stubId'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', collectionId).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
+
   const { album_id } = await c.req.json()
 
   const stub = await db
@@ -259,9 +290,14 @@ collections.post('/:id/stubs/:stubId/resolve', async (c) => {
 })
 
 // DELETE /collection/:id/albums/:albumId
-collections.delete('/:id/albums/:albumId', async (c) => {
+collections.delete('/:id/albums/:albumId', requireAuth, async (c) => {
   const collectionId = parseInt(c.req.param('id'))
   const albumId = parseInt(c.req.param('albumId'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', collectionId).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
 
   await db
     .deleteFrom('collection_albums')
@@ -323,8 +359,14 @@ collections.delete('/:id/notes/:noteId', async (c) => {
 })
 
 // PATCH /collection/:id/albums/reorder
-collections.patch('/:id/albums/reorder', async (c) => {
+collections.patch('/:id/albums/reorder', requireAuth, async (c) => {
   const collectionId = parseInt(c.req.param('id'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', collectionId).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
+
   const { album_orders, stub_orders } = await c.req.json() // [{ album_id, order }], [{ stub_id, order }]
 
   await db.transaction().execute(async (trx) => {
