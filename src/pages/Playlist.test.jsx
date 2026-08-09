@@ -155,6 +155,24 @@ describe('Playlist page — cover collage', () => {
   });
 });
 
+describe('Playlist page — Edit button access', () => {
+  test('shows the Edit button for a non-admin user who owns the playlist', async () => {
+    useAuthStore.setState({ isAdmin: false, user: { id: 1 }, isAuthenticated: true });
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    expect(screen.getByText('Edit')).toBeInTheDocument();
+  });
+
+  test('hides the Edit button for a non-admin user who does not own the playlist', async () => {
+    useAuthStore.setState({ isAdmin: false, user: { id: 999 }, isAuthenticated: true });
+    renderPlaylist();
+    await screen.findByText('Test Playlist');
+
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+  });
+});
+
 describe('Playlist page — header context menu', () => {
   test('right-clicking the header shows Favorite', async () => {
     renderPlaylist();

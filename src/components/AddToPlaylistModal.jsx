@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 
 const AddToPlaylistModal = ({ track, onClose }) => {
+  const { user, isAdmin } = useAuthStore();
   const [playlists, setPlaylists] = useState([]);
   const [filteredPlaylists, setFilteredPlaylists] = useState([]);
   const [filterText, setFilterText] = useState('');
@@ -35,7 +37,12 @@ const AddToPlaylistModal = ({ track, onClose }) => {
     try {
       setLoading(true);
       const response = await apiService.getPlaylists();
-      const playlistData = response.data || [];
+      // Only list playlists the current user can actually write to — the
+      // backend now rejects adding a track to a playlist owned by someone
+      // else with a 403, so showing those here would just be a dead end.
+      const playlistData = (response.data || []).filter(
+        (p) => isAdmin || (user && p.user_id === user.id)
+      );
 
       // Sort by updated_at descending (most recent first)
       const sortedPlaylists = playlistData.sort((a, b) => {

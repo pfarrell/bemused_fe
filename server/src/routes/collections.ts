@@ -6,6 +6,17 @@ import { createRecallNote, getRecallItem, decryptRecallToken, appendBacklink, st
 import { getCollectionSummary } from '../services/wikipedia.js'
 import { requireAuth } from '../middleware/auth.js'
 import { canModify } from '../utils/ownership.js'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+// In production, we're deployed to /var/www/bemused-node/current, use that
+// In development, calculate from __dirname
+const projectRoot = process.env.NODE_ENV === 'production'
+  ? '/var/www/bemused-node/current'
+  : path.resolve(__dirname, '../../..')
 
 const collections = new Hono<{ Variables: Variables }>()
 
@@ -389,6 +400,48 @@ collections.patch('/:id/albums/reorder', requireAuth, async (c) => {
   })
 
   return c.json({ success: true })
+})
+
+// POST /collection/:id/image — download and save a collection image from a URL
+collections.post('/:id/image', requireAuth, async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', id).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
+
+  const body = await c.req.json()
+  const { image_url, image_name } = body
+
+  if (!image_url || !image_name) {
+    return c.json({ error: 'image_url and image_name are required' }, 400)
+  }
+
+  try {
+    const response = await fetch(image_url)
+    if (!response.ok) return c.json({ error: 'Failed to download image from URL' }, 400)
+
+    const buffer = Buffer.from(await response.arrayBuffer())
+    const imageDir = path.join(projectRoot, 'public', 'images', 'albums')
+    if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir, { recursive: true })
+
+    const imagePath = path.join(imageDir, image_name)
+    fs.writeFileSync(imagePath, buffer)
+
+    const updated = await db
+      .updateTable('collections')
+      .set({ image_path: image_name, updated_at: new Date() })
+      .where('id', '=', id)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!updated) return c.json({ error: 'Collection not found' }, 404)
+    return c.json({ success: true, collection: updated })
+  } catch (error) {
+    console.error('Error downloading/saving collection image:', error)
+    return c.json({ error: 'Failed to save image' }, 500)
+  }
 })
 
 export default collections

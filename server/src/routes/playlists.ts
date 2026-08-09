@@ -7,6 +7,17 @@ import type { Variables } from '../types.js'
 import { countsService } from '../services/countsService.js'
 import { requireAuth } from '../middleware/auth.js'
 import { canModify } from '../utils/ownership.js'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+// In production, we're deployed to /var/www/bemused-node/current, use that
+// In development, calculate from __dirname
+const projectRoot = process.env.NODE_ENV === 'production'
+  ? '/var/www/bemused-node/current'
+  : path.resolve(__dirname, '../../..')
 
 const playlists = new Hono<{ Variables: Variables }>()
 
@@ -301,6 +312,70 @@ playlists.put('/:id', requireAuth, async (c) => {
     .execute()
 
   return c.json({ success: true })
+})
+
+// POST /playlist/:id/image — download and save a playlist image from a URL
+playlists.post('/:id/image', requireAuth, async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const user = c.get('user')!
+
+  const playlist = await db.selectFrom('playlists').selectAll().where('id', '=', id).executeTakeFirst()
+  if (!playlist) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, playlist)) return c.json({ error: 'Not permitted' }, 403)
+
+  const body = await c.req.json()
+  const { image_url, image_name } = body
+
+  if (!image_url || !image_name) {
+    return c.json({ error: 'image_url and image_name are required' }, 400)
+  }
+
+  try {
+    // Download the image
+    console.log(`Downloading playlist image from: ${image_url}`)
+    const response = await fetch(image_url)
+    if (!response.ok) {
+      return c.json({ error: 'Failed to download image from URL' }, 400)
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer())
+
+    // Determine the image directory (use albums directory for playlists too)
+    const imageDir = path.join(projectRoot, 'public', 'images', 'albums')
+    console.log(`Saving playlist image to directory: ${imageDir}`)
+
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(imageDir)) {
+      console.log(`Creating directory: ${imageDir}`)
+      fs.mkdirSync(imageDir, { recursive: true })
+    }
+
+    // Save the image
+    const imagePath = path.join(imageDir, image_name)
+    console.log(`Writing playlist image to: ${imagePath}`)
+    fs.writeFileSync(imagePath, buffer)
+    console.log(`Playlist image saved successfully: ${imagePath}`)
+
+    // Update the playlist record
+    const updated = await db
+      .updateTable('playlists')
+      .set({
+        image_path: image_name,
+        updated_at: new Date(),
+      })
+      .where('id', '=', id)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!updated) {
+      return c.json({ error: 'Playlist not found' }, 404)
+    }
+
+    return c.json({ success: true, playlist: updated })
+  } catch (error) {
+    console.error('Error downloading/saving playlist image:', error)
+    return c.json({ error: 'Failed to save image' }, 500)
+  }
 })
 
 export default playlists

@@ -22,8 +22,11 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', album.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
-  const ctxMenu = useContextMenu({ shouldIgnore: (e) => e.target.closest('[data-result-row-play]') });
   const onThisArtist = useIsCurrentPage(artist?.id ? `/artist/${artist.id}` : null);
+  const showGoToArtist = artist?.id && !onThisArtist;
+  const ctxMenu = useContextMenu({
+    shouldIgnore: (e) => e.target.closest('[data-result-row-play]') || (!isAuthenticated && !showGoToArtist),
+  });
 
   const handleImageError = (e) => {
     if (e.target.src.includes('/sm/')) {
@@ -139,7 +142,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
         onSwallowTouch={ctxMenu.swallowTouch}
         testId="album-card-menu-backdrop"
       >
-        {artist?.id && !onThisArtist && (
+        {showGoToArtist && (
           <button
             onClick={(e) => { e.stopPropagation(); handleGoToArtist(); }}
             onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleGoToArtist(); }}

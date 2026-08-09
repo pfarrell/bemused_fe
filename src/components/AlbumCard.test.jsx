@@ -331,6 +331,19 @@ describe('AlbumCard — Favorite menu item', () => {
     expect(screen.queryByText('▣ Add to Collection')).not.toBeInTheDocument();
   });
 
+  test('does not open the menu backdrop when logged out and "Go to Artist" would also not render', () => {
+    render(<AlbumCard album={album} artist={null} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+    expect(screen.queryByTestId('album-card-menu-backdrop')).not.toBeInTheDocument();
+  });
+
+  test('still opens the menu backdrop when logged out if "Go to Artist" would render', () => {
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
+    expect(screen.getByTestId('album-card-menu-backdrop')).toBeInTheDocument();
+    expect(screen.getByText('🎤 Go to Artist')).toBeInTheDocument();
+  });
+
   test('shows "Add to Favorites" alongside "Add to Collection" when logged in', () => {
     useAuthStore.setState({ isAuthenticated: true });
     render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);

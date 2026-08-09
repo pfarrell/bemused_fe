@@ -33,7 +33,7 @@ const Album = () => {
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', parseInt(id)));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
-  const ctxMenu = useContextMenu({ shouldIgnore: (e) => e.target.tagName === 'A' || !!e.target.closest('button') });
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
 
   useEffect(() => {
     const fetchAlbumData = async () => {

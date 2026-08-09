@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 
 const AddToCollectionModal = ({ album, onClose }) => {
+  const { user, isAdmin } = useAuthStore();
   const [collections, setCollections] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [filterText, setFilterText] = useState('');
@@ -30,7 +32,13 @@ const AddToCollectionModal = ({ album, onClose }) => {
     try {
       setLoading(true);
       const response = await apiService.getCollections();
-      const sorted = (response.data || []).sort((a, b) =>
+      // Only list collections the current user can actually write to — the
+      // backend now rejects adding an album to a collection owned by someone
+      // else with a 403, so showing those here would just be a dead end.
+      const writable = (response.data || []).filter(
+        (c) => isAdmin || (user && c.user_id === user.id)
+      );
+      const sorted = writable.sort((a, b) =>
         new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
       );
       setCollections(sorted);

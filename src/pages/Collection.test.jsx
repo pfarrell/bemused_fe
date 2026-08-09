@@ -76,6 +76,30 @@ describe('Collection page — stubs', () => {
   });
 });
 
+describe('Collection page — Edit button access', () => {
+  test('shows the Edit button for a non-admin user who owns the collection', async () => {
+    useAuthStore.setState({ isAdmin: false, user: { id: 7 }, isAuthenticated: true });
+    apiService.getCollection.mockResolvedValue({
+      data: { collection: { ...baseCollection, user_id: 7 }, albums: [], notes: [], summary: null },
+    });
+    renderCollection();
+    await screen.findByText('Road Trip Mix');
+
+    expect(screen.getByText('Edit')).toBeInTheDocument();
+  });
+
+  test('hides the Edit button for a non-admin user who does not own the collection', async () => {
+    useAuthStore.setState({ isAdmin: false, user: { id: 999 }, isAuthenticated: true });
+    apiService.getCollection.mockResolvedValue({
+      data: { collection: { ...baseCollection, user_id: 7 }, albums: [], notes: [], summary: null },
+    });
+    renderCollection();
+    await screen.findByText('Road Trip Mix');
+
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+  });
+});
+
 describe('Collection page — cover collage', () => {
   test('shows a 2x2 collage of the first 4 albums with covers when there is no custom image', async () => {
     apiService.getCollection.mockResolvedValue({

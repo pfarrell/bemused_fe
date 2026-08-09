@@ -79,6 +79,14 @@ app.route('/top', playlists)
 app.route('/newborns', playlists)
 app.route('/surprise', playlists)
 
+// Playlist/collection owners (not just site admins) can reach some routes under
+// the /admin/playlist and /admin/collection URL space (e.g. POST .../:id/image,
+// which AdminPlaylist.jsx/AdminCollection.jsx call to download a cover image).
+// These routers do their own requireAuth + canModify(owner-or-admin) checks per
+// route, so they're mounted here rather than under adminApp's blanket requireAdmin.
+app.route('/admin/playlist', playlists)
+app.route('/admin/collection', collections)
+
 // Admin routes (protected)
 const adminApp = new Hono()
 adminApp.use('*', requireAdmin)

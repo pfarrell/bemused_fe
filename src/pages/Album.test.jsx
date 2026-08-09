@@ -235,6 +235,16 @@ describe('Album page — header context menu', () => {
     expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
   });
 
+  test('does not open the menu backdrop at all when logged out (nothing in it would show)', async () => {
+    useAuthStore.setState({ isAdmin: false, isAuthenticated: false });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    fireEvent.contextMenu(screen.getByText('Test Album').closest('.media-page-header'));
+
+    expect(screen.queryByTestId('album-header-menu-backdrop')).not.toBeInTheDocument();
+  });
+
   test('clicking Favorite calls toggleFavorite with the album kind/id', async () => {
     const toggleFavorite = vi.fn();
     useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite });
