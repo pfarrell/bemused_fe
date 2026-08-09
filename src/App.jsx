@@ -219,7 +219,7 @@ function App() {
                 <Route path="/collection/:id" element={<Collection />} />
                 <Route path="/tags/:name" element={<TagPage />} />
                 <Route path="/admin/collection/:id" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute>
                     <AdminCollection />
                   </ProtectedRoute>
                 } />
@@ -239,7 +239,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/playlist/:id" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute>
                     <AdminPlaylist />
                   </ProtectedRoute>
                 } />

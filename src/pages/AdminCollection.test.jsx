@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminCollection from './AdminCollection';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 
 vi.mock('../services/api', () => ({
   apiService: {
@@ -38,6 +39,7 @@ const renderAdminCollection = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   apiService.getCollection.mockResolvedValue({ data: collectionPayload });
+  useAuthStore.setState({ isAdmin: true, user: { id: 1 } });
 });
 
 describe('AdminCollection — wikipedia field', () => {
@@ -299,5 +301,48 @@ describe('AdminCollection — optimistic order for newly added/resolved albums',
     // album must keep that order, landing in the middle, not at order 0/top.
     const row = (await screen.findByText('Abbey Road')).closest('[draggable]');
     expect(positionOf(row)).toBe('2');
+  });
+});
+
+describe('AdminCollection — ownership', () => {
+  const renderWithViewRoute = () =>
+    render(
+      <MemoryRouter initialEntries={['/admin/collection/7']}>
+        <Routes>
+          <Route path="/admin/collection/:id" element={<AdminCollection />} />
+          <Route path="/collection/:id" element={<div>Collection view page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+  test('redirects a signed-in non-owner, non-admin user to the collection view page', async () => {
+    useAuthStore.setState({ isAdmin: false, user: { id: 99 } });
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, collection: { ...collectionPayload.collection, user_id: 1 } },
+    });
+    renderWithViewRoute();
+
+    await waitFor(() => expect(screen.getByText('Collection view page')).toBeInTheDocument());
+    expect(screen.queryByText('Edit Collection')).not.toBeInTheDocument();
+  });
+
+  test('renders the edit form for the collection owner', async () => {
+    useAuthStore.setState({ isAdmin: false, user: { id: 1 } });
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, collection: { ...collectionPayload.collection, user_id: 1 } },
+    });
+    renderWithViewRoute();
+
+    expect(await screen.findByText('Edit Collection')).toBeInTheDocument();
+  });
+
+  test('renders the edit form for an admin who does not own the collection', async () => {
+    useAuthStore.setState({ isAdmin: true, user: { id: 99 } });
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, collection: { ...collectionPayload.collection, user_id: 1 } },
+    });
+    renderWithViewRoute();
+
+    expect(await screen.findByText('Edit Collection')).toBeInTheDocument();
   });
 });

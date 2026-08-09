@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 
 export default function AdminPlaylist() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, isAdmin } = useAuthStore();
   const [playlistData, setPlaylistData] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,13 @@ export default function AdminPlaylist() {
     loadPlaylist();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (loading || !playlistData) return;
+    if (!(isAdmin || (user && playlistData.user_id === user.id))) {
+      navigate(`/playlist/${id}`, { replace: true });
+    }
+  }, [loading, playlistData, isAdmin, user, id, navigate]);
 
   const loadPlaylist = async () => {
     try {
@@ -154,7 +163,10 @@ export default function AdminPlaylist() {
     }
   };
 
+  const canEdit = isAdmin || (user && playlistData?.user_id === user.id);
+
   if (loading) return <div style={{ padding: '2rem' }}>Loading...</div>;
+  if (!canEdit) return null;
 
   return (
     <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>

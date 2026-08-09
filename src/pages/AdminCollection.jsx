@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 
 export default function AdminCollection() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, isAdmin } = useAuthStore();
   const [collectionData, setCollectionData] = useState(null);
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,13 @@ export default function AdminCollection() {
   useEffect(() => {
     loadCollection();
   }, [id]);
+
+  useEffect(() => {
+    if (loading || !collectionData) return;
+    if (!(isAdmin || (user && collectionData.user_id === user.id))) {
+      navigate(`/collection/${id}`, { replace: true });
+    }
+  }, [loading, collectionData, isAdmin, user, id, navigate]);
 
   const loadCollection = async () => {
     try {
@@ -217,7 +226,10 @@ export default function AdminCollection() {
     }
   };
 
+  const canEdit = isAdmin || (user && collectionData?.user_id === user.id);
+
   if (loading) return <div style={{ padding: '2rem' }}>Loading...</div>;
+  if (!canEdit) return null;
 
   return (
     <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
