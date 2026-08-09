@@ -61,4 +61,27 @@ describe('SearchBar', () => {
 
     expect(screen.getByTestId('location')).toHaveTextContent('/');
   });
+
+  test('shows a clear button only once there is text, and clears it on click', async () => {
+    const user = userEvent.setup();
+    renderSearchBar();
+    const input = screen.getByPlaceholderText(
+      'Search for songs, artists, or albums'
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Clear search' })
+    ).not.toBeInTheDocument();
+
+    await user.type(input, 'pink floyd');
+    const clearButton = screen.getByRole('button', { name: 'Clear search' });
+    expect(clearButton).toBeInTheDocument();
+
+    await user.click(clearButton);
+
+    expect(input).toHaveValue('');
+    expect(
+      screen.queryByRole('button', { name: 'Clear search' })
+    ).not.toBeInTheDocument();
+  });
 });

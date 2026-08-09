@@ -23,20 +23,39 @@ const SearchBar = ({ onSearch, className = "" }) => {
     }
   };
 
+  const handleClear = () => {
+    setQuery('');
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
     <form onSubmit={handleSearch} style={{ width: '100%' }} className={className}>
-      <input
-        ref={inputRef}
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search for songs, artists, or albums"
-        className="search-input"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck="false"
-      />
+      <div className="search-input-wrapper">
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search for songs, artists, or albums"
+          className="search-input"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+        />
+        {query && (
+          <button
+            type="button"
+            className="search-clear-button"
+            onClick={handleClear}
+            aria-label="Clear search"
+          >
+            &times;
+          </button>
+        )}
+      </div>
     </form>
   );
 };
