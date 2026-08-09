@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { usePlayerStore } from '../../stores/playerStore';
+import { useAuthStore } from '../../stores/authStore';
 import { usePlayerEngine } from '../../hooks/usePlayerEngine';
 import PlaylistDrawer from './PlaylistDrawer';
 import { useContextMenu } from '../../hooks/useContextMenu';
@@ -49,9 +50,10 @@ const MusicPlayerWrapper = ({ className = '' }) => {
   const toggleDrawer = usePlayerStore((s) => s.toggleDrawer);
   const seek = usePlayerStore((s) => s.seek);
 
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [pulsing, setPulsing] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
-  const saveQueueCtx = useContextMenu({ shouldIgnore: () => playlist.length === 0 });
+  const saveQueueCtx = useContextMenu({ shouldIgnore: () => playlist.length === 0 || !isAuthenticated });
 
   const handleSaveQueue = (e) => {
     if (e) e.stopPropagation();

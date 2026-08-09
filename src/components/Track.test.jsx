@@ -459,6 +459,22 @@ describe('Track component — Favorite menu item', () => {
   });
 });
 
+describe('Track component — Add to Playlist menu item', () => {
+  test('does not render when logged out', () => {
+    useAuthStore.setState({ isAuthenticated: false });
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText('📋 Add to Playlist')).not.toBeInTheDocument();
+  });
+
+  test('renders when logged in', () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.getByText('📋 Add to Playlist')).toBeInTheDocument();
+  });
+});
+
 describe('Track component — Go to Album / Go to Artist menu items', () => {
   test('Go to Album navigates to the track\'s album and closes the menu', () => {
     const navigate = vi.fn();

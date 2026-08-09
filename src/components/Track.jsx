@@ -314,13 +314,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
           </button>
         )}
 
-        <button
-          onClick={handleAddToPlaylist}
-          onTouchStart={(e) => { e.stopPropagation(); }}
-          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToPlaylist(); }}
-        >
-          📋 Add to Playlist
-        </button>
+        {isAuthenticated && (
+          <button
+            onClick={handleAddToPlaylist}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToPlaylist(); }}
+          >
+            📋 Add to Playlist
+          </button>
+        )}
 
         <button
           onClick={handleShowNotes}

@@ -147,12 +147,14 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
             🎤 Go to Artist
           </button>
         )}
-        <button
-          onClick={(e) => { e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
-          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
-        >
-          ▣ Add to Collection
-        </button>
+        {isAuthenticated && (
+          <button
+            onClick={(e) => { e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
+          >
+            ▣ Add to Collection
+          </button>
+        )}
         {isAuthenticated && (
           <button
             onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }}

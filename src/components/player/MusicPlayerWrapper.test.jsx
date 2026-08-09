@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import MusicPlayerWrapper from './MusicPlayerWrapper';
 import { usePlayerStore } from '../../stores/playerStore';
+import { useAuthStore } from '../../stores/authStore';
 
 vi.mock('./PlaylistDrawer', () => ({ default: () => null }));
 vi.mock('./SavePlaylistModal', () => ({
@@ -16,6 +17,7 @@ beforeEach(() => {
     audioElementA: null, audioElementB: null, activeSlot: 'a', isPlaying: false, isBuffering: false, currentTime: 0, duration: 0,
     playbackMode: 'off', drawerOpen: false, activityPulseToken: 0, playlist: [], currentTrackIndex: -1,
   });
+  useAuthStore.setState({ isAuthenticated: true });
 });
 
 test('renders two hidden audio elements and binds both into the store', () => {
@@ -116,6 +118,14 @@ test('right-click on the hamburger icon opens the Save as Playlist menu when the
 
 test('Save as Playlist is not offered when the queue is empty', () => {
   usePlayerStore.setState({ playlist: [] });
+  render(<MusicPlayerWrapper />);
+  fireEvent.contextMenu(screen.getByTitle('Toggle Playlist'));
+  expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();
+});
+
+test('Save as Playlist is not offered when logged out, even with tracks in the queue', () => {
+  useAuthStore.setState({ isAuthenticated: false });
+  usePlayerStore.setState({ playlist: [{ id: 1 }] });
   render(<MusicPlayerWrapper />);
   fireEvent.contextMenu(screen.getByTitle('Toggle Playlist'));
   expect(screen.queryByText('💾 Save as Playlist')).not.toBeInTheDocument();

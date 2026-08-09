@@ -328,6 +328,7 @@ describe('AlbumCard — Favorite menu item', () => {
     render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
     fireEvent.contextMenu(screen.getByText('Test Album').closest('.artist-card'));
     expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
+    expect(screen.queryByText('▣ Add to Collection')).not.toBeInTheDocument();
   });
 
   test('shows "Add to Favorites" alongside "Add to Collection" when logged in', () => {

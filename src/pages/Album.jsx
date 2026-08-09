@@ -301,12 +301,14 @@ const Album = () => {
         onSwallowTouch={ctxMenu.swallowTouch}
         testId="album-header-menu-backdrop"
       >
-        <button
-          onClick={(e) => { e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
-          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
-        >
-          ▣ Add to Collection
-        </button>
+        {isAuthenticated && (
+          <button
+            onClick={(e) => { e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); setShowCollectionModal(true); }}
+          >
+            ▣ Add to Collection
+          </button>
+        )}
         {isAuthenticated && (
           <button
             onClick={(e) => { e.stopPropagation(); handleToggleFavorite(); }}

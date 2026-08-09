@@ -224,14 +224,14 @@ describe('Album page — header context menu', () => {
     expect(screen.getByText('☆ Add to Favorites')).toBeInTheDocument();
   });
 
-  test('shows Add to Collection but not Favorite when logged out', async () => {
+  test('shows neither Add to Collection nor Favorite when logged out', async () => {
     useAuthStore.setState({ isAdmin: false, isAuthenticated: false });
     renderAlbum();
     await screen.findByText('Test Album');
 
     fireEvent.contextMenu(screen.getByText('Test Album').closest('.media-page-header'));
 
-    expect(screen.getByText('▣ Add to Collection')).toBeInTheDocument();
+    expect(screen.queryByText('▣ Add to Collection')).not.toBeInTheDocument();
     expect(screen.queryByText(/Favorites/)).not.toBeInTheDocument();
   });
 
