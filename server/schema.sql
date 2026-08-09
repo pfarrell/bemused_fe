@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6BQ8ONWLwuWLpwBKqfHfAXm8AxMnmp7nlEIx9TPjjnGn7ceMWsCVcFyA0qOlXbn
+\restrict Cm7eLrFkeMhxdDAtJruxSqLXGYmnV8v9ovrayeBw5vpvZtahnfikB3qCvRovv0p
 
--- Dumped from database version 14.15 (Ubuntu 14.15-0ubuntu0.22.04.1)
--- Dumped by pg_dump version 17.9 (Ubuntu 17.9-0ubuntu0.25.10.1)
+-- Dumped from database version 17.10 (Ubuntu 17.10-0ubuntu0.25.10.1)
+-- Dumped by pg_dump version 17.10 (Ubuntu 17.10-0ubuntu0.25.10.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -18,13 +18,6 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
 
 --
 -- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
@@ -62,7 +55,7 @@ CREATE FUNCTION public.f_unaccent(text) RETURNS text
     LANGUAGE plpgsql IMMUTABLE STRICT
     AS $_$
       BEGIN
-        RETURN unaccent($1);
+        RETURN public.unaccent($1);
       END;
       $_$;
 
@@ -132,6 +125,101 @@ END;
 $$;
 
 
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: notes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notes (
+    id integer NOT NULL,
+    target_id integer NOT NULL,
+    recall_item_id text NOT NULL,
+    author_user_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    kind text NOT NULL
+);
+
+
+--
+-- Name: TABLE notes; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.notes IS 'Association between a bemused entity (album/track/collection, per kind) and a Recall note item. Content lives only in Recall — this table has no content column by design.';
+
+
+--
+-- Name: COLUMN notes.target_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.notes.target_id IS 'ID of the entity (album/track/collection) this note is attached to, per kind. No FK, matching the existing repo-wide convention.';
+
+
+--
+-- Name: COLUMN notes.kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.notes.kind IS 'Entity type this note is attached to: album | track | collection.';
+
+
+--
+-- Name: album_notes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.album_notes_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: album_notes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.album_notes_id_seq OWNED BY public.notes.id;
+
+
+--
+-- Name: album_stubs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.album_stubs (
+    id integer NOT NULL,
+    title character varying NOT NULL,
+    artist_name character varying,
+    user_id integer,
+    collection_id integer,
+    "order" integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: album_stubs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.album_stubs_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: album_stubs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.album_stubs_id_seq OWNED BY public.album_stubs.id;
+
+
 --
 -- Name: albums_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
@@ -143,10 +231,6 @@ CREATE SEQUENCE public.albums_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
 
 --
 -- Name: albums; Type: TABLE; Schema: public; Owner: -
@@ -165,8 +249,16 @@ CREATE TABLE public.albums (
     wikipedia text,
     musicbrainz_id character varying(36),
     mbid_confidence numeric(3,2),
-    mbid_status character varying(20) DEFAULT 'unmatched'::character varying
+    mbid_status character varying(20) DEFAULT 'unmatched'::character varying,
+    is_compilation boolean DEFAULT false NOT NULL
 );
+
+
+--
+-- Name: COLUMN albums.is_compilation; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.albums.is_compilation IS 'True for various-artists compilations/soundtracks — track artists are shown individually and secondary-artist display is suppressed. Decoupled from any specific artist row.';
 
 
 --
@@ -212,7 +304,7 @@ CREATE TABLE public.artist_albums (
     role character varying(50) DEFAULT 'primary'::character varying NOT NULL,
     "order" integer DEFAULT 1 NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_artist_albums_role CHECK (((role)::text = ANY ((ARRAY['primary'::character varying, 'compilation'::character varying, 'featured'::character varying, 'guest'::character varying, 'collaborator'::character varying])::text[])))
+    CONSTRAINT check_artist_albums_role CHECK (((role)::text = ANY (ARRAY[('primary'::character varying)::text, ('compilation'::character varying)::text, ('featured'::character varying)::text, ('guest'::character varying)::text, ('collaborator'::character varying)::text])))
 );
 
 
@@ -283,6 +375,8 @@ CREATE TABLE public.artist_relations (
     kind character varying(50) DEFAULT 'related'::character varying NOT NULL,
     source character varying(20) DEFAULT 'manual'::character varying NOT NULL,
     similarity numeric(5,4),
+    is_hidden boolean DEFAULT false NOT NULL,
+    force_show boolean DEFAULT false NOT NULL,
     CONSTRAINT artist_relations_check CHECK ((artist_id <> related_artist_id))
 );
 
@@ -410,7 +504,8 @@ CREATE TABLE public.collections (
     user_id integer,
     image_path character varying,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    wikipedia character varying
 );
 
 
@@ -432,6 +527,76 @@ CREATE SEQUENCE public.collections_id_seq
 --
 
 ALTER SEQUENCE public.collections_id_seq OWNED BY public.collections.id;
+
+
+--
+-- Name: discovery_sources; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.discovery_sources (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    kind character varying(100) NOT NULL,
+    url_pattern text,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: TABLE discovery_sources; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.discovery_sources IS 'Sources from which tracks are automatically discovered (e.g. RSS feeds, playlists)';
+
+
+--
+-- Name: COLUMN discovery_sources.kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.discovery_sources.kind IS 'Type of discovery source (e.g. rss, spotify, youtube, manual)';
+
+
+--
+-- Name: COLUMN discovery_sources.url_pattern; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.discovery_sources.url_pattern IS 'URL or pattern used to fetch content from this source';
+
+
+--
+-- Name: COLUMN discovery_sources.enabled; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.discovery_sources.enabled IS 'Whether this source is actively polled for new tracks';
+
+
+--
+-- Name: COLUMN discovery_sources.updated_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.discovery_sources.updated_at IS 'Timestamp of last modification';
+
+
+--
+-- Name: discovery_sources_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.discovery_sources_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: discovery_sources_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.discovery_sources_id_seq OWNED BY public.discovery_sources.id;
 
 
 --
@@ -477,8 +642,8 @@ CREATE TABLE public.favorites (
     target_id integer,
     user_id integer,
     kind text,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -614,6 +779,47 @@ CREATE TABLE public.media_files (
 
 
 --
+-- Name: oauth_identities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_identities (
+    id integer NOT NULL,
+    provider text NOT NULL,
+    provider_user_id text NOT NULL,
+    user_id integer NOT NULL,
+    email text NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE oauth_identities; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.oauth_identities IS 'External OAuth provider identities linked to a bemused user (e.g. Google). One row per provider per user.';
+
+
+--
+-- Name: oauth_identities_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.oauth_identities_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: oauth_identities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.oauth_identities_id_seq OWNED BY public.oauth_identities.id;
+
+
+--
 -- Name: opinions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -695,7 +901,8 @@ CREATE TABLE public.playlists (
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     image_path character varying(510) DEFAULT NULL::character varying,
-    auto_generated boolean
+    auto_generated boolean,
+    user_id integer
 );
 
 
@@ -873,8 +1080,16 @@ CREATE TABLE public.tracks (
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     wikipedia text,
-    duration_sec integer
+    duration_sec integer,
+    approved boolean DEFAULT true NOT NULL
 );
+
+
+--
+-- Name: COLUMN tracks.approved; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.tracks.approved IS 'Whether this track has been approved for playback; defaults true for existing tracks, may be set false for auto-discovered tracks pending review';
 
 
 --
@@ -901,7 +1116,10 @@ CREATE TABLE public.upload_queue (
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     started_at timestamp without time zone,
     completed_at timestamp without time zone,
-    CONSTRAINT valid_status CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying])::text[])))
+    discovery_source_id integer,
+    source_url text,
+    is_compilation boolean DEFAULT false NOT NULL,
+    CONSTRAINT valid_status CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('processing'::character varying)::text, ('completed'::character varying)::text, ('failed'::character varying)::text])))
 );
 
 
@@ -931,6 +1149,27 @@ COMMENT ON COLUMN public.upload_queue.track_pad IS 'Offset to add to track numbe
 --
 
 COMMENT ON COLUMN public.upload_queue.file_hash IS 'MD5 hash for deduplication';
+
+
+--
+-- Name: COLUMN upload_queue.discovery_source_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.upload_queue.discovery_source_id IS 'Discovery source that produced this upload, if any';
+
+
+--
+-- Name: COLUMN upload_queue.source_url; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.upload_queue.source_url IS 'Original URL of the discovered track; unique to prevent duplicate ingestion';
+
+
+--
+-- Name: COLUMN upload_queue.is_compilation; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.upload_queue.is_compilation IS 'Set by the admin at upload time; when true, the worker resolves each track''s artist from its own ID3 tag instead of the batch-level artist pick.';
 
 
 --
@@ -1015,6 +1254,31 @@ ALTER SEQUENCE public.user_playlists_id_seq OWNED BY public.user_playlists.id;
 
 
 --
+-- Name: user_recall_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_recall_tokens (
+    user_id integer NOT NULL,
+    recall_token text NOT NULL,
+    connected_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE user_recall_tokens; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.user_recall_tokens IS 'Per-bemused-user Recall API token (encrypted at rest), granted via the Recall cli-auth handshake. One row per connected user.';
+
+
+--
+-- Name: COLUMN user_recall_tokens.recall_token; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.user_recall_tokens.recall_token IS 'AES-256-GCM encrypted with RECALL_TOKEN_ENCRYPTION_KEY; format iv:authTag:ciphertext, all hex.';
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1025,7 +1289,8 @@ CREATE TABLE public.users (
     password text,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    admin boolean DEFAULT false
+    admin boolean DEFAULT false,
+    default_tag text
 );
 
 
@@ -1058,6 +1323,13 @@ COMMENT ON COLUMN public.users.admin IS 'Admin flag for accessing admin routes';
 
 
 --
+-- Name: COLUMN users.default_tag; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.users.default_tag IS 'Default tag filter for the home feed';
+
+
+--
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1074,6 +1346,13 @@ CREATE SEQUENCE public.users_id_seq
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- Name: album_stubs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.album_stubs ALTER COLUMN id SET DEFAULT nextval('public.album_stubs_id_seq'::regclass);
 
 
 --
@@ -1119,6 +1398,13 @@ ALTER TABLE ONLY public.collections ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
+-- Name: discovery_sources id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.discovery_sources ALTER COLUMN id SET DEFAULT nextval('public.discovery_sources_id_seq'::regclass);
+
+
+--
 -- Name: external_lookups id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1137,6 +1423,20 @@ ALTER TABLE ONLY public.favorites ALTER COLUMN id SET DEFAULT nextval('public.fa
 --
 
 ALTER TABLE ONLY public.images ALTER COLUMN id SET DEFAULT nextval('public.images_id_seq'::regclass);
+
+
+--
+-- Name: notes id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notes ALTER COLUMN id SET DEFAULT nextval('public.album_notes_id_seq'::regclass);
+
+
+--
+-- Name: oauth_identities id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_identities ALTER COLUMN id SET DEFAULT nextval('public.oauth_identities_id_seq'::regclass);
 
 
 --
@@ -1193,6 +1493,22 @@ ALTER TABLE ONLY public.user_playlists ALTER COLUMN id SET DEFAULT nextval('publ
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: notes album_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notes
+    ADD CONSTRAINT album_notes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: album_stubs album_stubs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.album_stubs
+    ADD CONSTRAINT album_stubs_pkey PRIMARY KEY (id);
 
 
 --
@@ -1284,6 +1600,14 @@ ALTER TABLE ONLY public.collections
 
 
 --
+-- Name: discovery_sources discovery_sources_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.discovery_sources
+    ADD CONSTRAINT discovery_sources_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: external_lookups external_lookups_entity_type_entity_id_service_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1305,6 +1629,14 @@ ALTER TABLE ONLY public.external_lookups
 
 ALTER TABLE ONLY public.favorites
     ADD CONSTRAINT favorites_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: favorites favorites_user_kind_target_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.favorites
+    ADD CONSTRAINT favorites_user_kind_target_unique UNIQUE (user_id, kind, target_id);
 
 
 --
@@ -1337,6 +1669,22 @@ ALTER TABLE ONLY public.logs
 
 ALTER TABLE ONLY public.media_files
     ADD CONSTRAINT media_files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth_identities oauth_identities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_identities
+    ADD CONSTRAINT oauth_identities_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth_identities oauth_identities_provider_provider_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_identities
+    ADD CONSTRAINT oauth_identities_provider_provider_user_id_key UNIQUE (provider, provider_user_id);
 
 
 --
@@ -1436,6 +1784,14 @@ ALTER TABLE ONLY public.user_playlists
 
 
 --
+-- Name: user_recall_tokens user_recall_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_recall_tokens
+    ADD CONSTRAINT user_recall_tokens_pkey PRIMARY KEY (user_id);
+
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1455,6 +1811,20 @@ CREATE INDEX favorites_created_at_index ON public.favorites USING btree (created
 --
 
 CREATE INDEX favorites_user_id_kind_index ON public.favorites USING btree (user_id, kind);
+
+
+--
+-- Name: idx_album_stubs_collection_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_album_stubs_collection_id ON public.album_stubs USING btree (collection_id);
+
+
+--
+-- Name: idx_albums_artist_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_albums_artist_id ON public.albums USING btree (artist_id);
 
 
 --
@@ -1497,6 +1867,13 @@ CREATE INDEX idx_artist_albums_role ON public.artist_albums USING btree (role);
 --
 
 CREATE INDEX idx_artist_relations_artist_id ON public.artist_relations USING btree (artist_id);
+
+
+--
+-- Name: idx_artist_relations_is_hidden; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_artist_relations_is_hidden ON public.artist_relations USING btree (is_hidden) WHERE (is_hidden = true);
 
 
 --
@@ -1549,6 +1926,13 @@ CREATE INDEX idx_collection_albums_collection_id ON public.collection_albums USI
 
 
 --
+-- Name: idx_discovery_sources_kind; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_discovery_sources_kind ON public.discovery_sources USING btree (kind);
+
+
+--
 -- Name: idx_external_lookups_entity; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1556,10 +1940,52 @@ CREATE INDEX idx_external_lookups_entity ON public.external_lookups USING btree 
 
 
 --
+-- Name: idx_gin_trgm_unaccent_album_title; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_gin_trgm_unaccent_album_title ON public.albums USING gin (public.f_unaccent(lower((title)::text)) public.gin_trgm_ops);
+
+
+--
+-- Name: idx_gin_trgm_unaccent_artist_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_gin_trgm_unaccent_artist_name ON public.artists USING gin (public.f_unaccent(lower((name)::text)) public.gin_trgm_ops);
+
+
+--
+-- Name: idx_gin_trgm_unaccent_collection_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_gin_trgm_unaccent_collection_name ON public.collections USING gin (public.f_unaccent(lower((name)::text)) public.gin_trgm_ops);
+
+
+--
+-- Name: idx_gin_trgm_unaccent_playlist_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_gin_trgm_unaccent_playlist_name ON public.playlists USING gin (public.f_unaccent(lower((name)::text)) public.gin_trgm_ops);
+
+
+--
+-- Name: idx_gin_trgm_unaccent_track_title; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_gin_trgm_unaccent_track_title ON public.tracks USING gin (public.f_unaccent(lower((title)::text)) public.gin_trgm_ops);
+
+
+--
 -- Name: idx_images_album_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_images_album_id ON public.images USING btree (album_id) WHERE (album_id IS NOT NULL);
+
+
+--
+-- Name: idx_images_album_not_found; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_images_album_not_found ON public.images USING btree (album_id, source) WHERE (((status)::text = 'not_found'::text) AND (album_id IS NOT NULL));
 
 
 --
@@ -1574,6 +2000,13 @@ CREATE UNIQUE INDEX idx_images_album_primary ON public.images USING btree (album
 --
 
 CREATE INDEX idx_images_artist_id ON public.images USING btree (artist_id) WHERE (artist_id IS NOT NULL);
+
+
+--
+-- Name: idx_images_artist_not_found; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_images_artist_not_found ON public.images USING btree (artist_id, source) WHERE (((status)::text = 'not_found'::text) AND (artist_id IS NOT NULL));
 
 
 --
@@ -1598,24 +2031,24 @@ CREATE INDEX idx_media_files_file_hash ON public.media_files USING btree (file_h
 
 
 --
--- Name: idx_trgm_unaccent_album_title; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_notes_kind_target_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_trgm_unaccent_album_title ON public.albums USING btree (public.f_unaccent(lower((title)::text)));
-
-
---
--- Name: idx_trgm_unaccent_artist_name; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_trgm_unaccent_artist_name ON public.artists USING btree (public.f_unaccent(lower((name)::text)));
+CREATE INDEX idx_notes_kind_target_id ON public.notes USING btree (kind, target_id);
 
 
 --
--- Name: idx_trgm_unaccent_track_title; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_oauth_identities_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_trgm_unaccent_track_title ON public.tracks USING btree (public.f_unaccent(lower((title)::text)));
+CREATE INDEX idx_oauth_identities_user_id ON public.oauth_identities USING btree (user_id);
+
+
+--
+-- Name: idx_tracks_album_id_approved; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_tracks_album_id_approved ON public.tracks USING btree (album_id) WHERE (approved = true);
 
 
 --
@@ -1630,6 +2063,13 @@ CREATE INDEX idx_upload_queue_created_at ON public.upload_queue USING btree (cre
 --
 
 CREATE INDEX idx_upload_queue_file_hash ON public.upload_queue USING btree (file_hash);
+
+
+--
+-- Name: idx_upload_queue_source_url; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_upload_queue_source_url ON public.upload_queue USING btree (source_url) WHERE (source_url IS NOT NULL);
 
 
 --
@@ -1700,6 +2140,22 @@ CREATE TRIGGER trigger_sync_artist_albums_insert AFTER INSERT ON public.albums F
 --
 
 CREATE TRIGGER trigger_sync_artist_albums_update AFTER UPDATE ON public.albums FOR EACH ROW EXECUTE FUNCTION public.sync_artist_albums_on_update();
+
+
+--
+-- Name: album_stubs album_stubs_collection_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.album_stubs
+    ADD CONSTRAINT album_stubs_collection_id_fkey FOREIGN KEY (collection_id) REFERENCES public.collections(id) ON DELETE CASCADE;
+
+
+--
+-- Name: album_stubs album_stubs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.album_stubs
+    ADD CONSTRAINT album_stubs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -1775,11 +2231,27 @@ ALTER TABLE ONLY public.images
 
 
 --
+-- Name: oauth_identities oauth_identities_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_identities
+    ADD CONSTRAINT oauth_identities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: upload_queue upload_queue_discovery_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload_queue
+    ADD CONSTRAINT upload_queue_discovery_source_id_fkey FOREIGN KEY (discovery_source_id) REFERENCES public.discovery_sources(id) ON DELETE SET NULL;
+
+
+--
 -- Name: upload_queue upload_queue_track_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.upload_queue
-    ADD CONSTRAINT upload_queue_track_id_fkey FOREIGN KEY (track_id) REFERENCES public.tracks(id);
+    ADD CONSTRAINT upload_queue_track_id_fkey FOREIGN KEY (track_id) REFERENCES public.tracks(id) ON DELETE CASCADE;
 
 
 --
@@ -1802,5 +2274,5 @@ ALTER TABLE ONLY public.user_playlists
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6BQ8ONWLwuWLpwBKqfHfAXm8AxMnmp7nlEIx9TPjjnGn7ceMWsCVcFyA0qOlXbn
+\unrestrict Cm7eLrFkeMhxdDAtJruxSqLXGYmnV8v9ovrayeBw5vpvZtahnfikB3qCvRovv0p
 
