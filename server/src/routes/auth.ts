@@ -452,6 +452,37 @@ auth.put('/set-password', async (c) => {
   return c.json({ ok: true })
 })
 
+// PUT /auth/change-password — for accounts that already have a password
+auth.put('/change-password', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Authentication required' }, 401)
+
+  const body = await c.req.json()
+  const { currentPassword, newPassword } = body
+
+  if (!currentPassword || !newPassword) {
+    return c.json({ error: 'Current and new password are required' }, 400)
+  }
+
+  if (newPassword.length < 6) {
+    return c.json({ error: 'New password must be at least 6 characters' }, 400)
+  }
+
+  const currentHash = await authService.getPasswordHash(user.id)
+  if (!currentHash) {
+    return c.json({ error: 'No password set for this account' }, 400)
+  }
+
+  const passwordMatch = await bcrypt.compare(currentPassword, currentHash)
+  if (!passwordMatch) {
+    return c.json({ error: 'Current password is incorrect' }, 401)
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS)
+  await authService.setPassword(user.id, passwordHash)
+  return c.json({ ok: true })
+})
+
 // DELETE /auth/google/disconnect — unlink Google; blocked if it would lock the user out
 auth.delete('/google/disconnect', async (c) => {
   const user = c.get('user')

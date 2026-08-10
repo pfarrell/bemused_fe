@@ -73,6 +73,15 @@ export function createAuthService(db: Kysely<Database>) {
         .execute()
     },
 
+    async getPasswordHash(userId: number): Promise<string | null> {
+      const row = await db
+        .selectFrom('users')
+        .select('password')
+        .where('id', '=', userId)
+        .executeTakeFirst()
+      return row?.password ?? null
+    },
+
     // Derives a unique username from a Google email's local part (e.g.
     // "pat.farrell@gmail.com" -> "patfarrell"), appending a numeric suffix
     // on collision. Falls back to "user" if the local part sanitizes to
