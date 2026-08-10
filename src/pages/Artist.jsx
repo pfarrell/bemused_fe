@@ -1,8 +1,9 @@
 // src/pages/Artist.jsx
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { getAlbumYear } from '../utils/formatters';
 import { useAuthStore } from '../stores/authStore';
 import { usePlayerStore } from '../stores/playerStore';
 import AlbumCard from '../components/AlbumCard';
@@ -311,17 +312,20 @@ const Artist = () => {
       {albums && albums.length > 0 && (
         <div className="artist-grid">
           <CardGrid>
-            {albums.map((album) => {
+            {albums.map((album, i) => {
               const imageUrl = apiService.getImageUrl(album.image_path, 'album_small')
+              const showDivider = i > 0 && !!getAlbumYear(albums[i - 1].release_year) && !getAlbumYear(album.release_year)
               return (
-                <AlbumCard
-                  key={album.id}
-                  album={album}
-                  artist={album.artist}
-                  imageUrl={imageUrl}
-                  onClick={handleAlbumClick}
-                  hideArtist={album.artist?.id === artist.id}
-                />
+                <Fragment key={album.id}>
+                  {showDivider && <div className="album-year-divider" />}
+                  <AlbumCard
+                    album={album}
+                    artist={album.artist}
+                    imageUrl={imageUrl}
+                    onClick={handleAlbumClick}
+                    hideArtist={album.artist?.id === artist.id}
+                  />
+                </Fragment>
               )
             })}
           </CardGrid>
