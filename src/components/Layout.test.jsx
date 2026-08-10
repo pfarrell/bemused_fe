@@ -105,14 +105,14 @@ describe('Layout — logged-in admin', () => {
 describe('Layout — logged-out hamburger menu', () => {
   test('still shows Home View and Tag Filter', () => {
     renderLayout();
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
     expect(screen.getByText('Home View')).toBeInTheDocument();
     expect(screen.getByText('Tag Filter')).toBeInTheDocument();
   });
 
   test('shows Login / Sign Up, not Account or Logout', () => {
     renderLayout();
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
     expect(screen.getByText('Login / Sign Up')).toBeInTheDocument();
     expect(screen.queryByText('Account')).not.toBeInTheDocument();
     expect(screen.queryByText('Logout')).not.toBeInTheDocument();

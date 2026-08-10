@@ -148,6 +148,7 @@ const Layout = ({ children }) => {
 
           <div className="user-menu" ref={dropdownRef} style={{ position: 'relative' }}>
             <button
+              aria-label="Menu"
               onClick={() => setShowDropdown(!showDropdown)}
               style={{
                 display: 'flex',
