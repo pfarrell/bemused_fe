@@ -1068,10 +1068,11 @@ async function readTrackTags(mediaFile: { absolute_path: string; file_missing: b
   if (!fs.existsSync(mediaFile.absolute_path)) return null
 
   try {
-    const { common } = await parseFile(mediaFile.absolute_path)
+    const metadata = await parseFile(mediaFile.absolute_path)
+    const { common } = metadata
     return {
       title: common.title,
-      trackNumber: common.track.no,
+      trackNumber: trackNumberFromMetadata(metadata),
       artist: common.artist,
       year: common.year?.toString(),
       album: common.album,
@@ -1079,6 +1080,28 @@ async function readTrackTags(mediaFile: { absolute_path: string; file_missing: b
   } catch {
     return null
   }
+}
+
+// music-metadata's `common.track` merge does not respect tag-source priority
+// the way it does for every other common field (title/artist/album/year) —
+// its MetadataCollector special-cases track/disk/movementIndex to
+// unconditionally take whichever tag type was parsed last, rather than the
+// higher-priority one. A trailing legacy ID3v1 trailer is parsed after
+// ID3v2 (it sits at the end of the file), so a stale single-byte ID3v1
+// track number silently overwrote a correct ID3v2 TRCK value. Read the
+// ID3v2 frame directly instead, matching what NodeID3.read (ID3v2-only)
+// previously did for this field; fall back to the merged value for files
+// with no ID3v2 tag (e.g. FLAC/Vorbis, or ID3v1-only files).
+function trackNumberFromMetadata(metadata: Awaited<ReturnType<typeof parseFile>>): number | null {
+  const id3v2TagType = Object.keys(metadata.native).find((t) => t.startsWith('ID3v2'))
+  if (id3v2TagType) {
+    const trckFrame = metadata.native[id3v2TagType].find((t) => t.id === 'TRCK' || t.id === 'TRK')
+    if (trckFrame) {
+      const match = String(trckFrame.value).match(/^(\d+)/)
+      if (match) return parseInt(match[1], 10)
+    }
+  }
+  return metadata.common.track.no
 }
 
 // GET /admin/album/:id/reprocess-preview — re-read ID3 tags from each
