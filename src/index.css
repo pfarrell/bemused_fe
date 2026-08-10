@@ -222,6 +222,19 @@
   color: #2563eb;
 }
 
+/* Marks the boundary on the Artist page's Albums grid where dated albums
+   (sorted newest-first) give way to undated ones. grid-column: 1 / -1
+   spans it across every column in card-grid mode; in list mode (desktop
+   .view-list, and the mobile flex-column override) it's simply ignored and
+   the div stretches full-width by default since neither layout sets
+   align-items. */
+.album-year-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0.5rem 0;
+}
+
 /* Desktop-only sizing for ResultRow (list view mode). Must be scoped to this
    media query — these rules used to be unscoped on the assumption that the
    mobile @media (max-width: 768px) block further down would always
