@@ -30,4 +30,15 @@ describe('HomeViewToggle', () => {
     render(<HomeViewToggle />);
     expect(() => fireEvent.click(screen.getByText('Artists'))).not.toThrow();
   });
+
+  test('dark variant (default) uses the dark-surface pill background', () => {
+    render(<HomeViewToggle />);
+    expect(screen.getByText('Artists').parentElement).toHaveStyle({ background: '#1a252f' });
+  });
+
+  test('light variant uses a light pill background and inactive text color', () => {
+    render(<HomeViewToggle variant="light" />);
+    expect(screen.getByText('Artists').parentElement).toHaveStyle({ background: '#f3f4f6' });
+    expect(screen.getByText('Albums')).toHaveStyle({ color: 'rgb(107, 114, 128)' });
+  });
 });

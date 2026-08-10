@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useTagFilterStore } from '../stores/tagFilterStore';
 import { apiService } from '../services/api';
+import { getTagsCached } from '../utils/tagsCache';
 import toast from 'react-hot-toast';
 
 // Tag-filter input with autocomplete, shared by both hamburger-menu branches
@@ -9,15 +10,19 @@ import toast from 'react-hot-toast';
 // the tag list once on mount rather than eagerly at the app root, since this
 // component is only ever mounted when actually visible (dropdown open, or
 // the Account page). `allowSetDefault` gates the "set default" action —
-// only meaningful for a signed-in user.
-const TagFilterControl = ({ allowSetDefault = false, onSelect }) => {
+// only meaningful for a signed-in user. `variant` picks the surface colors:
+// 'dark' (default) matches the hamburger dropdown's dark background
+// (#2a3540); 'light' matches Account.jsx's white cards / existing input
+// styling.
+const TagFilterControl = ({ allowSetDefault = false, onSelect, variant = 'dark' }) => {
   const { activeTag, setTag, clearTag } = useTagFilterStore();
   const [tagInput, setTagInput] = useState('');
   const [tagSuggestions, setTagSuggestions] = useState([]);
   const [allTagsCache, setAllTagsCache] = useState(null);
+  const isLight = variant === 'light';
 
   useEffect(() => {
-    apiService.getTags().then((res) => setAllTagsCache(res.data)).catch(() => {});
+    getTagsCached().then((res) => setAllTagsCache(res.data)).catch(() => {});
   }, []);
 
   const selectTag = (name) => {
@@ -45,7 +50,7 @@ const TagFilterControl = ({ allowSetDefault = false, onSelect }) => {
             {allowSetDefault && (
               <button
                 onClick={handleSetDefault}
-                style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
+                style={{ background: 'none', border: 'none', color: isLight ? '#6b7280' : '#9ca3af', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
               >
                 set default
               </button>
@@ -75,10 +80,10 @@ const TagFilterControl = ({ allowSetDefault = false, onSelect }) => {
             style={{
               width: '100%',
               padding: '4px 6px',
-              background: '#1a252f',
-              border: '1px solid #374151',
+              background: isLight ? '#f9fafb' : '#1a252f',
+              border: isLight ? '1px solid #d1d5db' : '1px solid #374151',
               borderRadius: '4px',
-              color: '#e2e8f0',
+              color: isLight ? '#111827' : '#e2e8f0',
               fontSize: '0.8rem',
               outline: 'none',
               boxSizing: 'border-box'
@@ -95,8 +100,8 @@ const TagFilterControl = ({ allowSetDefault = false, onSelect }) => {
               top: '100%',
               left: 0,
               right: 0,
-              backgroundColor: '#1a252f',
-              border: '1px solid #374151',
+              backgroundColor: isLight ? 'white' : '#1a252f',
+              border: isLight ? '1px solid #d1d5db' : '1px solid #374151',
               borderRadius: '4px',
               zIndex: 60
             }}>
@@ -104,8 +109,8 @@ const TagFilterControl = ({ allowSetDefault = false, onSelect }) => {
                 <div
                   key={t.id}
                   onClick={() => selectTag(t.name)}
-                  style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', color: '#e2e8f0' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2a3540'}
+                  style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', color: isLight ? '#111827' : '#e2e8f0' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isLight ? '#f3f4f6' : '#2a3540'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   #{t.name}

@@ -184,15 +184,18 @@ const Layout = ({ children }) => {
                       <button
                         onClick={() => { setShowDropdown(false); navigate('/account'); }}
                         style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '0.5rem 1rem',
                           background: 'none',
                           border: 'none',
                           color: 'inherit',
                           cursor: 'pointer',
-                          padding: 0,
                           fontSize: '0.875rem',
                           fontWeight: 500,
-                          textAlign: 'left',
                         }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                       >
                         {user.username}
                       </button>

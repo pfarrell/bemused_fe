@@ -1,5 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import TagFilterControl from './TagFilterControl';
+import { __resetTagsCacheForTests } from '../utils/tagsCache';
 import { useTagFilterStore } from '../stores/tagFilterStore';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
@@ -17,6 +18,7 @@ vi.mock('react-hot-toast', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  __resetTagsCacheForTests();
   useTagFilterStore.setState({ activeTag: null });
   apiService.getTags.mockResolvedValue({ data: [{ id: 1, name: 'jazz' }, { id: 2, name: 'blues' }] });
 });
@@ -91,5 +93,36 @@ describe('TagFilterControl', () => {
     fireEvent.click(await screen.findByText('#jazz'));
     expect(useTagFilterStore.getState().activeTag).toBe('jazz');
     expect(onSelect).toHaveBeenCalled();
+  });
+
+  test('dark variant (default) uses the dark-surface input background', () => {
+    render(<TagFilterControl />);
+    expect(screen.getByPlaceholderText('filter by tag…')).toHaveStyle({ background: '#1a252f' });
+  });
+
+  test('light variant uses a light input background matching Account.jsx inputs', () => {
+    render(<TagFilterControl variant="light" />);
+    expect(screen.getByPlaceholderText('filter by tag…')).toHaveStyle({ background: '#f9fafb' });
+  });
+
+  test('light variant uses lighter "set default" text color', () => {
+    useTagFilterStore.setState({ activeTag: 'jazz' });
+    render(<TagFilterControl allowSetDefault variant="light" />);
+    expect(screen.getByText('set default')).toHaveStyle({ color: 'rgb(107, 114, 128)' });
+  });
+
+  test('caches the tag list across mounts, fetching only once', async () => {
+    const { unmount } = render(<TagFilterControl />);
+    await waitFor(() => expect(apiService.getTags).toHaveBeenCalledTimes(1));
+    unmount();
+
+    render(<TagFilterControl />);
+    // The cached promise is already resolved, but the component's .then still
+    // needs a microtask to populate its local suggestion cache.
+    await act(async () => { await Promise.resolve(); });
+    const input = screen.getByPlaceholderText('filter by tag…');
+    fireEvent.change(input, { target: { value: 'ja' } });
+    expect(await screen.findByText('#jazz')).toBeInTheDocument();
+    expect(apiService.getTags).toHaveBeenCalledTimes(1);
   });
 });

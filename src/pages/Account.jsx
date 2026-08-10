@@ -116,14 +116,14 @@ const Account = () => {
         <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
           Home View
         </div>
-        <HomeViewToggle />
+        <HomeViewToggle variant="light" />
       </div>
 
       <div style={cardStyle}>
         <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
           Tag Filter
         </div>
-        <TagFilterControl allowSetDefault />
+        <TagFilterControl allowSetDefault variant="light" />
       </div>
 
       <div style={cardStyle}>

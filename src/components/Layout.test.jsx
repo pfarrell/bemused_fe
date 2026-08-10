@@ -1,9 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Layout from './Layout';
 import { useAuthStore } from '../stores/authStore';
 
 vi.mock('./SearchBar', () => ({ default: () => null }));
+vi.mock('../services/api', () => ({ apiService: { getTags: vi.fn(() => Promise.resolve({ data: [] })) } }));
 
 const renderLayout = () =>
   render(
@@ -11,6 +12,21 @@ const renderLayout = () =>
       <Layout>
         <div>page content</div>
       </Layout>
+    </MemoryRouter>
+  );
+
+const renderLayoutWithRoutes = (initialPath = '/') =>
+  render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Routes>
+        <Route path="/account" element={<Layout><div>Account page</div></Layout>} />
+        <Route path="/admin" element={<Layout><div>Admin page</div></Layout>} />
+        <Route path="*" element={
+          <Layout>
+            <div>page content</div>
+          </Layout>
+        } />
+      </Routes>
     </MemoryRouter>
   );
 
@@ -24,12 +40,12 @@ describe('Layout — logged-in hamburger menu', () => {
   });
 
   test('clicking the hamburger opens a dropdown whose username navigates to Account', () => {
-    renderLayout();
+    renderLayoutWithRoutes('/');
     const toggle = screen.getByText('pat').closest('button');
     fireEvent.click(toggle);
     const usernameInDropdown = screen.getAllByText('pat')[1];
     fireEvent.click(usernameInDropdown);
-    expect(screen.queryByText('Playlists')).not.toBeInTheDocument(); // dropdown closed after navigating
+    expect(screen.getByText('Account page')).toBeInTheDocument();
   });
 
   test('does not show Home View, Tag Filter, Account, or Logout', () => {
@@ -75,6 +91,14 @@ describe('Layout — logged-in admin', () => {
     expect(screen.queryByText('Upload')).not.toBeInTheDocument();
     expect(screen.queryByText('New')).not.toBeInTheDocument();
     expect(screen.queryByText('Logs')).not.toBeInTheDocument();
+  });
+
+  test('clicking Admin navigates to /admin', () => {
+    renderLayoutWithRoutes('/');
+    const toggle = screen.getByText('admin-pat').closest('button');
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByText('Admin'));
+    expect(screen.getByText('Admin page')).toBeInTheDocument();
   });
 });
 
