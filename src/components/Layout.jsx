@@ -2,23 +2,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useHomeModeStore } from '../stores/homeModeStore';
 import { useTagFilterStore } from '../stores/tagFilterStore';
 import { useHomeFeedStore } from '../stores/homeFeedStore';
-import { apiService } from '../services/api';
-import toast from 'react-hot-toast';
 import SearchBar from './SearchBar';
+import HomeViewToggle from './HomeViewToggle';
+import TagFilterControl from './TagFilterControl';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated, isAdmin, logout } = useAuthStore();
-  const { mode, setMode } = useHomeModeStore();
-  const { activeTag, setTag, clearTag } = useTagFilterStore();
+  const { user, isAuthenticated, isAdmin } = useAuthStore();
+  const { activeTag, clearTag } = useTagFilterStore();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [tagInput, setTagInput] = useState('');
-  const [tagSuggestions, setTagSuggestions] = useState([]);
-  const [allTagsCache, setAllTagsCache] = useState(null);
   const dropdownRef = useRef(null);
   const mainContentRef = useRef(null);
   const [pullDistance, setPullDistance] = useState(0);
@@ -42,13 +37,6 @@ const Layout = ({ children }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDropdown]);
-
-  // Fetch tags for autocomplete when hamburger opens
-  useEffect(() => {
-    if (showDropdown && allTagsCache === null) {
-      apiService.getTags().then(res => setAllTagsCache(res.data)).catch(() => {});
-    }
-  }, [showDropdown]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pull-to-refresh functionality for mobile
   useEffect(() => {
@@ -105,11 +93,6 @@ const Layout = ({ children }) => {
       mainContent.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isPulling, pullDistance]);
-
-  const handleLogout = async () => {
-    await logout();
-    setShowDropdown(false);
-  };
 
   // Shared by the "P·Share" logo and both "Home" menu buttons: always
   // forces a fresh random feed and a remount, even if already on '/'
@@ -198,135 +181,21 @@ const Layout = ({ children }) => {
                 {isAuthenticated && user ? (
                   <>
                     <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #3a4853' }}>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{user.username}</div>
-                    </div>
-                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #3a4853' }}>
-                      <div style={{ color: '#9ca3af', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                        Home View
-                      </div>
-                      <div style={{ display: 'inline-flex', background: '#1a252f', borderRadius: '20px', padding: '3px' }}>
-                        <button
-                          onClick={() => { setMode('artists'); setShowDropdown(false); }}
-                          style={{
-                            background: mode === 'artists' ? '#3b82f6' : 'none',
-                            color: mode === 'artists' ? 'white' : '#9ca3af',
-                            padding: '4px 14px', borderRadius: '18px',
-                            fontSize: '0.75rem', fontWeight: '600',
-                            border: 'none', cursor: 'pointer',
-                          }}
-                        >
-                          Artists
-                        </button>
-                        <button
-                          onClick={() => { setMode('albums'); setShowDropdown(false); }}
-                          style={{
-                            background: mode === 'albums' ? '#3b82f6' : 'none',
-                            color: mode === 'albums' ? 'white' : '#9ca3af',
-                            padding: '4px 14px', borderRadius: '18px',
-                            fontSize: '0.75rem', fontWeight: '600',
-                            border: 'none', cursor: 'pointer',
-                          }}
-                        >
-                          Albums
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Tag Filter — logged-in */}
-                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #3a4853' }}>
-                      <div style={{ color: '#9ca3af', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                        Tag Filter
-                      </div>
-                      {activeTag ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>#{activeTag}</span>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await apiService.setDefaultTag(activeTag);
-                                  toast.success(`Default tag set to #${activeTag}`);
-                                } catch {
-                                  toast.error('Failed to save default tag');
-                                }
-                              }}
-                              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
-                            >
-                              set default
-                            </button>
-                            <button
-                              onClick={() => { clearTag(); setShowDropdown(false); }}
-                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
-                            >
-                              clear
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ position: 'relative' }}>
-                          <input
-                            type="text"
-                            value={tagInput}
-                            onChange={(e) => {
-                              setTagInput(e.target.value);
-                              if (allTagsCache) {
-                                setTagSuggestions(
-                                  allTagsCache.filter(t => t.name.includes(e.target.value.toLowerCase())).slice(0, 6)
-                                );
-                              }
-                            }}
-                            placeholder="filter by tag…"
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              background: '#1a252f',
-                              border: '1px solid #374151',
-                              borderRadius: '4px',
-                              color: '#e2e8f0',
-                              fontSize: '0.8rem',
-                              outline: 'none',
-                              boxSizing: 'border-box'
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && tagInput.trim()) {
-                                setTag(tagInput.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
-                                setTagInput('');
-                                setTagSuggestions([]);
-                                setShowDropdown(false);
-                              }
-                            }}
-                          />
-                          {tagSuggestions.length > 0 && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '100%',
-                              left: 0,
-                              right: 0,
-                              backgroundColor: '#1a252f',
-                              border: '1px solid #374151',
-                              borderRadius: '4px',
-                              zIndex: 60
-                            }}>
-                              {tagSuggestions.map(t => (
-                                <div
-                                  key={t.id}
-                                  onClick={() => {
-                                    setTag(t.name);
-                                    setTagInput('');
-                                    setTagSuggestions([]);
-                                    setShowDropdown(false);
-                                  }}
-                                  style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', color: '#e2e8f0' }}
-                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#2a3540'}
-                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                  #{t.name}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <button
+                        onClick={() => { setShowDropdown(false); navigate('/account'); }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                          padding: 0,
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          textAlign: 'left',
+                        }}
+                      >
+                        {user.username}
+                      </button>
                     </div>
 
                     <div style={{ padding: '0.5rem 0' }}>
@@ -407,107 +276,28 @@ const Layout = ({ children }) => {
                       >
                         Favorites
                       </button>
-                      <button
-                        onClick={() => {
-                          setShowDropdown(false);
-                          navigate('/account');
-                        }}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '0.5rem 1rem',
-                          background: 'none',
-                          border: 'none',
-                          color: 'inherit',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                      >
-                        Account
-                      </button>
                       {isAdmin && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setShowDropdown(false);
-                              navigate('/admin/upload');
-                            }}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '0.5rem 1rem',
-                              background: 'none',
-                              border: 'none',
-                              color: 'inherit',
-                              cursor: 'pointer',
-                              fontSize: '0.875rem'
-                            }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                          >
-                            Upload
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowDropdown(false);
-                              navigate('/admin/new');
-                            }}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '0.5rem 1rem',
-                              background: 'none',
-                              border: 'none',
-                              color: 'inherit',
-                              cursor: 'pointer',
-                              fontSize: '0.875rem'
-                            }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                          >
-                            New
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowDropdown(false);
-                              navigate('/admin/logs');
-                            }}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '0.5rem 1rem',
-                              background: 'none',
-                              border: 'none',
-                              color: 'inherit',
-                              cursor: 'pointer',
-                              fontSize: '0.875rem'
-                            }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                          >
-                            Logs
-                          </button>
-                        </>
+                        <button
+                          onClick={() => {
+                            setShowDropdown(false);
+                            navigate('/admin');
+                          }}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '0.5rem 1rem',
+                            background: 'none',
+                            border: 'none',
+                            color: 'inherit',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        >
+                          Admin
+                        </button>
                       )}
-                      <button
-                        onClick={handleLogout}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '0.5rem 1rem',
-                          background: 'none',
-                          border: 'none',
-                          color: 'inherit',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                      >
-                        Logout
-                      </button>
                     </div>
                   </>
                 ) : (
@@ -516,113 +306,13 @@ const Layout = ({ children }) => {
                       <div style={{ color: '#9ca3af', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                         Home View
                       </div>
-                      <div style={{ display: 'inline-flex', background: '#1a252f', borderRadius: '20px', padding: '3px' }}>
-                        <button
-                          onClick={() => { setMode('artists'); setShowDropdown(false); }}
-                          style={{
-                            background: mode === 'artists' ? '#3b82f6' : 'none',
-                            color: mode === 'artists' ? 'white' : '#9ca3af',
-                            padding: '4px 14px', borderRadius: '18px',
-                            fontSize: '0.75rem', fontWeight: '600',
-                            border: 'none', cursor: 'pointer',
-                          }}
-                        >
-                          Artists
-                        </button>
-                        <button
-                          onClick={() => { setMode('albums'); setShowDropdown(false); }}
-                          style={{
-                            background: mode === 'albums' ? '#3b82f6' : 'none',
-                            color: mode === 'albums' ? 'white' : '#9ca3af',
-                            padding: '4px 14px', borderRadius: '18px',
-                            fontSize: '0.75rem', fontWeight: '600',
-                            border: 'none', cursor: 'pointer',
-                          }}
-                        >
-                          Albums
-                        </button>
-                      </div>
+                      <HomeViewToggle onSelect={() => setShowDropdown(false)} />
                     </div>
-                    {/* Tag Filter — logged-out */}
                     <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #3a4853' }}>
                       <div style={{ color: '#9ca3af', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                         Tag Filter
                       </div>
-                      {activeTag ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>#{activeTag}</span>
-                          <button
-                            onClick={() => { clearTag(); setShowDropdown(false); }}
-                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
-                          >
-                            clear
-                          </button>
-                        </div>
-                      ) : (
-                        <div style={{ position: 'relative' }}>
-                          <input
-                            type="text"
-                            value={tagInput}
-                            onChange={(e) => {
-                              setTagInput(e.target.value);
-                              if (allTagsCache) {
-                                setTagSuggestions(
-                                  allTagsCache.filter(t => t.name.includes(e.target.value.toLowerCase())).slice(0, 6)
-                                );
-                              }
-                            }}
-                            placeholder="filter by tag…"
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              background: '#1a252f',
-                              border: '1px solid #374151',
-                              borderRadius: '4px',
-                              color: '#e2e8f0',
-                              fontSize: '0.8rem',
-                              outline: 'none',
-                              boxSizing: 'border-box'
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && tagInput.trim()) {
-                                setTag(tagInput.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
-                                setTagInput('');
-                                setTagSuggestions([]);
-                                setShowDropdown(false);
-                              }
-                            }}
-                          />
-                          {tagSuggestions.length > 0 && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '100%',
-                              left: 0,
-                              right: 0,
-                              backgroundColor: '#1a252f',
-                              border: '1px solid #374151',
-                              borderRadius: '4px',
-                              zIndex: 60
-                            }}>
-                              {tagSuggestions.map(t => (
-                                <div
-                                  key={t.id}
-                                  onClick={() => {
-                                    setTag(t.name);
-                                    setTagInput('');
-                                    setTagSuggestions([]);
-                                    setShowDropdown(false);
-                                  }}
-                                  style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', color: '#e2e8f0' }}
-                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#2a3540'}
-                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                  #{t.name}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <TagFilterControl onSelect={() => setShowDropdown(false)} />
                     </div>
 
                     <div style={{ padding: '0.5rem 0' }}>
