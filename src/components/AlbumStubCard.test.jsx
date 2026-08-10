@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import AlbumStubCard from './AlbumStubCard';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 vi.mock('../hooks/useIsMobile', () => ({ useIsMobile: () => false }));
 
@@ -18,5 +19,14 @@ describe('AlbumStubCard', () => {
   test('applies the dashed-border stub class', () => {
     render(<AlbumStubCard stub={{ id: 1, title: 'Abbey Road', artist_name: 'The Beatles' }} />);
     expect(screen.getByTestId('album-stub-card')).toHaveClass('album-stub-card');
+  });
+
+  test('renders a ResultRow when desktop list view mode is active', () => {
+    useViewModeStore.setState({ mode: 'list' });
+    render(<AlbumStubCard stub={{ id: 1, title: 'Abbey Road', artist_name: 'The Beatles' }} />);
+    expect(screen.getByText('Abbey Road')).toBeInTheDocument();
+    expect(screen.getByText('The Beatles')).toBeInTheDocument();
+    expect(document.querySelector('.artist-card')).toBeNull();
+    useViewModeStore.setState({ mode: 'card' });
   });
 });

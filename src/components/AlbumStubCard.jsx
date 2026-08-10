@@ -1,11 +1,13 @@
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useViewModeStore } from '../stores/viewModeStore';
 import ResultRow from './ResultRow';
 
 const AlbumStubCard = ({ stub }) => {
   const isMobile = useIsMobile();
+  const viewMode = useViewModeStore((s) => s.mode);
   const glyph = <div className="album-stub-card-glyph">▢</div>;
 
-  if (isMobile) {
+  if (isMobile || viewMode === 'list') {
     return (
       <div className="album-stub-card" data-testid="album-stub-card">
         <ResultRow
