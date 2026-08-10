@@ -6,6 +6,7 @@ import ContextMenu from './ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useIsCurrentPage } from '../hooks/useIsCurrentPage';
+import { useViewModeStore } from '../stores/viewModeStore';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
@@ -16,6 +17,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [playLoading, setPlayLoading] = useState(false);
   const isMobile = useIsMobile();
+  const viewMode = useViewModeStore((s) => s.mode);
   const navigate = useNavigate();
   const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
   const addTracks = usePlayerStore((s) => s.addTracks);
@@ -84,7 +86,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
 
   return (
     <>
-      {isMobile ? (
+      {(isMobile || viewMode === 'list') ? (
         <ResultRow
           imageUrl={imageUrl}
           imageShape="square"

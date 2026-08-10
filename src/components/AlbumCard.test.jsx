@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 vi.mock('./AddToCollectionModal', () => ({ default: () => null }));
 vi.mock('../services/api', () => ({
@@ -315,6 +316,46 @@ describe('mobile row layout', () => {
 
     expect(screen.queryByText('▣ Add to Collection')).toBeNull();
     vi.useRealTimers();
+  });
+});
+
+describe('desktop list-mode row layout', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    useViewModeStore.setState({ mode: 'list' });
+  });
+
+  afterEach(() => {
+    useViewModeStore.setState({ mode: 'card' });
+  });
+
+  test('renders a ResultRow (same subtitle format as the mobile row) instead of the square card', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, has_collaborators: true }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Album · Test Artist +')).toBeInTheDocument();
+    expect(document.querySelector('.artist-card')).toBeNull();
+  });
+
+  test('tapping play fetches the album and replaces the queue, same as the mobile row', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+
+    render(<AlbumCard album={album} artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play Test Album' }));
+
+    await waitFor(() => expect(addTracks).toHaveBeenCalled());
+    expect(clearPlaylist).toHaveBeenCalled();
   });
 });
 
