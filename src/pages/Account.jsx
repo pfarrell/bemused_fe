@@ -44,6 +44,10 @@ const Account = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [settingPassword, setSettingPassword] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const linked = searchParams.get('linked');
   const error = searchParams.get('error');
@@ -69,6 +73,30 @@ const Account = () => {
       toast.error(err.response?.data?.error || 'Failed to set password');
     } finally {
       setSettingPassword(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await apiService.changePassword(currentPassword, newPassword);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      toast.success('Password changed');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to change password');
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -178,6 +206,43 @@ const Account = () => {
             />
             <button type="submit" disabled={settingPassword} style={buttonStyle}>
               {settingPassword ? 'Saving...' : 'Set password'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {user?.has_password && (
+        <div style={cardStyle}>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+            Change Password
+          </div>
+          <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <input
+              type="password"
+              placeholder="Current password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              style={inputStyle}
+            />
+            <input
+              type="password"
+              placeholder="New password (min 6 characters)"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              style={inputStyle}
+            />
+            <input
+              type="password"
+              placeholder="Confirm new password"
+              autoComplete="new-password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              style={inputStyle}
+            />
+            <button type="submit" disabled={changingPassword} style={buttonStyle}>
+              {changingPassword ? 'Saving...' : 'Change password'}
             </button>
           </form>
         </div>
