@@ -7,12 +7,15 @@ import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import PlaylistResultCard from '../components/PlaylistResultCard';
 import CoverCollage from '../components/CoverCollage';
+import CardGrid from '../components/CardGrid';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useViewModeStore } from '../stores/viewModeStore';
 import { formatCount } from '../utils/formatters';
 
 export default function Playlists() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const viewMode = useViewModeStore((s) => s.mode);
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,9 +47,9 @@ export default function Playlists() {
         <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
           <p style={{ fontSize: '1.125rem' }}>No playlists found</p>
         </div>
-      ) : isMobile ? (
+      ) : (isMobile || viewMode === 'list') ? (
         <div className="artist-grid">
-          <div className="artist-grid-container">
+          <CardGrid>
             {playlists.map((playlist) => (
               <PlaylistResultCard
                 key={playlist.id}
@@ -56,7 +59,7 @@ export default function Playlists() {
                 onClick={() => navigate(`/playlist/${playlist.id}`)}
               />
             ))}
-          </div>
+          </CardGrid>
         </div>
       ) : (
         <div className="artist-grid" style={{
