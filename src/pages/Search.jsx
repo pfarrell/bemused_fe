@@ -6,6 +6,7 @@ import Loading from '../components/Loading';
 import Track from '../components/Track';
 import SearchResultCard from '../components/SearchResultCard';
 import SearchTypeFilterPills from '../components/SearchTypeFilterPills';
+import CardGrid from '../components/CardGrid';
 
 const EMPTY_COUNTS = { album: 0, artist: 0, playlist: 0, collection: 0 };
 const PAGE_SIZE = 30;
@@ -187,7 +188,7 @@ const Search = () => {
           <SearchTypeFilterPills counts={resultCounts} activeTypes={activeTypes} onToggle={toggleType} />
           <h2 className="search-section-title">Results ({totalResultCount})</h2>
           <div className="artist-grid" style={{ padding: '0' }}>
-            <div className="artist-grid-container">
+            <CardGrid>
               {filteredResults.map((result) => (
                 <SearchResultCard
                   key={`${result.type}-${result.data.id}`}
@@ -197,7 +198,7 @@ const Search = () => {
                   getImageUrl={apiService.getImageUrl}
                 />
               ))}
-            </div>
+            </CardGrid>
           </div>
           {hasMore && <div ref={sentinelRef} style={{ height: '1px' }} />}
           {loadingMore && (

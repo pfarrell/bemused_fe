@@ -10,6 +10,7 @@ import Track from '../components/Track';
 import PlaylistResultCard from '../components/PlaylistResultCard';
 import CollectionResultCard from '../components/CollectionResultCard';
 import Loading from '../components/Loading';
+import CardGrid from '../components/CardGrid';
 
 const TABS = [
   { kind: 'artist', label: 'Artists' },
@@ -75,7 +76,7 @@ const Library = () => {
         </div>
       ) : (
         <div className="artist-grid">
-          <div className="artist-grid-container">
+          <CardGrid>
             {itemsForKind.map((f) => {
               if (activeKind === 'artist') {
                 return (
@@ -117,7 +118,7 @@ const Library = () => {
                 />
               );
             })}
-          </div>
+          </CardGrid>
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ import Retry from '../components/Retry';
 import TagsSection from '../components/TagsSection';
 import ShareButton from '../components/ShareButton';
 import ContextMenu from '../components/ContextMenu';
+import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
 
@@ -309,7 +310,7 @@ const Artist = () => {
       {/* Albums Grid */}
       {albums && albums.length > 0 && (
         <div className="artist-grid">
-          <div className="artist-grid-container">
+          <CardGrid>
             {albums.map((album) => {
               const imageUrl = apiService.getImageUrl(album.image_path, 'album_small')
               return (
@@ -323,7 +324,7 @@ const Artist = () => {
                 />
               )
             })}
-          </div>
+          </CardGrid>
         </div>
       )}
 
@@ -374,7 +375,7 @@ const Artist = () => {
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1.5rem 0 0.75rem 0', color: '#1f2937' }}>
             Appears On
           </h2>
-          <div className="artist-grid-container">
+          <CardGrid>
             {appears_on.map((album) => {
               const imageUrl = apiService.getImageUrl(album.image_path, 'album_small')
               return (
@@ -387,7 +388,7 @@ const Artist = () => {
                 />
               )
             })}
-          </div>
+          </CardGrid>
         </div>
       )}
 

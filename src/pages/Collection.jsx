@@ -12,6 +12,7 @@ import NotesSection from '../components/NotesSection';
 import Wikipedia from '../components/Wikipedia';
 import CoverCollage from '../components/CoverCollage';
 import ContextMenu from '../components/ContextMenu';
+import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
 
@@ -164,7 +165,7 @@ export default function Collection() {
       {/* Albums Grid */}
       {(albums?.length > 0 || stubs?.length > 0) ? (
         <div className="artist-grid">
-          <div className="artist-grid-container">
+          <CardGrid>
             {[
               ...(albums || []).map((album) => ({ type: 'album', order: album.order ?? 0, data: album })),
               ...(stubs || []).map((stub) => ({ type: 'stub', order: stub.order ?? 0, data: stub })),
@@ -181,7 +182,7 @@ export default function Collection() {
               ) : (
                 <AlbumStubCard key={`stub-${item.data.id}`} stub={item.data} />
               ))}
-          </div>
+          </CardGrid>
         </div>
       ) : (
         <div style={{
