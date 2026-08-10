@@ -59,7 +59,7 @@ export default function AdminCollection() {
   // far outside the current scroll position with nothing visibly changing.
   useEffect(() => {
     if (showSearch && searchPanelRef.current) {
-      searchPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      searchPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [showSearch]);
 
@@ -463,11 +463,20 @@ export default function AdminCollection() {
       {showSearch && (
         <div
           ref={searchPanelRef}
+          className="scroll-below-fixed-header"
           style={{
             backgroundColor: 'white', padding: '1.5rem', borderRadius: '0.5rem',
             marginBottom: '2rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
           }}
         >
+          {resolvingStubId && (
+            <div style={{
+              marginBottom: '1rem', padding: '0.5rem 0.75rem', backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe', borderRadius: '4px', fontSize: '0.875rem', color: '#1e40af',
+            }}>
+              Resolving placeholder: <strong>{stubs.find((s) => s.id === resolvingStubId)?.title}</strong>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <input

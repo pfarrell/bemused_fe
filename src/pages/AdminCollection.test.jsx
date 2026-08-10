@@ -352,7 +352,10 @@ describe('AdminCollection — resolve/search panel scrolls into view', () => {
     await user.click(await screen.findByText('+ Add Album'));
 
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
-      expect.objectContaining({ block: 'nearest' })
+      // 'start' (not 'nearest') so the top of a panel taller than the
+      // viewport — the actual failure mode hit live — still lands the
+      // search input on screen instead of showing only its tail end.
+      expect.objectContaining({ block: 'start' })
     );
   });
 
@@ -367,6 +370,29 @@ describe('AdminCollection — resolve/search panel scrolls into view', () => {
     await user.click(await screen.findByText('Resolve'));
 
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+  });
+
+  test('shows which placeholder is being resolved', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, stubs: [{ id: 9, title: 'Abbey Road', artist_name: 'The Beatles', order: 1 }] },
+    });
+    renderAdminCollection();
+
+    expect(screen.queryByText(/Resolving placeholder/)).not.toBeInTheDocument();
+    await user.click(await screen.findByText('Resolve'));
+
+    expect(screen.getByText(/Resolving placeholder:/)).toBeInTheDocument();
+    expect(screen.getByText('Abbey Road', { selector: 'strong' })).toBeInTheDocument();
+  });
+
+  test('does not show a "resolving" banner for the plain "+ Add Album" flow', async () => {
+    const user = userEvent.setup();
+    renderAdminCollection();
+
+    await user.click(await screen.findByText('+ Add Album'));
+
+    expect(screen.queryByText(/Resolving placeholder/)).not.toBeInTheDocument();
   });
 });
 

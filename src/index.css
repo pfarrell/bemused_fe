@@ -30,6 +30,18 @@
   box-sizing: border-box;
 }
 
+/* For any element that gets `scrollIntoView`'d: .app-header is fixed and
+   sits on top of .main-content's own scroll box, so scrollIntoView's native
+   top-alignment (which only knows about .main-content's raw geometry, not
+   the fixed sibling drawn over the top of it) lands the target right behind
+   the header — visually invisible despite being "in view". scroll-margin-top
+   tells the browser to leave this much clearance above the target instead.
+   var(--mb, 4.5em) falls back to the desktop header height outside the
+   mobile media query below, matching every other --mb-based calc in this file. */
+.scroll-below-fixed-header {
+  scroll-margin-top: calc(var(--mb, 4.5em) + env(safe-area-inset-top, 0));
+}
+
 .header-content {
   display: flex;
   align-items: center;
