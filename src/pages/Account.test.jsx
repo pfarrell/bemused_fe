@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Account from './Account';
 import { useAuthStore } from '../stores/authStore';
+import { useTagFilterStore } from '../stores/tagFilterStore';
 import { apiService } from '../services/api';
 
 vi.mock('../services/api', () => ({
@@ -15,6 +16,8 @@ vi.mock('../services/api', () => ({
     },
     disconnectGoogle: vi.fn(),
     setPassword: vi.fn(),
+    getTags: vi.fn(() => Promise.resolve({ data: [] })),
+    setDefaultTag: vi.fn(),
   },
 }));
 
@@ -64,5 +67,30 @@ describe('Account', () => {
     useAuthStore.setState({ user: { id: 1, username: 'pat', admin: false, google_connected: true, has_password: true } });
     renderAccount(['/account?linked=google']);
     expect(screen.getByText('Google account connected.')).toBeInTheDocument();
+  });
+});
+
+describe('Account — Preferences and Log Out', () => {
+  test('renders the Home View toggle', () => {
+    useAuthStore.setState({ user: { id: 1, username: 'pat', admin: false, google_connected: false, has_password: true } });
+    renderAccount();
+    expect(screen.getByText('Artists')).toBeInTheDocument();
+    expect(screen.getByText('Albums')).toBeInTheDocument();
+  });
+
+  test('renders the Tag Filter control with set-default enabled', () => {
+    useAuthStore.setState({ user: { id: 1, username: 'pat', admin: false, google_connected: false, has_password: true } });
+    useTagFilterStore.setState({ activeTag: 'jazz' });
+    renderAccount();
+    expect(screen.getByText('#jazz')).toBeInTheDocument();
+    expect(screen.getByText('set default')).toBeInTheDocument();
+  });
+
+  test('clicking Log Out calls logout', async () => {
+    const logout = vi.fn();
+    useAuthStore.setState({ user: { id: 1, username: 'pat', admin: false, google_connected: false, has_password: true }, logout });
+    renderAccount();
+    fireEvent.click(screen.getByText('Log Out'));
+    await waitFor(() => expect(logout).toHaveBeenCalled());
   });
 });

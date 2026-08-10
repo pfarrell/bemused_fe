@@ -4,6 +4,8 @@ import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
 import { isLanAccess } from '../utils/device';
 import toast from 'react-hot-toast';
+import HomeViewToggle from '../components/HomeViewToggle';
+import TagFilterControl from '../components/TagFilterControl';
 
 const cardStyle = {
   backgroundColor: 'white',
@@ -36,7 +38,7 @@ const buttonStyle = {
 };
 
 const Account = () => {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser, logout } = useAuthStore();
   const [searchParams] = useSearchParams();
   const [password, setPasswordField] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -68,6 +70,10 @@ const Account = () => {
     } finally {
       setSettingPassword(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   const handleDisconnectGoogle = async () => {
@@ -104,6 +110,20 @@ const Account = () => {
         </div>
         <div style={{ color: '#111827' }}>{user?.username}</div>
         {user?.email && <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>{user.email}</div>}
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+          Home View
+        </div>
+        <HomeViewToggle />
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+          Tag Filter
+        </div>
+        <TagFilterControl allowSetDefault />
       </div>
 
       <div style={cardStyle}>
@@ -162,6 +182,12 @@ const Account = () => {
           </form>
         </div>
       )}
+
+      <div style={cardStyle}>
+        <button onClick={handleLogout} style={{ ...buttonStyle, backgroundColor: '#ef4444' }}>
+          Log Out
+        </button>
+      </div>
     </div>
   );
 };
