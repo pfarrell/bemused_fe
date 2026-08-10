@@ -15,6 +15,7 @@ import Artist from './pages/Artist';
 import Album from './pages/Album';
 import Library from './pages/Library';
 import Account from './pages/Account';
+import Admin from './pages/Admin';
 import Playlists from './pages/Playlists';
 import Playlist from './pages/Playlist';
 import Collections from './pages/Collections';
@@ -211,6 +212,11 @@ function App() {
                 <Route path="/account" element={
                   <ProtectedRoute>
                     <Account />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute requireAdmin>
+                    <Admin />
                   </ProtectedRoute>
                 } />
                 <Route path="/playlists" element={<Playlists />} />
