@@ -7,6 +7,7 @@ import { useHomeFeedStore } from '../stores/homeFeedStore';
 import SearchBar from './SearchBar';
 import HomeViewToggle from './HomeViewToggle';
 import TagFilterControl from './TagFilterControl';
+import ViewModeToggle from './ViewModeToggle';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
@@ -115,6 +116,10 @@ const Layout = ({ children }) => {
           
           <div className="header-search">
             <SearchBar />
+          </div>
+
+          <div className="view-mode-toggle-desktop">
+            <ViewModeToggle />
           </div>
 
           {activeTag && (
