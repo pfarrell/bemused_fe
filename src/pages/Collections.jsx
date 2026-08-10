@@ -6,11 +6,14 @@ import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import CollectionResultCard from '../components/CollectionResultCard';
 import CoverCollage from '../components/CoverCollage';
+import CardGrid from '../components/CardGrid';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 export default function Collections() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const viewMode = useViewModeStore((s) => s.mode);
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,9 +44,9 @@ export default function Collections() {
         <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
           <p style={{ fontSize: '1.125rem' }}>No collections found</p>
         </div>
-      ) : isMobile ? (
+      ) : (isMobile || viewMode === 'list') ? (
         <div className="artist-grid">
-          <div className="artist-grid-container">
+          <CardGrid>
             {collections.map((collection) => (
               <CollectionResultCard
                 key={collection.id}
@@ -53,7 +56,7 @@ export default function Collections() {
                 onClick={() => navigate(`/collection/${collection.id}`)}
               />
             ))}
-          </div>
+          </CardGrid>
         </div>
       ) : (
         <div className="artist-grid" style={{

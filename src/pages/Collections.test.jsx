@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import Collections from './Collections';
 import { apiService } from '../services/api';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 vi.mock('../services/api', () => ({
   apiService: {
@@ -50,6 +51,36 @@ describe('Collections page — desktop grid', () => {
     useNavigate.mockReturnValue(navigate);
     apiService.getCollections.mockResolvedValue({
       data: [{ id: 5, name: 'Road Trip Mix', image_path: null, album_count: 3 }],
+    });
+    renderCollections();
+
+    fireEvent.click(await screen.findByText('Road Trip Mix'));
+
+    expect(navigate).toHaveBeenCalledWith('/collection/5');
+  });
+});
+
+describe('Collections page — desktop list mode', () => {
+  afterEach(() => {
+    useViewModeStore.setState({ mode: 'card' });
+  });
+
+  test('renders CollectionResultCard rows instead of the bespoke CoverCollage grid', async () => {
+    useViewModeStore.setState({ mode: 'list' });
+    apiService.getCollections.mockResolvedValue({
+      data: [{ id: 5, name: 'Road Trip Mix', image_path: 'road-trip.jpg', album_count: 3 }],
+    });
+    renderCollections();
+
+    expect(await screen.findByText('Collection · 3 albums')).toBeInTheDocument();
+  });
+
+  test('clicking a row in list mode navigates to the collection', async () => {
+    const navigate = vi.fn();
+    useNavigate.mockReturnValue(navigate);
+    useViewModeStore.setState({ mode: 'list' });
+    apiService.getCollections.mockResolvedValue({
+      data: [{ id: 5, name: 'Road Trip Mix', image_path: 'road-trip.jpg', album_count: 3 }],
     });
     renderCollections();
 
