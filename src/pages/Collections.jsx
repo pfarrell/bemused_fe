@@ -1,6 +1,5 @@
 // src/pages/Collections.jsx
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
@@ -15,7 +14,6 @@ export default function Collections() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [zoomedCollection, setZoomedCollection] = useState(null);
 
   useEffect(() => {
     loadCollections();
@@ -89,7 +87,6 @@ export default function Collections() {
                     imagePath={collection.image_path}
                     items={collection.preview_albums}
                     alt={collection.name}
-                    onImageClick={collection.image_path ? (e) => { e.stopPropagation(); setZoomedCollection(collection); } : undefined}
                     placeholderGlyph="▣"
                     imageContext="album_small"
                   />
@@ -111,33 +108,6 @@ export default function Collections() {
             </div>
           ))}
         </div>
-      )}
-
-      {zoomedCollection && createPortal(
-        <div
-          onClick={() => setZoomedCollection(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 1000,
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            cursor: 'zoom-out', padding: '1rem',
-          }}
-        >
-          <img
-            src={apiService.getImageUrl(zoomedCollection.image_path, 'album_page')}
-            alt={zoomedCollection.name}
-            style={{
-              maxWidth: '90vw', maxHeight: '80vh',
-              objectFit: 'contain', borderRadius: '4px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-            }}
-          />
-          <div style={{ marginTop: '0.75rem', textAlign: 'center', color: 'white' }}>
-            <div style={{ fontWeight: '600', fontSize: '1rem' }}>{zoomedCollection.name}</div>
-          </div>
-        </div>,
-        document.body
       )}
     </div>
   );
