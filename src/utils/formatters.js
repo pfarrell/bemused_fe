@@ -24,3 +24,13 @@ export const formatCount = (count, singular, plural = `${singular}s`) => {
   return `${count} ${count === 1 ? singular : plural}`;
 };
 
+/**
+ * Normalize an album's release_year for display.
+ * @param {string|null|undefined} release_year
+ * @returns {string|null} the year, or null if unset/blank/the "0" sentinel
+ */
+export const getAlbumYear = (release_year) => {
+  if (!release_year || release_year === '0') return null;
+  return release_year;
+};
+

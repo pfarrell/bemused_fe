@@ -1,4 +1,4 @@
-import { formatDuration, formatCount } from './formatters';
+import { formatDuration, formatCount, getAlbumYear } from './formatters';
 
 describe('formatDuration', () => {
   test('returns empty string for 0', () => {
@@ -54,5 +54,27 @@ describe('formatCount', () => {
 
   test('uses an explicit plural form when given one', () => {
     expect(formatCount(2, 'album', 'albums')).toBe('2 albums');
+  });
+});
+
+describe('getAlbumYear', () => {
+  test('returns the year when present', () => {
+    expect(getAlbumYear('1969')).toBe('1969');
+  });
+
+  test('returns null for null', () => {
+    expect(getAlbumYear(null)).toBeNull();
+  });
+
+  test('returns null for undefined', () => {
+    expect(getAlbumYear(undefined)).toBeNull();
+  });
+
+  test('returns null for an empty string', () => {
+    expect(getAlbumYear('')).toBeNull();
+  });
+
+  test('returns null for the sentinel "0"', () => {
+    expect(getAlbumYear('0')).toBeNull();
   });
 });
