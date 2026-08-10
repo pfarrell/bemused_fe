@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 vi.mock('../services/api', () => ({
   apiService: {
@@ -197,6 +198,44 @@ describe('mobile row — cover collage', () => {
       />
     );
     expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+  });
+});
+
+describe('desktop list-mode row layout', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    useViewModeStore.setState({ mode: 'list' });
+  });
+
+  afterEach(() => {
+    useViewModeStore.setState({ mode: 'card' });
+  });
+
+  test('shows "Playlist · {N} tracks" as the subtitle', () => {
+    render(
+      <PlaylistResultCard
+        playlist={{ ...playlist, track_count: 8 }}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Playlist · 8 tracks')).toBeInTheDocument();
+  });
+
+  test('tapping play fetches the playlist and replaces the queue', async () => {
+    apiService.getPlaylist.mockResolvedValue({
+      data: { tracks: [{ id: 1, title: 'Track One', url: 'http://x/1.mp3' }] },
+    });
+    const clearPlaylist = vi.fn();
+    const addTracks = vi.fn();
+    usePlayerStore.setState({ clearPlaylist, addTracks });
+
+    render(<PlaylistResultCard playlist={playlist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play Test Playlist' }));
+
+    await waitFor(() => expect(addTracks).toHaveBeenCalled());
+    expect(clearPlaylist).toHaveBeenCalled();
   });
 });
 

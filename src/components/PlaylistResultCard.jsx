@@ -10,6 +10,7 @@ import ContextMenu from './ContextMenu';
 import CoverCollage from './CoverCollage';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 // previewAlbums is only passed by the Playlists list page (its API response
 // is the only one that includes it) — that's what scopes the collage to that
@@ -17,6 +18,7 @@ import { useIsMobile } from '../hooks/useIsMobile';
 // this same card with a plain imageUrl.
 const PlaylistResultCard = ({ playlist, onClick, imageUrl, previewAlbums }) => {
   const isMobile = useIsMobile();
+  const viewMode = useViewModeStore((s) => s.mode);
   const [playLoading, setPlayLoading] = useState(false);
   const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
   const addTracks = usePlayerStore((s) => s.addTracks);
@@ -88,7 +90,7 @@ const PlaylistResultCard = ({ playlist, onClick, imageUrl, previewAlbums }) => {
     </ContextMenu>
   );
 
-  if (isMobile) {
+  if (isMobile || viewMode === 'list') {
     const trackCount = formatCount(playlist.track_count || null, 'track');
     const imageContent = (!playlist.image_path && previewAlbums?.length)
       ? <CoverCollage items={previewAlbums} alt={playlist.name} placeholderGlyph="♪" />
