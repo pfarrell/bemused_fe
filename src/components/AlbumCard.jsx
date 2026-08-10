@@ -11,7 +11,7 @@ import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
-import { formatCount } from '../utils/formatters';
+import { formatCount, getAlbumYear } from '../utils/formatters';
 
 const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => {
   const [showCollectionModal, setShowCollectionModal] = useState(false);
@@ -80,9 +80,12 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
 
   const trackCount = formatCount(album.track_count || null, 'track');
   const trackCountSuffix = trackCount ? ` (${trackCount})` : '';
+  const yearText = getAlbumYear(album.release_year);
+  const yearSuffix = yearText ? ` · ${yearText}` : '';
+  const metaText = [yearText, trackCount].filter(Boolean).join(' · ');
   const subtitle = hideArtist
-    ? `Album${trackCountSuffix}`
-    : `Album · ${artist?.name || ''}${album.has_collaborators ? ' +' : ''}${trackCountSuffix}`;
+    ? `Album${yearSuffix}${trackCountSuffix}`
+    : `Album · ${artist?.name || ''}${album.has_collaborators ? ' +' : ''}${yearSuffix}${trackCountSuffix}`;
 
   return (
     <>
@@ -127,9 +130,9 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
                 {artist?.name}{album.has_collaborators && ' +'}
               </p>
             )}
-            {formatCount(album.track_count || null, 'track') && (
+            {metaText && (
               <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
-                {formatCount(album.track_count || null, 'track')}
+                {metaText}
               </p>
             )}
           </div>

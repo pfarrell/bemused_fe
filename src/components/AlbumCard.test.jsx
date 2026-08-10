@@ -109,6 +109,43 @@ test('does not render a track count when track_count is absent', () => {
   expect(screen.queryByText(/track/)).toBeNull();
 });
 
+test('shows the release year in the meta line when present', () => {
+  render(
+    <AlbumCard
+      album={{ ...album, release_year: '1969' }}
+      artist={artist}
+      onClick={vi.fn()}
+      imageUrl="/img/sm/x.jpg"
+    />
+  );
+  expect(screen.getByText('1969')).toBeInTheDocument();
+});
+
+test('joins year and track count with a middot in the meta line', () => {
+  render(
+    <AlbumCard
+      album={{ ...album, release_year: '1969', track_count: 12 }}
+      artist={artist}
+      onClick={vi.fn()}
+      imageUrl="/img/sm/x.jpg"
+    />
+  );
+  expect(screen.getByText('1969 · 12 tracks')).toBeInTheDocument();
+});
+
+test('treats a release_year of "0" as no year', () => {
+  render(
+    <AlbumCard
+      album={{ ...album, release_year: '0', track_count: 12 }}
+      artist={artist}
+      onClick={vi.fn()}
+      imageUrl="/img/sm/x.jpg"
+    />
+  );
+  expect(screen.getByText('12 tracks')).toBeInTheDocument();
+  expect(screen.queryByText(/^0/)).toBeNull();
+});
+
 test('hides the artist name when hideArtist is set', () => {
   render(
     <AlbumCard
@@ -199,6 +236,57 @@ describe('mobile row layout', () => {
       />
     );
     expect(screen.getByText('Album · Test Artist')).toBeInTheDocument();
+  });
+
+  test('appends the year to the subtitle when present', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, release_year: '1969' }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+        hideArtist
+      />
+    );
+    expect(screen.getByText('Album · 1969')).toBeInTheDocument();
+  });
+
+  test('places the year before the track-count parenthetical', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, release_year: '1969', track_count: 12 }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+        hideArtist
+      />
+    );
+    expect(screen.getByText('Album · 1969 (12 tracks)')).toBeInTheDocument();
+  });
+
+  test('shows both the artist name and the year when hideArtist is not set', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, release_year: '1969' }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Album · Test Artist · 1969')).toBeInTheDocument();
+  });
+
+  test('treats a release_year of "0" as no year in the subtitle', () => {
+    render(
+      <AlbumCard
+        album={{ ...album, release_year: '0' }}
+        artist={artist}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+        hideArtist
+      />
+    );
+    expect(screen.getByText('Album')).toBeInTheDocument();
   });
 
   test('shows the track count in the subtitle even when hideArtist is set', () => {
