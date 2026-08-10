@@ -475,7 +475,7 @@ auth.put('/change-password', async (c) => {
 
   const passwordMatch = await bcrypt.compare(currentPassword, currentHash)
   if (!passwordMatch) {
-    return c.json({ error: 'Current password is incorrect' }, 401)
+    return c.json({ error: 'Current password is incorrect' }, 400)
   }
 
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS)
