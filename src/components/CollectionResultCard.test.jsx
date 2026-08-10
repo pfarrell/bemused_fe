@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import CollectionResultCard from './CollectionResultCard';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 const collection = { id: 9, name: 'Test Collection' };
 
@@ -114,6 +115,35 @@ describe('mobile row — cover collage', () => {
       />
     );
     expect(screen.queryByTestId('cover-collage')).not.toBeInTheDocument();
+  });
+});
+
+describe('desktop list-mode row layout', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    useViewModeStore.setState({ mode: 'list' });
+  });
+
+  afterEach(() => {
+    useViewModeStore.setState({ mode: 'card' });
+  });
+
+  test('shows "Collection · {N} albums" as the subtitle', () => {
+    render(
+      <CollectionResultCard
+        collection={{ ...collection, album_count: 3 }}
+        onClick={vi.fn()}
+        imageUrl="/img/sm/x.jpg"
+      />
+    );
+    expect(screen.getByText('Collection · 3 albums')).toBeInTheDocument();
+  });
+
+  test('clicking the row calls onClick with the collection', () => {
+    const onClick = vi.fn();
+    render(<CollectionResultCard collection={collection} onClick={onClick} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.click(screen.getByText('Test Collection'));
+    expect(onClick).toHaveBeenCalledWith(collection);
   });
 });
 

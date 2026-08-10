@@ -7,6 +7,7 @@ import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 // previewAlbums is only passed by the Collections list page (its API response
 // is the only one that includes it) — that's what scopes the collage to that
@@ -14,6 +15,7 @@ import { useFavoritesStore } from '../stores/favoritesStore';
 // this same card with a plain imageUrl.
 const CollectionResultCard = ({ collection, onClick, imageUrl, previewAlbums }) => {
   const isMobile = useIsMobile();
+  const viewMode = useViewModeStore((s) => s.mode);
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useFavoritesStore((s) => s.isFavorite('collection', collection.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
@@ -46,7 +48,7 @@ const CollectionResultCard = ({ collection, onClick, imageUrl, previewAlbums }) 
     </ContextMenu>
   );
 
-  if (isMobile) {
+  if (isMobile || viewMode === 'list') {
     const albumCount = formatCount(collection.album_count || null, 'album');
     const imageContent = (!collection.image_path && previewAlbums?.length)
       ? <CoverCollage items={previewAlbums} alt={collection.name} placeholderGlyph="▣" />
