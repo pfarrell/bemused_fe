@@ -1,8 +1,16 @@
 // src/pages/AdminCollection.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+
+const AUTO_SCROLL_EDGE_PX = 60;
+const AUTO_SCROLL_SPEED_PX = 12;
+
+// Shows exactly where a dragged album/stub would land, between two rows.
+const DropIndicator = () => (
+  <div data-testid="drop-indicator" style={{ height: '3px', backgroundColor: '#3b82f6', borderRadius: '2px' }} />
+);
 
 export default function AdminCollection() {
   const { id } = useParams();
@@ -13,6 +21,10 @@ export default function AdminCollection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [draggedItem, setDraggedItem] = useState(null); // { type: 'album' | 'stub', id }
+  const [dragOverTarget, setDragOverTarget] = useState(null); // { type, id, position: 'before' | 'after' }
+  const searchPanelRef = useRef(null);
+  const autoScrollFrameRef = useRef(null);
+  const autoScrollDirectionRef = useRef(0);
 
   // Search to add albums
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,6 +53,64 @@ export default function AdminCollection() {
       navigate(`/collection/${id}`, { replace: true });
     }
   }, [loading, collectionData, isAdmin, user, id, navigate]);
+
+  // The search/resolve panel renders above the albums list — on a long list,
+  // opening it (including via Resolve, deep in the list) would otherwise land
+  // far outside the current scroll position with nothing visibly changing.
+  useEffect(() => {
+    if (showSearch && searchPanelRef.current) {
+      searchPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [showSearch]);
+
+  // Auto-scrolls the page's scroll container (Layout.jsx's .main-content,
+  // not window — this app's whole layout is a fixed-height flex column with
+  // its own internal scroll area) while a native drag hovers near its top or
+  // bottom edge, so a long list can be reordered past the current viewport.
+  useEffect(() => {
+    const container = document.querySelector('.main-content');
+    if (!container) return undefined;
+
+    const stepAutoScroll = () => {
+      if (autoScrollDirectionRef.current !== 0) {
+        container.scrollTop += autoScrollDirectionRef.current * AUTO_SCROLL_SPEED_PX;
+      }
+      autoScrollFrameRef.current = requestAnimationFrame(stepAutoScroll);
+    };
+
+    const handleDragOverContainer = (e) => {
+      const rect = container.getBoundingClientRect();
+      if (e.clientY < rect.top + AUTO_SCROLL_EDGE_PX) {
+        autoScrollDirectionRef.current = -1;
+      } else if (e.clientY > rect.bottom - AUTO_SCROLL_EDGE_PX) {
+        autoScrollDirectionRef.current = 1;
+      } else {
+        autoScrollDirectionRef.current = 0;
+      }
+      if (!autoScrollFrameRef.current) {
+        autoScrollFrameRef.current = requestAnimationFrame(stepAutoScroll);
+      }
+    };
+
+    const stopAutoScroll = () => {
+      autoScrollDirectionRef.current = 0;
+      if (autoScrollFrameRef.current) {
+        cancelAnimationFrame(autoScrollFrameRef.current);
+        autoScrollFrameRef.current = null;
+      }
+    };
+
+    container.addEventListener('dragover', handleDragOverContainer);
+    container.addEventListener('drop', stopAutoScroll);
+    container.addEventListener('dragend', stopAutoScroll);
+
+    return () => {
+      container.removeEventListener('dragover', handleDragOverContainer);
+      container.removeEventListener('drop', stopAutoScroll);
+      container.removeEventListener('dragend', stopAutoScroll);
+      stopAutoScroll();
+    };
+  }, []);
 
   const loadCollection = async () => {
     try {
@@ -153,24 +223,38 @@ export default function AdminCollection() {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e, item) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    const rect = e.currentTarget.getBoundingClientRect();
+    const position = e.clientY - rect.top < rect.height / 2 ? 'before' : 'after';
+    setDragOverTarget({ type: item.type, id: item.data.id, position });
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDragOverTarget(null);
   };
 
   const handleDrop = async (e, targetItem) => {
     e.preventDefault();
+    const dropPosition = dragOverTarget?.position ?? 'before';
+    setDragOverTarget(null);
     if (!draggedItem) return;
     if (draggedItem.type === targetItem.type && draggedItem.id === targetItem.data.id) return;
 
     const current = buildMergedItems();
     const fromIndex = current.findIndex((i) => i.type === draggedItem.type && i.data.id === draggedItem.id);
-    const toIndex = current.findIndex((i) => i.type === targetItem.type && i.data.id === targetItem.data.id);
+    let toIndex = current.findIndex((i) => i.type === targetItem.type && i.data.id === targetItem.data.id);
     if (fromIndex === -1 || toIndex === -1) return;
+    if (dropPosition === 'after') toIndex += 1;
 
     const reordered = [...current];
     const [moved] = reordered.splice(fromIndex, 1);
-    reordered.splice(toIndex, 0, moved);
+    // toIndex was computed against the pre-removal array — shift it back by
+    // one if the removed item was earlier in the list than the drop target.
+    const insertAt = fromIndex < toIndex ? toIndex - 1 : toIndex;
+    reordered.splice(insertAt, 0, moved);
 
     const withNewOrder = reordered.map((item, i) => ({ ...item, order: i + 1 }));
     setAlbums(withNewOrder.filter((i) => i.type === 'album').map((i) => ({ ...i.data, order: i.order })));
@@ -377,10 +461,13 @@ export default function AdminCollection() {
       </div>
 
       {showSearch && (
-        <div style={{
-          backgroundColor: 'white', padding: '1.5rem', borderRadius: '0.5rem',
-          marginBottom: '2rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-        }}>
+        <div
+          ref={searchPanelRef}
+          style={{
+            backgroundColor: 'white', padding: '1.5rem', borderRadius: '0.5rem',
+            marginBottom: '2rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}
+        >
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <input
@@ -500,12 +587,17 @@ export default function AdminCollection() {
             No albums in this collection. Use the search above to add albums.
           </div>
         ) : (
-          buildMergedItems().map((item, index) => item.type === 'album' ? (
+          buildMergedItems().map((item, index) => {
+            const isDropTarget = dragOverTarget?.type === item.type && dragOverTarget?.id === item.data.id;
+            return (
+            <div key={`${item.type}-${item.data.id}`}>
+              {isDropTarget && dragOverTarget.position === 'before' && <DropIndicator />}
+              {item.type === 'album' ? (
               <div
-                key={`album-${item.data.id}`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, item)}
-                onDragOver={handleDragOver}
+                onDragOver={(e) => handleDragOver(e, item)}
+                onDragEnd={handleDragEnd}
                 onDrop={(e) => handleDrop(e, item)}
                 style={{
                   padding: '1rem', borderBottom: '1px solid #e5e7eb',
@@ -551,10 +643,10 @@ export default function AdminCollection() {
               </div>
             ) : (
               <div
-                key={`stub-${item.data.id}`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, item)}
-                onDragOver={handleDragOver}
+                onDragOver={(e) => handleDragOver(e, item)}
+                onDragEnd={handleDragEnd}
                 onDrop={(e) => handleDrop(e, item)}
                 style={{
                   padding: '1rem', borderBottom: '1px solid #e5e7eb',
@@ -600,7 +692,11 @@ export default function AdminCollection() {
                   </button>
                 </div>
               </div>
-            ))
+              )}
+              {isDropTarget && dragOverTarget.position === 'after' && <DropIndicator />}
+            </div>
+            );
+          })
         )}
       </div>
     </div>

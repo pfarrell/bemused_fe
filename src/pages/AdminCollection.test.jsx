@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, createEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminCollection from './AdminCollection';
@@ -35,6 +35,10 @@ const renderAdminCollection = () =>
       </Routes>
     </MemoryRouter>
   );
+
+// jsdom doesn't implement scrollIntoView at all — the search panel's
+// scroll-into-view effect would otherwise throw on every render where it's open.
+Element.prototype.scrollIntoView = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -189,15 +193,28 @@ describe('AdminCollection — interleaved drag-reorder', () => {
 
     const stubRow = (await screen.findByText('Missing')).closest('[draggable]');
     const albumARow = screen.getByText('A').closest('[draggable]');
+    // jsdom's getBoundingClientRect defaults to an all-zero rect; the drop
+    // handler's before/after math needs a real rect to test against so a
+    // hover in the row's upper half is unambiguous.
+    albumARow.getBoundingClientRect = () => ({ top: 0, height: 100 });
 
     // jsdom's synthetic drag events don't provide a dataTransfer object by default;
     // the component's handlers set effectAllowed/dropEffect on it, so without this
     // fireEvent throws "Cannot set properties of undefined" instead of exercising the drop.
+    // jsdom also has no DragEvent constructor at all, so fireEvent's shorthand silently
+    // drops clientY (it falls back to a plain Event, which fireEvent can't extend with
+    // MouseEvent-only init properties) — createEvent + a manual property assignment is
+    // the reliable way to get a real clientY onto the dispatched event.
     const dataTransfer = { effectAllowed: '', dropEffect: '' };
-    // Drag the stub to where album A currently is (position 1)
+    const dragOverEvent = createEvent.dragOver(albumARow, { dataTransfer });
+    dragOverEvent.clientY = 10;
+    const dropEvent = createEvent.drop(albumARow, { dataTransfer });
+    dropEvent.clientY = 10;
+    // Drag the stub to where album A currently is (position 1) — hover its
+    // upper half so the drop lands before it, not after.
     fireEvent.dragStart(stubRow, { dataTransfer });
-    fireEvent.dragOver(albumARow, { dataTransfer });
-    fireEvent.drop(albumARow, { dataTransfer });
+    fireEvent(albumARow, dragOverEvent);
+    fireEvent(albumARow, dropEvent);
 
     expect(apiService.reorderCollectionAlbums).toHaveBeenCalledWith(
       '7',
@@ -225,17 +242,131 @@ describe('AdminCollection — interleaved drag-reorder', () => {
 
     const albumARow = (await screen.findByText('A')).closest('[draggable]');
     const albumBRow = screen.getByText('B').closest('[draggable]');
+    albumBRow.getBoundingClientRect = () => ({ top: 0, height: 100 });
 
     const dataTransfer = { effectAllowed: '', dropEffect: '' };
-    // Drag album A past album B (to the end)
+    const dragOverEvent = createEvent.dragOver(albumBRow, { dataTransfer });
+    dragOverEvent.clientY = 90;
+    const dropEvent = createEvent.drop(albumBRow, { dataTransfer });
+    dropEvent.clientY = 90;
+    // Drag album A past album B (to the end) — hover B's lower half so the
+    // drop lands after it.
     fireEvent.dragStart(albumARow, { dataTransfer });
-    fireEvent.dragOver(albumBRow, { dataTransfer });
-    fireEvent.drop(albumBRow, { dataTransfer });
+    fireEvent(albumBRow, dragOverEvent);
+    fireEvent(albumBRow, dropEvent);
 
     const [, albumOrders, stubOrders] = apiService.reorderCollectionAlbums.mock.calls[0];
     const orderOf = (arr, key, id) => arr.find(x => x[key] === id)?.order;
     expect(orderOf(albumOrders, 'album_id', 2)).toBeLessThan(orderOf(albumOrders, 'album_id', 1));
     expect(stubOrders[0].order).toBeGreaterThan(0);
+  });
+
+  test('shows a drop indicator before the hovered row when dragging over its upper half', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 2, artist: { name: 'X' } },
+        ],
+      },
+    });
+    renderAdminCollection();
+
+    const albumARow = (await screen.findByText('A')).closest('[draggable]');
+    const albumBRow = screen.getByText('B').closest('[draggable]');
+    albumBRow.getBoundingClientRect = () => ({ top: 0, height: 100 });
+
+    expect(screen.queryByTestId('drop-indicator')).not.toBeInTheDocument();
+
+    const dataTransfer = { effectAllowed: '', dropEffect: '' };
+    fireEvent.dragStart(albumARow, { dataTransfer });
+    const dragOverEvent = createEvent.dragOver(albumBRow, { dataTransfer });
+    dragOverEvent.clientY = 10; // upper half of B's mocked 100px-tall rect
+    fireEvent(albumBRow, dragOverEvent);
+
+    const indicator = screen.getByTestId('drop-indicator');
+    // The indicator is B's previous sibling when hovering its upper half —
+    // i.e. it renders between A and B, not between B and nothing-after-it.
+    expect(indicator.nextElementSibling).toBe(albumBRow);
+  });
+
+  test('shows a drop indicator after the hovered row when dragging over its lower half', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 2, artist: { name: 'X' } },
+        ],
+      },
+    });
+    renderAdminCollection();
+
+    const albumARow = (await screen.findByText('A')).closest('[draggable]');
+    const albumBRow = screen.getByText('B').closest('[draggable]');
+    albumARow.getBoundingClientRect = () => ({ top: 0, height: 100 });
+
+    const dataTransfer = { effectAllowed: '', dropEffect: '' };
+    fireEvent.dragStart(albumBRow, { dataTransfer });
+    const dragOverEvent = createEvent.dragOver(albumARow, { dataTransfer });
+    dragOverEvent.clientY = 90; // lower half of A's mocked 100px-tall rect
+    fireEvent(albumARow, dragOverEvent);
+
+    const indicator = screen.getByTestId('drop-indicator');
+    expect(indicator.previousElementSibling).toBe(albumARow);
+  });
+
+  test('clears the drop indicator when the drag ends', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 2, artist: { name: 'X' } },
+        ],
+      },
+    });
+    renderAdminCollection();
+
+    const albumARow = (await screen.findByText('A')).closest('[draggable]');
+    const albumBRow = screen.getByText('B').closest('[draggable]');
+    albumBRow.getBoundingClientRect = () => ({ top: 0, height: 100 });
+
+    const dataTransfer = { effectAllowed: '', dropEffect: '' };
+    fireEvent.dragStart(albumARow, { dataTransfer });
+    fireEvent.dragOver(albumBRow, { dataTransfer });
+    expect(screen.getByTestId('drop-indicator')).toBeInTheDocument();
+
+    fireEvent.dragEnd(albumARow, { dataTransfer });
+    expect(screen.queryByTestId('drop-indicator')).not.toBeInTheDocument();
+  });
+});
+
+describe('AdminCollection — resolve/search panel scrolls into view', () => {
+  test('scrolls the search panel into view when opened via "+ Add Album"', async () => {
+    const user = userEvent.setup();
+    renderAdminCollection();
+
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    await user.click(await screen.findByText('+ Add Album'));
+
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(
+      expect.objectContaining({ block: 'nearest' })
+    );
+  });
+
+  test('scrolls the search panel into view when opened via Resolve on a distant stub', async () => {
+    const user = userEvent.setup();
+    apiService.getCollection.mockResolvedValue({
+      data: { ...collectionPayload, stubs: [{ id: 9, title: 'Abbey Road', artist_name: 'The Beatles', order: 1 }] },
+    });
+    renderAdminCollection();
+
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    await user.click(await screen.findByText('Resolve'));
+
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 });
 
