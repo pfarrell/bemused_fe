@@ -34,6 +34,7 @@ export const apiService = {
   },
   disconnectGoogle: () => api.delete('/auth/google/disconnect'),
   setPassword: (password) => api.put('/auth/set-password', { password }),
+  changePassword: (currentPassword, newPassword) => api.put('/auth/change-password', { currentPassword, newPassword }),
 
   // Artists
   getRandomArtists: (size = 60, tag = null) => api.get(`/artists/random?size=${size}${tag ? `&tag=${encodeURIComponent(tag)}` : ''}`),
