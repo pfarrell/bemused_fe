@@ -54,14 +54,22 @@ async function tryTitles(titles: string[]): Promise<WikiSummary | null> {
   return null
 }
 
+// Mobile keyboards (iOS Safari smart punctuation) silently substitute
+// typographic quotes for straight ones as an admin types. Wikipedia's API
+// matches article slugs exactly, so a stray curly quote 404s where a
+// straight one would 200 — normalize before it ever reaches the API.
+function normalizeQuotes(name: string): string {
+  return name.replace(/[‘’]/g, "'").replace(/[“”]/g, '"')
+}
+
 // Mirror Ruby's wp_fix: replace & with "and", strip parens
 function wpFix(name: string): string {
-  return name.replace(/&/g, 'and').replace(/\s*\(.*?\)/g, '').trim()
+  return normalizeQuotes(name).replace(/&/g, 'and').replace(/\s*\(.*?\)/g, '').trim()
 }
 
 // Candidate names for an artist: exact, fixed, "Name (band)", "Name (musician)"
 function artistCandidates(name: string, wikipediaOverride?: string | null): string[] {
-  if (wikipediaOverride) return [wikipediaOverride]
+  if (wikipediaOverride) return [normalizeQuotes(wikipediaOverride)]
   const fixed = wpFix(name)
   return [fixed, `${fixed} (band)`, `${fixed} (musician)`, `${fixed} (singer)`]
 }
@@ -73,7 +81,7 @@ function albumCandidates(
   artistWikipedia?: string | null,
   albumWikipedia?: string | null
 ): string[] {
-  if (albumWikipedia) return [albumWikipedia]
+  if (albumWikipedia) return [normalizeQuotes(albumWikipedia)]
   const artist = artistWikipedia ? wpFix(artistWikipedia) : wpFix(artistName)
   const title = wpFix(albumTitle)
   return [`${title} (${artist} album)`, `${title} (album)`, title]
@@ -101,5 +109,5 @@ export async function getCollectionSummary(
   title?: string | null
 ): Promise<WikiSummary | null> {
   if (!title) return null
-  return tryTitles([title])
+  return tryTitles([normalizeQuotes(title)])
 }

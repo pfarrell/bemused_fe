@@ -791,6 +791,9 @@ const AdminAlbum = () => {
             value={wikipedia}
             onChange={(e) => setWikipedia(e.target.value)}
             placeholder="e.g., Abbey_Road"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
             style={{
               width: '100%',
               padding: '0.5rem',

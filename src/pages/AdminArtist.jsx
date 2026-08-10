@@ -686,6 +686,9 @@ const AdminArtist = () => {
             value={wikipedia}
             onChange={(e) => setWikipedia(e.target.value)}
             placeholder="e.g., The_Beatles"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
             style={{
               width: '100%',
               padding: '0.5rem',
