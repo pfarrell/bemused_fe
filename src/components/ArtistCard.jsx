@@ -6,9 +6,11 @@ import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 const ArtistCard = ({ artist, onClick, imageUrl }) => {
   const isMobile = useIsMobile();
+  const viewMode = useViewModeStore((s) => s.mode);
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useFavoritesStore((s) => s.isFavorite('artist', artist.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
@@ -43,7 +45,7 @@ const ArtistCard = ({ artist, onClick, imageUrl }) => {
     </ContextMenu>
   );
 
-  if (isMobile) {
+  if (isMobile || viewMode === 'list') {
     return (
       <>
         <ResultRow

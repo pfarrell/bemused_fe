@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import ArtistCard from './ArtistCard';
 import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useViewModeStore } from '../stores/viewModeStore';
 
 const artist = { id: 1, name: 'Test Artist', image_path: 'x.jpg' };
 
@@ -35,6 +36,30 @@ describe('mobile row layout', () => {
   test('does not render a play button', () => {
     render(<ArtistCard artist={artist} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
     expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  test('clicking the row calls onClick with the artist', () => {
+    const onClick = vi.fn();
+    render(<ArtistCard artist={artist} onClick={onClick} imageUrl="/img/sm/x.jpg" />);
+    fireEvent.click(screen.getByText('Test Artist'));
+    expect(onClick).toHaveBeenCalledWith(artist);
+  });
+});
+
+describe('desktop list-mode row layout', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    useViewModeStore.setState({ mode: 'list' });
+  });
+
+  afterEach(() => {
+    useViewModeStore.setState({ mode: 'card' });
+  });
+
+  test('shows "Artist" as the subtitle, without an album count', () => {
+    render(<ArtistCard artist={{ ...artist, album_count: 5 }} onClick={vi.fn()} imageUrl="/img/sm/x.jpg" />);
+    expect(screen.getByText('Artist')).toBeInTheDocument();
+    expect(screen.queryByText(/5 album/)).toBeNull();
   });
 
   test('clicking the row calls onClick with the artist', () => {
