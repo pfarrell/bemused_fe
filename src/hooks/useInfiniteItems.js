@@ -85,7 +85,7 @@ export function useInfiniteItems(fetchFn, cacheKey) {
       if (combined.length > windowSize && gridRef?.current) {
         const trimCount = combined.length - windowSize;
         const container = gridRef.current;
-        const card      = container.querySelector('.artist-card');
+        const card      = container.querySelector('.artist-card, .result-row');
 
         if (card) {
           const cardRect    = card.getBoundingClientRect();
