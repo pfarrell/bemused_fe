@@ -1,5 +1,6 @@
 // src/pages/AdminLogs.jsx
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
@@ -129,10 +130,22 @@ export default function AdminLogs() {
                       {log.track_title || '-'}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
-                      {log.artist_name || '-'}
+                      {log.artist_id ? (
+                        <Link to={`/artist/${log.artist_id}`} style={{ color: '#3b82f6', textDecoration: 'none' }}>
+                          {log.artist_name || '-'}
+                        </Link>
+                      ) : (
+                        log.artist_name || '-'
+                      )}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
-                      {log.album_title || '-'}
+                      {log.album_id ? (
+                        <Link to={`/album/${log.album_id}`} style={{ color: '#3b82f6', textDecoration: 'none' }}>
+                          {log.album_title || '-'}
+                        </Link>
+                      ) : (
+                        log.album_title || '-'
+                      )}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#6b7280', fontFamily: 'monospace' }}>
                       {log.ip_address || '-'}
