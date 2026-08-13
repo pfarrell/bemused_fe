@@ -136,6 +136,44 @@ describe('AdminUpload — Album picker', () => {
     await user.click(screen.getByText('OK Computer'));
     expect(screen.queryByRole('button', { name: 'Search albums' })).not.toBeInTheDocument();
   });
+
+  test('selecting an existing album pre-fills the track pad with its track count', async () => {
+    apiService.searchAdminAlbums.mockResolvedValue({
+      data: [{ id: 3, title: 'OK Computer', artist_name: 'Radiohead', release_year: '1997', track_count: 12 }],
+    });
+    const user = userEvent.setup();
+    renderUpload();
+
+    await user.type(
+      screen.getByPlaceholderText('Search by title or leave blank to use ID3 tag'),
+      'OK Co'
+    );
+    await user.click(screen.getByRole('button', { name: 'Search albums' }));
+    await screen.findByText('OK Computer');
+    await user.click(screen.getByText('OK Computer'));
+
+    expect(screen.getByPlaceholderText('0')).toHaveValue(12);
+  });
+
+  test('clearing the selected album resets the track pad back to 0', async () => {
+    apiService.searchAdminAlbums.mockResolvedValue({
+      data: [{ id: 3, title: 'OK Computer', artist_name: 'Radiohead', release_year: '1997', track_count: 12 }],
+    });
+    const user = userEvent.setup();
+    renderUpload();
+
+    await user.type(
+      screen.getByPlaceholderText('Search by title or leave blank to use ID3 tag'),
+      'OK Co'
+    );
+    await user.click(screen.getByRole('button', { name: 'Search albums' }));
+    await screen.findByText('OK Computer');
+    await user.click(screen.getByText('OK Computer'));
+    expect(screen.getByPlaceholderText('0')).toHaveValue(12);
+
+    await user.click(screen.getByRole('button', { name: 'Clear album' }));
+    expect(screen.getByPlaceholderText('0')).toHaveValue(0);
+  });
 });
 
 describe('AdminUpload — Various artists compilation checkbox', () => {

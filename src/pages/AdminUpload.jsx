@@ -289,12 +289,14 @@ const AdminUpload = () => {
     setSelectedAlbum(album);
     setAlbumQuery('');
     setAlbumResults([]);
+    setTrackPad(String(Number(album.track_count) || 0));
   };
 
   const handleAlbumClear = () => {
     setSelectedAlbum(null);
     setAlbumQuery('');
     setAlbumResults([]);
+    setTrackPad('0');
   };
 
   return (
