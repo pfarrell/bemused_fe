@@ -42,6 +42,13 @@ export default function AdminLogs() {
     });
   };
 
+  const ACTION_COLORS = {
+    stream: { bg: '#dbeafe', color: '#1e40af' },
+    search: { bg: '#ede9fe', color: '#5b21b6' },
+  };
+
+  const getActionColors = (action) => ACTION_COLORS[action] || { bg: '#e5e7eb', color: '#374151' };
+
   const handlePageChange = (newPage) => {
     if (newPage < 1 || (pagination && newPage > pagination.totalPages)) return;
     setCurrentPage(newPage);
@@ -85,6 +92,9 @@ export default function AdminLogs() {
                   Action
                 </th>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                  Query
+                </th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
                   Track
                 </th>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
@@ -101,12 +111,14 @@ export default function AdminLogs() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                  <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
                     No log entries found
                   </td>
                 </tr>
               ) : (
-                logs.map((log) => (
+                logs.map((log) => {
+                  const actionColors = getActionColors(log.action);
+                  return (
                   <tr key={log.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                     <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#6b7280' }}>
                       {log.id}
@@ -118,13 +130,16 @@ export default function AdminLogs() {
                       <span style={{
                         padding: '0.25rem 0.5rem',
                         borderRadius: '0.25rem',
-                        backgroundColor: log.action === 'stream' ? '#dbeafe' : '#e5e7eb',
-                        color: log.action === 'stream' ? '#1e40af' : '#374151',
+                        backgroundColor: actionColors.bg,
+                        color: actionColors.color,
                         fontSize: '0.75rem',
                         fontWeight: '500',
                       }}>
                         {log.action || 'N/A'}
                       </span>
+                    </td>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
+                      {log.query || '-'}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
                       {log.track_title || '-'}
@@ -151,7 +166,8 @@ export default function AdminLogs() {
                       {log.ip_address || '-'}
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
