@@ -213,8 +213,8 @@ upload.get('/recent', async (c) => {
   try {
     const limit = parseInt(c.req.query('limit') || '50')
 
-    // Hide completed uploads after 30 seconds (but keep pending/processing/failed)
-    const thirtySecondsAgo = new Date(Date.now() - 30000)
+    // Hide completed uploads after 5 minutes (but keep pending/processing/failed)
+    const completedCutoff = new Date(Date.now() - 5 * 60 * 1000)
 
     const recent = await db
       .selectFrom('upload_queue')
@@ -222,11 +222,11 @@ upload.get('/recent', async (c) => {
       .leftJoin('albums', 'albums.id', 'tracks.album_id')
       .leftJoin('artists', 'artists.id', 'tracks.artist_id')
       .selectAll('upload_queue')
-      .select(['albums.title as resolved_album_title', 'artists.name as resolved_artist_name'])
+      .select(['albums.id as resolved_album_id', 'albums.title as resolved_album_title', 'artists.name as resolved_artist_name'])
       .where((eb) =>
         eb.or([
           eb('upload_queue.status', '!=', 'completed'),
-          eb('upload_queue.completed_at', '>', thirtySecondsAgo)
+          eb('upload_queue.completed_at', '>', completedCutoff)
         ])
       )
       .orderBy('upload_queue.created_at', 'desc')

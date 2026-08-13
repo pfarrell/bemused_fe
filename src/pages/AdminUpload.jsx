@@ -1,5 +1,6 @@
 // src/pages/AdminUpload.jsx
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import jsmediatags from 'jsmediatags';
 
@@ -798,7 +799,18 @@ const AdminUpload = () => {
                     </td>
                     <td style={{ padding: '0.75rem' }}>{upload.original_filename}</td>
                     <td style={{ padding: '0.75rem' }}>{upload.resolved_artist_name || upload.artist_name || upload.artist_id || '-'}</td>
-                    <td style={{ padding: '0.75rem' }}>{upload.resolved_album_title || upload.album_name || upload.album_id || '-'}</td>
+                    <td style={{ padding: '0.75rem' }}>
+                      {upload.resolved_album_id || upload.album_id ? (
+                        <Link
+                          to={`/album/${upload.resolved_album_id || upload.album_id}`}
+                          style={{ color: '#3b82f6' }}
+                        >
+                          {upload.resolved_album_title || upload.album_name || upload.album_id}
+                        </Link>
+                      ) : (
+                        upload.resolved_album_title || upload.album_name || '-'
+                      )}
+                    </td>
                     <td style={{ padding: '0.75rem' }}>{formatDate(upload.created_at)}</td>
                     <td style={{ padding: '0.75rem', color: '#ef4444', fontSize: '0.75rem' }}>
                       {upload.error_message || '-'}
