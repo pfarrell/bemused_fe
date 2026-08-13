@@ -91,6 +91,7 @@ interface LogTable {
   updated_at: ColumnType<Date, Date | string | undefined, never> | null
   ip_address: string | null
   cookie: string | null
+  query: string | null
 }
 
 interface FavoriteTable {

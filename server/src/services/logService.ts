@@ -2,12 +2,13 @@ import { Kysely } from 'kysely'
 import { db, Database } from '../db/database.js'
 
 interface NewLogEntry {
-  track_id: number
-  album_id: number
+  track_id: number | null
+  album_id: number | null
   artist_id: number | null
   action: string
   created_at: Date
   ip_address: string | null
+  query?: string | null
 }
 
 export function createLogService(db: Kysely<Database>) {
