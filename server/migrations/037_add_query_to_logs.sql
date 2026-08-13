@@ -7,4 +7,4 @@
 -- existing 'stream' rows leave it null. See
 -- docs/superpowers/specs/2026-08-13-search-query-logging-design.md.
 
-ALTER TABLE logs ADD COLUMN query text;
+ALTER TABLE logs ADD COLUMN IF NOT EXISTS query text;

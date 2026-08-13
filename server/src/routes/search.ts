@@ -137,7 +137,7 @@ search.get('/', async (c) => {
       action: 'search',
       created_at: new Date(),
       ip_address: extractIpAddress(c),
-      query: rawQuery.trim(),
+      query: rawQuery.trim().slice(0, 255),
     })
     .catch((err) => console.error('Failed to log search:', err))
 
