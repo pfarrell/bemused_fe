@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { logService } from '../services/logService.js'
 import { requireAdmin } from '../middleware/auth.js'
+import { extractIpAddress } from '../utils/requestIp.js'
 import type { Variables } from '../types.js'
 
 const logs = new Hono<{ Variables: Variables }>()
@@ -40,11 +41,7 @@ logs.get('/:id', async (c) => {
   if (!track) return c.text('', 200)
 
   // Get IP address from request, checking for proxy headers
-  const ip_address =
-    c.req.header('x-forwarded-for')?.split(',')[0].trim() ||
-    c.req.header('x-real-ip') ||
-    c.req.header('cf-connecting-ip') ||
-    null
+  const ip_address = extractIpAddress(c)
 
   await logService.record({
     track_id: track.id,

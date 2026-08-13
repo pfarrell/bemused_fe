@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import { searchService, RESULT_LIMIT } from '../services/searchService.js'
+import { logService } from '../services/logService.js'
+import { extractIpAddress } from '../utils/requestIp.js'
 
 const search = new Hono()
 
@@ -126,6 +128,18 @@ search.get('/', async (c) => {
     const { results, hasMore } = await buildRankedResults(likeParam, filteredQ, exactOnly, offset)
     return c.json({ results, hasMore, resultCounts: EMPTY_RESULT_COUNTS, tracks: [], count: results.length, pageSize: RESULT_LIMIT })
   }
+
+  logService
+    .record({
+      track_id: null,
+      album_id: null,
+      artist_id: null,
+      action: 'search',
+      created_at: new Date(),
+      ip_address: extractIpAddress(c),
+      query: rawQuery.trim(),
+    })
+    .catch((err) => console.error('Failed to log search:', err))
 
   const [{ results, hasMore }, trackIds, rawCounts] = await Promise.all([
     buildRankedResults(likeParam, filteredQ, exactOnly, offset),
