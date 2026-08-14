@@ -14,8 +14,8 @@
 
 import 'dotenv/config'
 import fs from 'fs'
-import crypto from 'crypto'
 import { db } from '../src/db/database.js'
+import { calculateFileHash } from '../src/utils/fileHash.js'
 
 const args = process.argv.slice(2)
 const getArg = (flag: string) => {
@@ -39,26 +39,21 @@ function logLine(msg: string) {
   fs.appendFileSync(logPath, msg + '\n')
 }
 
-// Same MD5-over-stream approach as routes/upload.ts, so backfilled hashes
-// are computed identically to ones written at upload time.
-function calculateFileHash(filePath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash('md5')
-    const stream = fs.createReadStream(filePath)
-    stream.on('data', (data) => hash.update(data))
-    stream.on('end', () => resolve(hash.digest('hex')))
-    stream.on('error', reject)
-  })
-}
-
-type FileRow = { id: number; absolute_path: string; track_id: number; track_title: string }
+type FileRow = { id: number; absolute_path: string | null; track_id: number; track_title: string }
 type Result =
   | { status: 'hashed' }
   | { status: 'missing' }
   | { status: 'error'; message: string }
 
 async function processFile(file: FileRow): Promise<Result> {
-  if (!fs.existsSync(file.absolute_path)) {
+  if (!file.absolute_path || !fs.existsSync(file.absolute_path)) {
+    if (!dryRun) {
+      await db
+        .updateTable('media_files')
+        .set({ file_missing: true, updated_at: new Date() })
+        .where('id', '=', file.id)
+        .execute()
+    }
     return { status: 'missing' }
   }
 
@@ -85,7 +80,6 @@ async function main() {
     .innerJoin('tracks', 'tracks.media_file_id', 'media_files.id')
     .select(['media_files.id', 'media_files.absolute_path', 'tracks.id as track_id', 'tracks.title as track_title'])
     .where('media_files.file_hash', 'is', null)
-    .where('media_files.absolute_path', 'is not', null)
     .orderBy('media_files.id')
 
   if (singleId) query = query.where('media_files.id', '=', singleId) as typeof query
