@@ -1,36 +1,40 @@
 import { renderHook } from '@testing-library/react';
 import { useUploadTabTitle } from './useUploadTabTitle';
+import { useTabTitleStore } from '../stores/tabTitleStore';
 
 const setHidden = (hidden) => {
   Object.defineProperty(document, 'hidden', { value: hidden, configurable: true });
   document.dispatchEvent(new Event('visibilitychange'));
 };
 
+const getOverride = () => useTabTitleStore.getState().override;
+
 describe('useUploadTabTitle', () => {
+  beforeEach(() => {
+    useTabTitleStore.setState({ override: null });
+  });
+
   afterEach(() => {
     setHidden(false);
   });
 
-  test('does not change the title while the tab is visible', () => {
-    document.title = 'Upload Tracks';
+  test('does not set an override while the tab is visible', () => {
     setHidden(false);
     renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
     });
-    expect(document.title).toBe('Upload Tracks');
+    expect(getOverride()).toBeNull();
   });
 
-  test('shows an uploading count in the title while the tab is hidden', () => {
-    document.title = 'Upload Tracks';
+  test('shows an uploading count override while the tab is hidden', () => {
     setHidden(true);
     renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
     });
-    expect(document.title).toBe('(1 uploading) Upload Tracks');
+    expect(getOverride()).toBe('(1 uploading)');
   });
 
   test('flashes a completion message with the remaining count when a batch finishes while hidden', () => {
-    document.title = 'Upload Tracks';
     setHidden(true);
     const { rerender } = renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: {
@@ -41,55 +45,62 @@ describe('useUploadTabTitle', () => {
       },
     });
     rerender({ batches: [{ id: '2', fileCount: 1, status: 'uploading' }] });
-    expect(document.title).toBe('✓ Batch done — 1 left');
+    expect(getOverride()).toBe('✓ Batch done — 1 left');
   });
 
   test('shows an all-complete message when the last batch finishes while hidden', () => {
-    document.title = 'Upload Tracks';
     setHidden(true);
     const { rerender } = renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
     });
     rerender({ batches: [] });
-    expect(document.title).toBe('✓ All uploads complete');
+    expect(getOverride()).toBe('✓ All uploads complete');
   });
 
-  test('restores the original title as soon as the tab becomes visible again', () => {
-    document.title = 'Upload Tracks';
+  test('clears the override as soon as the tab becomes visible again', () => {
     setHidden(true);
     renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
     });
-    expect(document.title).toBe('(1 uploading) Upload Tracks');
+    expect(getOverride()).toBe('(1 uploading)');
 
     setHidden(false);
-    expect(document.title).toBe('Upload Tracks');
+    expect(getOverride()).toBeNull();
   });
 
-  test('applies uploading count title when tab becomes hidden with active uploads', () => {
-    document.title = 'Upload Tracks';
+  test('sets the uploading-count override when tab becomes hidden with active uploads', () => {
     setHidden(false);
     renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
     });
-    expect(document.title).toBe('Upload Tracks');
+    expect(getOverride()).toBeNull();
 
     setHidden(true);
-    expect(document.title).toBe('(1 uploading) Upload Tracks');
+    expect(getOverride()).toBe('(1 uploading)');
   });
 
   test('shows completion flash when batch completes while backgrounded, even if started while visible', () => {
-    document.title = 'Upload Tracks';
     setHidden(false);
     const { rerender } = renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
     });
-    expect(document.title).toBe('Upload Tracks'); // Still visible, no title change
+    expect(getOverride()).toBeNull(); // Still visible, no override
 
     setHidden(true);
-    expect(document.title).toBe('(1 uploading) Upload Tracks'); // Now hidden, shows count
+    expect(getOverride()).toBe('(1 uploading)'); // Now hidden, shows count
 
     rerender({ batches: [] }); // Batch completes while hidden
-    expect(document.title).toBe('✓ All uploads complete');
+    expect(getOverride()).toBe('✓ All uploads complete');
+  });
+
+  test('clears a lingering override on unmount', () => {
+    setHidden(true);
+    const { unmount } = renderHook(({ batches }) => useUploadTabTitle(batches), {
+      initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
+    });
+    expect(getOverride()).toBe('(1 uploading)');
+
+    unmount();
+    expect(getOverride()).toBeNull();
   });
 });

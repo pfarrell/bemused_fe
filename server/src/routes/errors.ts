@@ -6,8 +6,8 @@ const errors = new Hono()
 
 // GET /admin/errors?page=1&limit=25&source=upload
 errors.get('/', async (c) => {
-  const page = parseInt(c.req.query('page') ?? '1')
-  const limit = parseInt(c.req.query('limit') ?? '25')
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1') || 1)
+  const limit = Math.max(1, parseInt(c.req.query('limit') ?? '25') || 1)
   const source = c.req.query('source') || undefined
   const offset = (page - 1) * limit
 

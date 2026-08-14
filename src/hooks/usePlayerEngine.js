@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
+import { useTabTitleStore } from '../stores/tabTitleStore';
 import { apiService } from '../services/api';
 
 const FALLBACK_ARTWORK = `${import.meta.env.BASE_URL}icons/icon-512.png`;
@@ -37,6 +38,7 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
   const duration = usePlayerStore((s) => s.duration);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const nextTrackIndex = usePlayerStore((s) => s.nextTrackIndex);
+  const titleOverride = useTabTitleStore((s) => s.override);
 
   useEffect(() => {
     const audioA = audioRefA.current;
@@ -148,6 +150,10 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
   }, [nextTrackIndex]);
 
   useEffect(() => {
+    if (titleOverride) {
+      document.title = titleOverride;
+      return undefined;
+    }
     if (!currentTrack) {
       document.title = DEFAULT_TITLE;
       return undefined;
@@ -157,7 +163,7 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
     return () => {
       document.title = DEFAULT_TITLE;
     };
-  }, [currentTrack]);
+  }, [currentTrack, titleOverride]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;

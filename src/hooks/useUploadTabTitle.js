@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react';
+import { useTabTitleStore } from '../stores/tabTitleStore';
 
 // Notifies via the browser tab title while this tab is backgrounded and
-// upload batches are in flight. Restores the original title the instant the
-// tab regains focus — the in-page batch strip already covers that case, so
-// the title only needs to carry information when you're not looking.
+// upload batches are in flight. Restores control to the player's own title
+// (current track, or the default) the instant the tab regains focus — the
+// in-page batch strip already covers that case, so the title only needs to
+// carry information when you're not looking. Goes through tabTitleStore's
+// override rather than writing document.title directly, since
+// usePlayerEngine is mounted globally and would otherwise race this hook
+// for ownership of the tab title.
 export function useUploadTabTitle(inFlightBatches) {
-  const originalTitleRef = useRef(document.title);
   const prevIdsRef = useRef(new Set());
   const inFlightBatchesRef = useRef(inFlightBatches);
 
@@ -31,23 +35,27 @@ export function useUploadTabTitle(inFlightBatches) {
       completedIds = [...prevIds].filter((id) => !currentIds.has(id));
     }
 
+    const { setOverride, clearOverride } = useTabTitleStore.getState();
+
     // Only change the title if the tab is hidden
     if (!document.hidden) {
-      document.title = originalTitleRef.current;
+      clearOverride();
       return;
     }
 
     // Show completion flash if we have completed IDs
     if (showCompletionFlash && completedIds.length > 0) {
-      document.title = uploadingCount === 0
+      setOverride(uploadingCount === 0
         ? '✓ All uploads complete'
-        : `✓ Batch done — ${uploadingCount} left`;
+        : `✓ Batch done — ${uploadingCount} left`);
       return;
     }
 
-    document.title = uploadingCount > 0
-      ? `(${uploadingCount} uploading) ${originalTitleRef.current}`
-      : originalTitleRef.current;
+    if (uploadingCount > 0) {
+      setOverride(`(${uploadingCount} uploading)`);
+    } else {
+      clearOverride();
+    }
   };
 
   useEffect(() => {
@@ -60,5 +68,14 @@ export function useUploadTabTitle(inFlightBatches) {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Clear any lingering override on unmount (e.g. navigating away from
+  // AdminUpload mid-upload) so the player's own title takes back over
+  // instead of a stale "(N uploading)" string being stranded.
+  useEffect(() => {
+    return () => {
+      useTabTitleStore.getState().clearOverride();
+    };
   }, []);
 }

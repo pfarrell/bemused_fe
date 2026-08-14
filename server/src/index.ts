@@ -49,9 +49,9 @@ app.use('*', cors({
 // Apply auth middleware globally to extract user from cookies
 app.use('*', authMiddleware)
 
-app.onError(async (err, c) => {
+app.onError((err, c) => {
   console.error(err)
-  await errorLogService.record({
+  errorLogService.record({
     source: 'http',
     message: err.message,
     context: `${c.req.method} ${c.req.path}`,

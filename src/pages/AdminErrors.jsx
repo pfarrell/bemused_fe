@@ -63,8 +63,8 @@ export default function AdminErrors() {
     window.scrollTo(0, 0);
   };
 
-  if (loading && !errors.length) return <Loading />;
-  if (error) return <Retry message={error} onRetry={() => loadErrors(currentPage)} />;
+  if (loading && !errors.length) return <Loading message="Loading errors" />;
+  if (error) return <Retry error={error} />;
 
   return (
     <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
