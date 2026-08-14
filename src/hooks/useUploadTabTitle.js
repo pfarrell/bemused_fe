@@ -2,72 +2,52 @@ import { useEffect, useRef } from 'react';
 import { useTabTitleStore } from '../stores/tabTitleStore';
 
 // Notifies via the browser tab title while this tab is backgrounded and
-// upload batches are in flight. Restores control to the player's own title
-// (current track, or the default) the instant the tab regains focus — the
-// in-page batch strip already covers that case, so the title only needs to
-// carry information when you're not looking. Goes through tabTitleStore's
-// override rather than writing document.title directly, since
-// usePlayerEngine is mounted globally and would otherwise race this hook
-// for ownership of the tab title.
+// upload batches are in flight: a live "(N uploading)" countdown that
+// updates immediately as each batch finishes, settling on "All uploads
+// complete" once none remain. Restores control to the player's own title
+// the instant the tab regains focus — the in-page batch strip already
+// covers that case, so the title only needs to carry information when
+// you're not looking. Goes through tabTitleStore's override rather than
+// writing document.title directly, since usePlayerEngine is mounted
+// globally and would otherwise race this hook for ownership of the tab title.
 export function useUploadTabTitle(inFlightBatches) {
-  const prevIdsRef = useRef(new Set());
   const inFlightBatchesRef = useRef(inFlightBatches);
+  const sawUploadingRef = useRef(false);
 
-  // Keep inFlightBatches in sync with the ref so visibility listener always sees fresh data
+  // Keep inFlightBatches in sync with the ref so the visibility listener always sees fresh data
   useEffect(() => {
     inFlightBatchesRef.current = inFlightBatches;
   }, [inFlightBatches]);
 
-  const applyTitle = (showCompletionFlash = false) => {
-    const batches = inFlightBatchesRef.current;
-    const uploadingCount = batches.filter((b) => b.status === 'uploading').length;
-
-    // Always compute and track current IDs, regardless of visibility.
-    // This ensures prevIdsRef.current is seeded even while visible, so
-    // completion detection works when the batch finishes after the tab becomes hidden.
-    const currentIds = new Set(batches.map((b) => b.id));
-    const prevIds = prevIdsRef.current;
-    prevIdsRef.current = currentIds;
-
-    // Compute completed IDs (only meaningful if we're checking for completion)
-    let completedIds = [];
-    if (showCompletionFlash) {
-      completedIds = [...prevIds].filter((id) => !currentIds.has(id));
-    }
-
+  const applyTitle = () => {
     const { setOverride, clearOverride } = useTabTitleStore.getState();
 
-    // Only change the title if the tab is hidden
     if (!document.hidden) {
+      sawUploadingRef.current = false;
       clearOverride();
       return;
     }
 
-    // Show completion flash if we have completed IDs
-    if (showCompletionFlash && completedIds.length > 0) {
-      setOverride(uploadingCount === 0
-        ? '✓ All uploads complete'
-        : `✓ Batch done — ${uploadingCount} left`);
-      return;
-    }
+    const uploadingCount = inFlightBatchesRef.current.filter((b) => b.status === 'uploading').length;
 
     if (uploadingCount > 0) {
+      sawUploadingRef.current = true;
       setOverride(`(${uploadingCount} uploading)`);
+    } else if (sawUploadingRef.current) {
+      sawUploadingRef.current = false;
+      setOverride('✓ All uploads complete');
     } else {
       clearOverride();
     }
   };
 
   useEffect(() => {
-    applyTitle(true);
+    applyTitle();
   }, [inFlightBatches]);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      applyTitle(false);
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', applyTitle);
+    return () => document.removeEventListener('visibilitychange', applyTitle);
   }, []);
 
   // Clear any lingering override on unmount (e.g. navigating away from

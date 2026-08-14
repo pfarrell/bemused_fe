@@ -34,7 +34,7 @@ describe('useUploadTabTitle', () => {
     expect(getOverride()).toBe('(1 uploading)');
   });
 
-  test('flashes a completion message with the remaining count when a batch finishes while hidden', () => {
+  test('updates the countdown immediately when a batch finishes while hidden', () => {
     setHidden(true);
     const { rerender } = renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: {
@@ -44,8 +44,37 @@ describe('useUploadTabTitle', () => {
         ],
       },
     });
+    expect(getOverride()).toBe('(2 uploading)');
     rerender({ batches: [{ id: '2', fileCount: 1, status: 'uploading' }] });
-    expect(getOverride()).toBe('✓ Batch done — 1 left');
+    expect(getOverride()).toBe('(1 uploading)');
+  });
+
+  test('keeps updating the countdown across multiple completions with no visibility toggle in between', () => {
+    setHidden(true);
+    const { rerender } = renderHook(({ batches }) => useUploadTabTitle(batches), {
+      initialProps: {
+        batches: [
+          { id: '1', fileCount: 2, status: 'uploading' },
+          { id: '2', fileCount: 1, status: 'uploading' },
+          { id: '3', fileCount: 3, status: 'uploading' },
+        ],
+      },
+    });
+    expect(getOverride()).toBe('(3 uploading)');
+
+    rerender({
+      batches: [
+        { id: '2', fileCount: 1, status: 'uploading' },
+        { id: '3', fileCount: 3, status: 'uploading' },
+      ],
+    });
+    expect(getOverride()).toBe('(2 uploading)');
+
+    rerender({ batches: [{ id: '3', fileCount: 3, status: 'uploading' }] });
+    expect(getOverride()).toBe('(1 uploading)');
+
+    rerender({ batches: [] });
+    expect(getOverride()).toBe('✓ All uploads complete');
   });
 
   test('shows an all-complete message when the last batch finishes while hidden', () => {
@@ -79,7 +108,7 @@ describe('useUploadTabTitle', () => {
     expect(getOverride()).toBe('(1 uploading)');
   });
 
-  test('shows completion flash when batch completes while backgrounded, even if started while visible', () => {
+  test('shows all-complete when batch completes while backgrounded, even if started while visible', () => {
     setHidden(false);
     const { rerender } = renderHook(({ batches }) => useUploadTabTitle(batches), {
       initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
