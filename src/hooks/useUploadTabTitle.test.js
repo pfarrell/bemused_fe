@@ -77,4 +77,19 @@ describe('useUploadTabTitle', () => {
     setHidden(true);
     expect(document.title).toBe('(1 uploading) Upload Tracks');
   });
+
+  test('shows completion flash when batch completes while backgrounded, even if started while visible', () => {
+    document.title = 'Upload Tracks';
+    setHidden(false);
+    const { rerender } = renderHook(({ batches }) => useUploadTabTitle(batches), {
+      initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
+    });
+    expect(document.title).toBe('Upload Tracks'); // Still visible, no title change
+
+    setHidden(true);
+    expect(document.title).toBe('(1 uploading) Upload Tracks'); // Now hidden, shows count
+
+    rerender({ batches: [] }); // Batch completes while hidden
+    expect(document.title).toBe('✓ All uploads complete');
+  });
 });

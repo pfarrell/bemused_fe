@@ -18,22 +18,31 @@ export function useUploadTabTitle(inFlightBatches) {
     const batches = inFlightBatchesRef.current;
     const uploadingCount = batches.filter((b) => b.status === 'uploading').length;
 
+    // Always compute and track current IDs, regardless of visibility.
+    // This ensures prevIdsRef.current is seeded even while visible, so
+    // completion detection works when the batch finishes after the tab becomes hidden.
+    const currentIds = new Set(batches.map((b) => b.id));
+    const prevIds = prevIdsRef.current;
+    prevIdsRef.current = currentIds;
+
+    // Compute completed IDs (only meaningful if we're checking for completion)
+    let completedIds = [];
+    if (showCompletionFlash) {
+      completedIds = [...prevIds].filter((id) => !currentIds.has(id));
+    }
+
+    // Only change the title if the tab is hidden
     if (!document.hidden) {
       document.title = originalTitleRef.current;
       return;
     }
 
-    if (showCompletionFlash) {
-      const currentIds = new Set(batches.map((b) => b.id));
-      const completedIds = [...prevIdsRef.current].filter((id) => !currentIds.has(id));
-      prevIdsRef.current = currentIds;
-
-      if (completedIds.length > 0) {
-        document.title = uploadingCount === 0
-          ? '✓ All uploads complete'
-          : `✓ Batch done — ${uploadingCount} left`;
-        return;
-      }
+    // Show completion flash if we have completed IDs
+    if (showCompletionFlash && completedIds.length > 0) {
+      document.title = uploadingCount === 0
+        ? '✓ All uploads complete'
+        : `✓ Batch done — ${uploadingCount} left`;
+      return;
     }
 
     document.title = uploadingCount > 0
