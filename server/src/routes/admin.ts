@@ -279,6 +279,25 @@ admin.put('/album/:id', async (c) => {
   }
 })
 
+// A media_files row can be shared by tracks outside the artist/album being
+// deleted (the same recording appearing on another release) — only delete
+// rows no longer referenced by any remaining track, so a shared file
+// survives. This is the graceful-skip layer; the media_files FK's
+// ON DELETE RESTRICT is the hard backstop underneath it for any path that
+// doesn't call this first. Call this AFTER deleting the tracks in the
+// artist/album being removed, so "no longer referenced" correctly means
+// "not referenced by some other, surviving track."
+async function deletableMediaFileIds(candidateIds: number[]): Promise<number[]> {
+  if (candidateIds.length === 0) return []
+  const stillReferenced = await db
+    .selectFrom('tracks')
+    .select('media_file_id')
+    .where('media_file_id', 'in', candidateIds)
+    .execute()
+  const stillReferencedIds = new Set(stillReferenced.map(t => t.media_file_id))
+  return candidateIds.filter(id => !stillReferencedIds.has(id))
+}
+
 // DELETE /admin/artist/:id — delete an artist and cascade to albums, tracks, media_files
 admin.delete('/artist/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
@@ -304,7 +323,10 @@ admin.delete('/artist/:id', async (c) => {
         await db.deleteFrom('tracks').where('album_id', 'in', albumIds).execute()
       }
       if (mediaFileIds.length > 0) {
-        await db.deleteFrom('media_files').where('id', 'in', mediaFileIds).execute()
+        const deletable = await deletableMediaFileIds(mediaFileIds)
+        if (deletable.length > 0) {
+          await db.deleteFrom('media_files').where('id', 'in', deletable).execute()
+        }
       }
       await db.deleteFrom('albums').where('id', 'in', albumIds).execute()
     }
@@ -336,7 +358,10 @@ admin.delete('/album/:id', async (c) => {
       await db.deleteFrom('tracks').where('album_id', '=', id).execute()
     }
     if (mediaFileIds.length > 0) {
-      await db.deleteFrom('media_files').where('id', 'in', mediaFileIds).execute()
+      const deletable = await deletableMediaFileIds(mediaFileIds)
+      if (deletable.length > 0) {
+        await db.deleteFrom('media_files').where('id', 'in', deletable).execute()
+      }
     }
 
     const deleted = await db.deleteFrom('albums').where('id', '=', id).returningAll().executeTakeFirst()

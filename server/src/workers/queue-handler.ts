@@ -362,45 +362,133 @@ async function processQueueItem(item: any) {
       trackNumber = rawTrackNumber !== null ? (rawTrackNumber + trackPad).toString() : null
     }
 
-    // Determine final file location on NAS
-    const sanitizedArtist = sanitizeFilename(albumArtist!.name)
-    const sanitizedAlbum = sanitizeFilename(album!.title)
-    const filename = path.basename(item.file_path)
-    const nasLocation = path.join(UPLOAD_PATH, sanitizedArtist, sanitizedAlbum, filename)
-
-    console.log(`  📁 Moving file to: ${nasLocation}`)
-
-    // Create directory if needed
-    fs.mkdirSync(path.dirname(nasLocation), { recursive: true })
-
-    // Copy file to NAS location (handles cross-device moves)
-    fs.copyFileSync(item.file_path, nasLocation)
-
-    // Delete original file after successful copy
-    fs.unlinkSync(item.file_path)
-
-    // Get duration from metadata
+    // Get duration from metadata — computed once, unconditionally, since
+    // `metadata` was already parsed from item.file_path before any of the
+    // branching below, and is needed on both the reuse and new-file paths.
     const durationSec = metadata.format.duration ? Math.round(metadata.format.duration) : null
 
-    // Create media_file record (file system info)
-    console.log(`  💾 Creating media_file record...`)
-    const now = new Date()
-    const fileStats = fs.statSync(nasLocation)
-    const mediaFile = await db
-      .insertInto('media_files')
-      .values({
-        absolute_path: nasLocation,
-        file_hash: item.file_hash,
-        name: filename,
-        file_type: path.extname(filename).toLowerCase(),
-        imported_date: now,
-        last_modified: fileStats.mtime, // File's actual modification time
-        created_at: now,
-        updated_at: now,
-        file_missing: false
-      })
-      .returningAll()
+    // Media-file dedup: reuse an existing media_files row when this exact
+    // content (by hash) is already in the library, rather than creating a
+    // duplicate copy on disk. Two tracks can legitimately share one
+    // media_files row when the same recording appears on multiple
+    // releases. `file_missing` rows are excluded from the match — if the
+    // previously-known file is gone, treat this upload as re-establishing
+    // it rather than linking to a broken reference. `entity_type IS NULL`
+    // scopes the match to track-linked rows only — media_files also holds
+    // non-track rows (entity_type = 'image' for cached artist/album art
+    // today, with more entity types planned) and an audio upload must
+    // never link to one of those, even on an accidental hash collision
+    // (e.g. two unrelated zero-byte/corrupt uploads hashing identically).
+    let mediaFile = await db
+      .selectFrom('media_files')
+      .selectAll()
+      .where('file_hash', '=', item.file_hash)
+      .where('entity_type', 'is', null)
+      .where('file_missing', 'is not', true)
       .executeTakeFirst()
+
+    if (mediaFile) {
+      // The `file_missing IS NOT TRUE` filter above only excludes rows
+      // that were explicitly flagged missing — nothing in this codebase
+      // ever sets that flag, so it can never actually catch a stale
+      // reference. Verify the matched row's file genuinely exists on disk
+      // before trusting it: if it's gone (moved, deleted, lost on the
+      // NAS), re-establish it from the upload currently being processed
+      // rather than either silently linking to a broken path or inserting
+      // a second media_files row for the same hash (which would defeat
+      // the one-row-per-hash invariant a future UNIQUE constraint on
+      // file_hash is meant to enforce).
+      if (!mediaFile.absolute_path || !fs.existsSync(mediaFile.absolute_path)) {
+        const restoreLocation = mediaFile.absolute_path || path.join(
+          UPLOAD_PATH,
+          sanitizeFilename(albumArtist!.name),
+          sanitizeFilename(album!.title),
+          path.basename(item.file_path)
+        )
+
+        console.log(`  🔧 Re-establishing missing media_files row ${mediaFile.id} at: ${restoreLocation}`)
+
+        fs.mkdirSync(path.dirname(restoreLocation), { recursive: true })
+        fs.copyFileSync(item.file_path, restoreLocation)
+
+        const fileStats = fs.statSync(restoreLocation)
+        mediaFile = await db
+          .updateTable('media_files')
+          .set({
+            absolute_path: restoreLocation,
+            last_modified: fileStats.mtime,
+            file_missing: false,
+            updated_at: new Date()
+          })
+          .where('id', '=', mediaFile.id)
+          .returningAll()
+          .executeTakeFirst()
+      }
+
+      // Hash already exists. Only skip creating a track entirely if one
+      // already sits in this exact album pointing at this file — a true
+      // accidental re-upload, the same case the old upload.ts dedup check
+      // caught. Any other placement (different album/artist) is a
+      // legitimate new track sharing the existing file.
+      const existingTrackInAlbum = await db
+        .selectFrom('tracks')
+        .selectAll()
+        .where('media_file_id', '=', mediaFile.id)
+        .where('album_id', '=', album!.id)
+        .executeTakeFirst()
+
+      fs.rmSync(item.file_path, { force: true })
+
+      if (existingTrackInAlbum) {
+        console.log(`  ♻️  Hash ${item.file_hash} already has a track in this album — linking to existing track "${existingTrackInAlbum.title}" instead of duplicating`)
+        await db
+          .updateTable('upload_queue')
+          .set({ status: 'completed', completed_at: new Date(), track_id: existingTrackInAlbum.id })
+          .where('id', '=', item.id)
+          .execute()
+        console.log(`✅ Linked duplicate to existing track: ${existingTrackInAlbum.title}`)
+        return
+      }
+
+      console.log(`  ♻️  Reusing existing media_files row ${mediaFile.id} for hash ${item.file_hash} — new placement, no NAS copy needed`)
+    } else {
+      // Determine final file location on NAS
+      const sanitizedArtist = sanitizeFilename(albumArtist!.name)
+      const sanitizedAlbum = sanitizeFilename(album!.title)
+      const filename = path.basename(item.file_path)
+      const nasLocation = path.join(UPLOAD_PATH, sanitizedArtist, sanitizedAlbum, filename)
+
+      console.log(`  📁 Moving file to: ${nasLocation}`)
+
+      // Create directory if needed
+      fs.mkdirSync(path.dirname(nasLocation), { recursive: true })
+
+      // Copy file to NAS location (handles cross-device moves)
+      fs.copyFileSync(item.file_path, nasLocation)
+
+      // Delete original file after successful copy
+      fs.unlinkSync(item.file_path)
+
+      // Create media_file record (file system info)
+      console.log(`  💾 Creating media_file record...`)
+      const now = new Date()
+      const fileStats = fs.statSync(nasLocation)
+      mediaFile = await db
+        .insertInto('media_files')
+        .values({
+          absolute_path: nasLocation,
+          file_hash: item.file_hash,
+          name: filename,
+          file_type: path.extname(filename).toLowerCase(),
+          imported_date: now,
+          last_modified: fileStats.mtime, // File's actual modification time
+          created_at: now,
+          updated_at: now,
+          file_missing: false
+        })
+        .returningAll()
+        .executeTakeFirst()
+    }
 
     // Find or create track
     console.log(`  🎵 Finding/creating track: ${trackTitle}`)

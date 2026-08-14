@@ -55,7 +55,6 @@ interface MediaFileTable {
   absolute_path: string | null
   name: string | null
   file_type: string | null
-  track_id: number | null        // legacy — use entity_id for new records
   entity_id: number | null
   entity_type: string | null
   file_missing: boolean | null
