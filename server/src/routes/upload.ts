@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import { db } from '../db/database.js'
 import fs from 'fs'
 import path from 'path'
-import crypto from 'crypto'
 import { fileURLToPath } from 'url'
+import { calculateFileHash } from '../utils/fileHash.js'
 
 const upload = new Hono()
 
@@ -24,18 +24,6 @@ const getUploadDir = () => {
   }
 
   return uploadDir
-}
-
-// Helper to calculate MD5 hash of a file
-const calculateFileHash = (filePath: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash('md5')
-    const stream = fs.createReadStream(filePath)
-
-    stream.on('data', (data) => hash.update(data))
-    stream.on('end', () => resolve(hash.digest('hex')))
-    stream.on('error', reject)
-  })
 }
 
 // POST /admin/upload - Upload audio files
