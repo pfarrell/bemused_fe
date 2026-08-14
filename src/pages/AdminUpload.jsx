@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import jsmediatags from 'jsmediatags';
+import { useUploadTabTitle } from '../hooks/useUploadTabTitle';
 
 const VARIOUS_ARTISTS = { id: 161, name: 'Various Artists' };
 
@@ -16,6 +17,7 @@ const AdminUpload = () => {
 
   // Status
   const [inFlightBatches, setInFlightBatches] = useState([]);
+  useUploadTabTitle(inFlightBatches);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
