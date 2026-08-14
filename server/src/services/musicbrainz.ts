@@ -2,6 +2,7 @@
 
 import { db } from '../db/database.js'
 import { fetchAlbumArtFromCAA } from './coverArtArchive.js'
+import { errorLogService } from './errorLogService.js'
 
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -61,6 +62,7 @@ export async function lookupAlbumMBID(
     data = await rateLimitedFetch(url)
   } catch (err) {
     console.warn(`  ⚠️  MB lookup failed for album ${albumId}: ${(err as Error).message}`)
+    errorLogService.record({ source: 'musicbrainz', message: (err as Error).message, context: `album ${albumId}` })
     return { mbid: '', confidence: 0, status: 'unmatched' }
   }
 
@@ -101,6 +103,7 @@ export async function lookupAlbumMBID(
   // Async image fetch from Cover Art Archive — non-blocking
   fetchAlbumArtFromCAA(albumId, top.id, IMAGES_DIR).catch(err => {
     console.warn(`  ⚠️  CAA image fetch failed post-MBID for album ${albumId}:`, err.message)
+    errorLogService.record({ source: 'musicbrainz', message: err.message, context: `CAA fetch for album ${albumId}` })
   })
 
   return { mbid: top.id, confidence, status }
@@ -133,6 +136,7 @@ export async function lookupArtistMBID(
     data = await rateLimitedFetch(url)
   } catch (err) {
     console.warn(`  ⚠️  MB lookup failed for artist ${artistId}: ${(err as Error).message}`)
+    errorLogService.record({ source: 'musicbrainz', message: (err as Error).message, context: `artist ${artistId}` })
     return { mbid: '', confidence: 0, status: 'unmatched' }
   }
 

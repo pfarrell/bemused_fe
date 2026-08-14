@@ -11,6 +11,7 @@ import { db } from '../db/database.js'
 import fs from 'fs'
 import path from 'path'
 import { createSmallVersion } from './imageResize.js'
+import { errorLogService } from './errorLogService.js'
 
 const FANART_BASE = 'https://webservice.fanart.tv/v3/music'
 const USER_AGENT = 'Bemused/1.0 (https://patf.net)'
@@ -102,6 +103,7 @@ export async function fetchArtistImageFromFanart(
     data = await res.json()
   } catch (err) {
     console.warn(`  ⚠️  Fanart.tv fetch failed for artist ${artistId}: ${(err as Error).message}`)
+    errorLogService.record({ source: 'fanart', message: (err as Error).message, context: `artist ${artistId}` })
     return { downloaded: 0, existing: 0 }
   }
 
@@ -152,6 +154,7 @@ export async function fetchArtistImageFromFanart(
       downloaded++
     } catch (err) {
       console.warn(`  ⚠️  Failed to save thumb ${thumb.id}: ${(err as Error).message}`)
+      errorLogService.record({ source: 'fanart', message: (err as Error).message, context: `thumb ${thumb.id} for artist ${artistId}` })
     }
   }
 
@@ -174,6 +177,7 @@ export async function fetchArtistImageFromFanart(
       downloaded++
     } catch (err) {
       console.warn(`  ⚠️  Failed to save background ${bg.id}: ${(err as Error).message}`)
+      errorLogService.record({ source: 'fanart', message: (err as Error).message, context: `background ${bg.id} for artist ${artistId}` })
     }
   }
 
@@ -196,6 +200,7 @@ export async function fetchArtistImageFromFanart(
       downloaded++
     } catch (err) {
       console.warn(`  ⚠️  Failed to save banner ${banner.id}: ${(err as Error).message}`)
+      errorLogService.record({ source: 'fanart', message: (err as Error).message, context: `banner ${banner.id} for artist ${artistId}` })
     }
   }
 
@@ -212,6 +217,7 @@ export async function fetchArtistImageFromFanart(
       downloaded++
     } catch (err) {
       console.warn(`  ⚠️  Failed to save logo ${logo.id}: ${(err as Error).message}`)
+      errorLogService.record({ source: 'fanart', message: (err as Error).message, context: `logo ${logo.id} for artist ${artistId}` })
     }
   }
 

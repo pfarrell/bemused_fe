@@ -8,6 +8,7 @@
 //   4. Create a stub artist (no albums/tracks)
 
 import { db } from '../db/database.js'
+import { errorLogService } from './errorLogService.js'
 import { sql } from 'kysely'
 
 const LB_BASE = 'https://labs.api.listenbrainz.org'
@@ -61,6 +62,7 @@ export async function fetchLBSimilarArtists(
     )
   } catch (err) {
     console.warn(`  ⚠️  ListenBrainz similar failed for artist ${artistId}: ${(err as Error).message}`)
+    errorLogService.record({ source: 'listenbrainz', message: (err as Error).message, context: `artist ${artistId}` })
     await upsertLookup(artistId, 'error')
     return { matched: 0, stubbed: 0, skipped: false }
   }

@@ -7,6 +7,8 @@ interface WikiSummary {
   url: string
 }
 
+import { errorLogService } from './errorLogService.js'
+
 const cache = new Map<string, WikiSummary | null>()
 
 async function fetchWikipedia(title: string): Promise<WikiSummary | null> {
@@ -33,7 +35,8 @@ async function fetchWikipedia(title: string): Promise<WikiSummary | null> {
     }
 
     return { summary, url: data.content_urls?.desktop?.page ?? `https://en.wikipedia.org/wiki/${encoded}` }
-  } catch {
+  } catch (err) {
+    errorLogService.record({ source: 'wikipedia', message: (err as Error).message, context: title })
     return null
   }
 }

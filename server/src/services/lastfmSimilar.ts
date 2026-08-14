@@ -8,6 +8,7 @@
 
 import { db } from '../db/database.js'
 import { lastfmUrl } from './lastfm.js'
+import { errorLogService } from './errorLogService.js'
 import { sql } from 'kysely'
 
 const RATE_LIMIT_MS = 1100
@@ -63,6 +64,7 @@ export async function fetchSimilarArtists(
     data = await rateLimitedFetch(url)
   } catch (err) {
     console.warn(`  ⚠️  Last.fm similar failed for artist ${artistId}: ${(err as Error).message}`)
+    errorLogService.record({ source: 'lastfm', message: (err as Error).message, context: `artist ${artistId}` })
     await upsertLookup(artistId, 'error')
     return { matched: 0, stubbed: 0, skipped: false }
   }
