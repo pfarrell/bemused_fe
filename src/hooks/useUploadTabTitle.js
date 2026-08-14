@@ -7,33 +7,47 @@ import { useEffect, useRef } from 'react';
 export function useUploadTabTitle(inFlightBatches) {
   const originalTitleRef = useRef(document.title);
   const prevIdsRef = useRef(new Set());
+  const inFlightBatchesRef = useRef(inFlightBatches);
 
+  // Keep inFlightBatches in sync with the ref so visibility listener always sees fresh data
   useEffect(() => {
-    const uploadingCount = inFlightBatches.filter((b) => b.status === 'uploading').length;
-    const currentIds = new Set(inFlightBatches.map((b) => b.id));
-    const completedIds = [...prevIdsRef.current].filter((id) => !currentIds.has(id));
-    prevIdsRef.current = currentIds;
+    inFlightBatchesRef.current = inFlightBatches;
+  }, [inFlightBatches]);
+
+  const applyTitle = (showCompletionFlash = false) => {
+    const batches = inFlightBatchesRef.current;
+    const uploadingCount = batches.filter((b) => b.status === 'uploading').length;
 
     if (!document.hidden) {
       document.title = originalTitleRef.current;
       return;
     }
 
-    if (completedIds.length > 0) {
-      document.title = uploadingCount === 0
-        ? '✓ All uploads complete'
-        : `✓ Batch done — ${uploadingCount} left`;
-      return;
+    if (showCompletionFlash) {
+      const currentIds = new Set(batches.map((b) => b.id));
+      const completedIds = [...prevIdsRef.current].filter((id) => !currentIds.has(id));
+      prevIdsRef.current = currentIds;
+
+      if (completedIds.length > 0) {
+        document.title = uploadingCount === 0
+          ? '✓ All uploads complete'
+          : `✓ Batch done — ${uploadingCount} left`;
+        return;
+      }
     }
 
     document.title = uploadingCount > 0
       ? `(${uploadingCount} uploading) ${originalTitleRef.current}`
       : originalTitleRef.current;
+  };
+
+  useEffect(() => {
+    applyTitle(true);
   }, [inFlightBatches]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden) document.title = originalTitleRef.current;
+      applyTitle(false);
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);

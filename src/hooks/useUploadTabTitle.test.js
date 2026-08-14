@@ -65,4 +65,16 @@ describe('useUploadTabTitle', () => {
     setHidden(false);
     expect(document.title).toBe('Upload Tracks');
   });
+
+  test('applies uploading count title when tab becomes hidden with active uploads', () => {
+    document.title = 'Upload Tracks';
+    setHidden(false);
+    renderHook(({ batches }) => useUploadTabTitle(batches), {
+      initialProps: { batches: [{ id: '1', fileCount: 2, status: 'uploading' }] },
+    });
+    expect(document.title).toBe('Upload Tracks');
+
+    setHidden(true);
+    expect(document.title).toBe('(1 uploading) Upload Tracks');
+  });
 });
