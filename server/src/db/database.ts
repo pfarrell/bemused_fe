@@ -282,6 +282,14 @@ interface NoteTable {
   created_at: ColumnType<Date, string | Date | undefined, never>
 }
 
+interface ErrorLogTable {
+  id: Generated<number>
+  source: string
+  message: string
+  context: string | null
+  created_at: ColumnType<Date, never, never>
+}
+
 export interface Database {
   artists: ArtistTable
   albums: AlbumTable
@@ -309,6 +317,7 @@ export interface Database {
   user_recall_tokens: UserRecallTokenTable
   notes: NoteTable
   oauth_identities: OAuthIdentityTable
+  error_log: ErrorLogTable
 }
 
 // ---- DB instance ----
