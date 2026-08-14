@@ -314,8 +314,11 @@ async function processQueueItem(item: any) {
         .executeTakeFirst()
     }
 
-    // Async MBID lookup — non-blocking, upload success does not depend on it
-    if (album) {
+    // Async MBID lookup — non-blocking, upload success does not depend on it.
+    // Skip for _Singles pseudo-albums: mbid-lookup.ts and backfill-release-year.ts
+    // both exclude `albums.title != '_Singles'` from this exact operation, since a
+    // shared pseudo-album titled "_Singles" can never legitimately match a release.
+    if (album && !item.is_single) {
       const trackCountResult = await db
         .selectFrom('tracks')
         .select(db.fn.count<number>('id').as('count'))

@@ -583,7 +583,10 @@ const AdminUpload = () => {
                 checked={isSingle}
                 onChange={(e) => {
                   setIsSingle(e.target.checked);
-                  if (e.target.checked) setIsCompilation(false);
+                  if (e.target.checked) {
+                    setIsCompilation(false);
+                    setSelectedArtist(null);
+                  }
                 }}
               />
               Singles

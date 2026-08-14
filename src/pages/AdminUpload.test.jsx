@@ -316,6 +316,21 @@ describe('AdminUpload — Singles checkbox', () => {
     expect(compilationCheckbox).toBeChecked();
     expect(singlesCheckbox).not.toBeChecked();
   });
+
+  test('switching from Compilation to Singles clears the artist pinned to Various Artists', async () => {
+    const user = userEvent.setup();
+    renderUpload();
+
+    const compilationCheckbox = screen.getByLabelText('Various artists compilation');
+    const singlesCheckbox = screen.getByLabelText('Singles');
+
+    await user.click(compilationCheckbox);
+    expect(screen.getByText('Various Artists')).toBeInTheDocument();
+
+    await user.click(singlesCheckbox);
+
+    expect(screen.queryByText('Various Artists')).not.toBeInTheDocument();
+  });
 });
 
 describe('AdminUpload — clearing failed uploads', () => {
