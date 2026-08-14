@@ -146,10 +146,15 @@ async function main() {
     } catch (err) {
       groupsFailed++
       console.error(`  ❌ [hash ${hash}] failed: ${(err as Error).message}`)
-    }
-
-    if (processed % checkpointEvery === 0) {
-      logLine(`  [${processed}/${hashes.length}] checkpoint — completed=${processed} | ✅${groupsConsolidated} ⚠️${groupsSkipped} ❌${groupsFailed} | tracks repointed=${tracksRepointed} rows deleted=${rowsDeleted}`)
+    } finally {
+      // A `finally` block always runs — including when the skip path's
+      // `continue` above fires — so the checkpoint check can't be
+      // silently skipped for a group that lands on a checkpoint boundary,
+      // unlike placing this check after the try/catch would (that only
+      // runs on the fall-through path, not on `continue`).
+      if (processed % checkpointEvery === 0) {
+        logLine(`  [${processed}/${hashes.length}] checkpoint — completed=${processed} | ✅${groupsConsolidated} ⚠️${groupsSkipped} ❌${groupsFailed} | tracks repointed=${tracksRepointed} rows deleted=${rowsDeleted}`)
+      }
     }
   }
 
