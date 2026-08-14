@@ -13,6 +13,7 @@ import 'dotenv/config'
  */
 
 import { db } from '../db/database.js'
+import { errorLogService } from '../services/errorLogService.js'
 import fs from 'fs'
 import path from 'path'
 import { parseFile } from 'music-metadata'
@@ -425,6 +426,12 @@ async function processQueueItem(item: any) {
   } catch (error: any) {
     console.error(`❌ Error processing queue item ${item.id}:`, error.message)
 
+    await errorLogService.record({
+      source: 'upload',
+      message: error.message,
+      context: item.original_filename,
+    })
+
     // Mark as failed with error message
     await db
       .updateTable('upload_queue')
@@ -460,6 +467,11 @@ async function reclaimStaleProcessingItems() {
 
   for (const item of stale) {
     console.warn(`  ⚠️  Reclaimed stale processing item ${item.id} (${item.original_filename})`)
+    await errorLogService.record({
+      source: 'upload',
+      message: 'Reclaimed: stuck in "processing" past the worker restart without completing.',
+      context: item.original_filename,
+    })
   }
 }
 

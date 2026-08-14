@@ -17,6 +17,7 @@ import share from './routes/share.js'
 import admin from './routes/admin.js'
 import upload from './routes/upload.js'
 import auth from './routes/auth.js'
+import { errorLogService } from './services/errorLogService.js'
 import { authMiddleware, requireAdmin } from './middleware/auth.js'
 
 const app = new Hono<{ Variables: Variables }>()
@@ -47,8 +48,13 @@ app.use('*', cors({
 // Apply auth middleware globally to extract user from cookies
 app.use('*', authMiddleware)
 
-app.onError((err, c) => {
+app.onError(async (err, c) => {
   console.error(err)
+  await errorLogService.record({
+    source: 'http',
+    message: err.message,
+    context: `${c.req.method} ${c.req.path}`,
+  })
   return c.json({ error: err.message, stack: err.stack }, 500)
 })
 
