@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/database.js'
 import { sql } from 'kysely'
+import { SINGLES_ALBUM_TITLE } from '../constants/singles.js'
 import pg from 'pg'
 
 const pool = new pg.Pool({ connectionString: process.env.BEMUSED_DB })
@@ -799,7 +800,6 @@ admin.put('/track/:id', async (c) => {
 // left unchanged — it's what determines which artist's singles it joins,
 // which matters for a compilation track credited to someone other than the
 // album's nominal artist.
-const SINGLES_ALBUM_TITLE = '_Singles'
 
 admin.post('/track/:id/make-single', async (c) => {
   const id = parseInt(c.req.param('id'))
