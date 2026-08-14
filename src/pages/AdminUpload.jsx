@@ -43,6 +43,7 @@ const AdminUpload = () => {
   const [selectedAlbum, setSelectedAlbum] = useState(null);
 
   const [isCompilation, setIsCompilation] = useState(false);
+  const [isSingle, setIsSingle] = useState(false);
 
   // Prevent the exact bug that fragmented a real upload into one album per
   // ID3 artist tag: a various-artists batch must always resolve to a single,
@@ -146,12 +147,15 @@ const AdminUpload = () => {
       formData.append('artist_name', artistQuery.trim());
     }
 
-    if (selectedAlbum) {
-      formData.append('album_id', String(selectedAlbum.id));
-    } else if (albumQuery.trim()) {
-      formData.append('album_name', albumQuery.trim());
+    if (!isSingle) {
+      if (selectedAlbum) {
+        formData.append('album_id', String(selectedAlbum.id));
+      } else if (albumQuery.trim()) {
+        formData.append('album_name', albumQuery.trim());
+      }
     }
     formData.append('is_compilation', String(isCompilation));
+    formData.append('is_single', String(isSingle));
     if (genre) formData.append('genre', genre);
     if (trackPad) formData.append('track_pad', trackPad);
     if (albumArtUrl) formData.append('album_art_url', albumArtUrl);
@@ -170,6 +174,7 @@ const AdminUpload = () => {
     setSelectedAlbum(null);
     setAlbumResults([]);
     setIsCompilation(false);
+    setIsSingle(false);
     setGenre('');
     setTrackPad('0');
     setAlbumArtUrl('');
@@ -558,7 +563,10 @@ const AdminUpload = () => {
               <input
                 type="checkbox"
                 checked={isCompilation}
-                onChange={(e) => setIsCompilation(e.target.checked)}
+                onChange={(e) => {
+                  setIsCompilation(e.target.checked);
+                  if (e.target.checked) setIsSingle(false);
+                }}
               />
               Various artists compilation
             </label>
@@ -567,7 +575,26 @@ const AdminUpload = () => {
             </small>
           </div>
 
+          {/* Singles Toggle */}
+          <div style={{ marginTop: '0.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={isSingle}
+                onChange={(e) => {
+                  setIsSingle(e.target.checked);
+                  if (e.target.checked) setIsCompilation(false);
+                }}
+              />
+              Singles
+            </label>
+            <small style={{ color: '#6b7280', fontSize: '0.875rem', display: 'block', marginTop: '0.25rem' }}>
+              Each track is filed under its artist's _Singles album instead of a regular album.
+            </small>
+          </div>
+
           {/* Album Picker */}
+          {!isSingle && (
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
               Album
@@ -652,6 +679,7 @@ const AdminUpload = () => {
               </div>
             )}
           </div>
+          )}
 
           {/* Genre and Track Pad */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
@@ -698,6 +726,7 @@ const AdminUpload = () => {
           </div>
 
           {/* Album Art */}
+          {!isSingle && (
           <div style={{
             padding: '1rem',
             backgroundColor: '#fff',
@@ -744,6 +773,7 @@ const AdminUpload = () => {
               />
             </div>
           </div>
+          )}
 
           {/* Submit Button */}
           <button
