@@ -373,17 +373,26 @@ async function processQueueItem(item: any) {
     // media_files row when the same recording appears on multiple
     // releases. `file_missing` rows are excluded from the match — if the
     // previously-known file is gone, treat this upload as re-establishing
-    // it rather than linking to a broken reference. `entity_type IS NULL`
+    // it rather than linking to a broken reference. The entity_type filter
     // scopes the match to track-linked rows only — media_files also holds
     // non-track rows (entity_type = 'image' for cached artist/album art
     // today, with more entity types planned) and an audio upload must
     // never link to one of those, even on an accidental hash collision
     // (e.g. two unrelated zero-byte/corrupt uploads hashing identically).
+    // Track-linked rows carry entity_type IS NULL (the current upload
+    // path's convention) OR entity_type = 'track' (migration 011's older
+    // convention, still the dominant one for existing library data — most
+    // of the real library was created before the newer convention existed,
+    // so excluding it here would silently fail to dedupe against the vast
+    // majority of an established library). This is deliberately an
+    // allowlist of known track-signaling values, not a blocklist of known
+    // non-track ones, so a future new entity_type is excluded by default
+    // until explicitly added here.
     let mediaFile = await db
       .selectFrom('media_files')
       .selectAll()
       .where('file_hash', '=', item.file_hash)
-      .where('entity_type', 'is', null)
+      .where(eb => eb.or([eb('entity_type', 'is', null), eb('entity_type', '=', 'track')]))
       .where('file_missing', 'is not', true)
       .executeTakeFirst()
 
