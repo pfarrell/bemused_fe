@@ -397,12 +397,12 @@ async function processQueueItem(item: any) {
       .executeTakeFirst()
 
     if (mediaFile) {
-      // The `file_missing IS NOT TRUE` filter above only excludes rows
-      // that were explicitly flagged missing — nothing in this codebase
-      // ever sets that flag, so it can never actually catch a stale
-      // reference. Verify the matched row's file genuinely exists on disk
-      // before trusting it: if it's gone (moved, deleted, lost on the
-      // NAS), re-establish it from the upload currently being processed
+      // The `file_missing IS NOT TRUE` filter above excludes rows already
+      // known to be missing (server/scripts/backfill-file-hash.ts sets and
+      // clears this flag on its own periodic runs). That's a periodic, not
+      // real-time, signal, so still verify the matched row's file genuinely
+      // exists on disk before trusting it: if it's gone (moved, deleted,
+      // lost on the NAS), re-establish it from the upload currently being processed
       // rather than either silently linking to a broken path or inserting
       // a second media_files row for the same hash (which would defeat
       // the one-row-per-hash invariant a future UNIQUE constraint on

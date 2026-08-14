@@ -67,7 +67,7 @@ async function processFile(file: FileRow): Promise<Result> {
   if (!dryRun) {
     await db
       .updateTable('media_files')
-      .set({ file_hash: hash, updated_at: new Date() })
+      .set({ file_hash: hash, file_missing: false, updated_at: new Date() })
       .where('id', '=', file.id)
       .execute()
   }
