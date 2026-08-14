@@ -117,22 +117,6 @@ upload.post('/', async (c) => {
       // Calculate MD5 hash
       const fileHash = await calculateFileHash(filePath)
 
-      // Check if file already exists and is linked to an active track.
-      // An orphaned media_files row (no track pointing to it) should not block re-upload.
-      const existingFile = await db
-        .selectFrom('media_files')
-        .innerJoin('tracks', 'tracks.media_file_id', 'media_files.id')
-        .select('media_files.id')
-        .where('media_files.file_hash', '=', fileHash)
-        .executeTakeFirst()
-
-      if (existingFile) {
-        console.log(`Skipping duplicate file: ${filename} (hash: ${fileHash})`)
-        // Delete the uploaded file since it's a duplicate
-        fs.unlinkSync(filePath)
-        continue
-      }
-
       // Add to upload queue
       const queueEntry = await db
         .insertInto('upload_queue')
