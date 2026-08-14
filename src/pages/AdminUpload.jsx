@@ -15,7 +15,7 @@ const AdminUpload = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   // Status
-  const [uploading, setUploading] = useState(false);
+  const [inFlightBatches, setInFlightBatches] = useState([]);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
@@ -118,6 +118,10 @@ const AdminUpload = () => {
     setFilePreviews(previews);
   };
 
+  const handleDismissBatch = (id) => {
+    setInFlightBatches((prev) => prev.filter((b) => b.id !== id));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -126,70 +130,68 @@ const AdminUpload = () => {
       return;
     }
 
-    setUploading(true);
     setError(null);
-    setMessage(null);
+
+    const formData = new FormData();
+
+    selectedFiles.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    if (selectedArtist) {
+      formData.append('artist_id', String(selectedArtist.id));
+    } else if (artistQuery.trim()) {
+      formData.append('artist_name', artistQuery.trim());
+    }
+
+    if (selectedAlbum) {
+      formData.append('album_id', String(selectedAlbum.id));
+    } else if (albumQuery.trim()) {
+      formData.append('album_name', albumQuery.trim());
+    }
+    formData.append('is_compilation', String(isCompilation));
+    if (genre) formData.append('genre', genre);
+    if (trackPad) formData.append('track_pad', trackPad);
+    if (albumArtUrl) formData.append('album_art_url', albumArtUrl);
+    if (albumArtName) formData.append('album_art_name', albumArtName);
+
+    const batchId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setInFlightBatches((prev) => [...prev, { id: batchId, fileCount: selectedFiles.length, status: 'uploading' }]);
+
+    // Reset the form immediately so a new batch can be started right away —
+    // the FormData above was already built from the current state, so a
+    // later selection can't corrupt this in-flight submission.
+    setArtistQuery('');
+    setSelectedArtist(null);
+    setArtistResults([]);
+    setAlbumQuery('');
+    setSelectedAlbum(null);
+    setAlbumResults([]);
+    setIsCompilation(false);
+    setGenre('');
+    setTrackPad('0');
+    setAlbumArtUrl('');
+    setAlbumArtName('');
+    setSelectedFiles([]);
+    setFilePreviews([]);
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) fileInput.value = '';
 
     try {
-      const formData = new FormData();
-
-      // Add files
-      selectedFiles.forEach((file) => {
-        formData.append('files', file);
-      });
-
-      // Add metadata
-      if (selectedArtist) {
-        formData.append('artist_id', String(selectedArtist.id));
-      } else if (artistQuery.trim()) {
-        formData.append('artist_name', artistQuery.trim());
-      }
-
-      if (selectedAlbum) {
-        formData.append('album_id', String(selectedAlbum.id));
-      } else if (albumQuery.trim()) {
-        formData.append('album_name', albumQuery.trim());
-      }
-      formData.append('is_compilation', String(isCompilation));
-      if (genre) formData.append('genre', genre);
-      if (trackPad) formData.append('track_pad', trackPad);
-      if (albumArtUrl) formData.append('album_art_url', albumArtUrl);
-      if (albumArtName) formData.append('album_art_name', albumArtName);
-
       const response = await apiService.uploadTracks(formData);
 
+      setInFlightBatches((prev) => prev.filter((b) => b.id !== batchId));
       setMessage(`Successfully queued ${response.data.queued} file(s) for processing`);
-
-      // Auto-clear success message after 5 seconds
       setTimeout(() => setMessage(null), 5000);
 
-      // Clear form
-      setArtistQuery('');
-      setSelectedArtist(null);
-      setArtistResults([]);
-      setAlbumQuery('');
-      setSelectedAlbum(null);
-      setAlbumResults([]);
-      setIsCompilation(false);
-      setGenre('');
-      setTrackPad('0');
-      setAlbumArtUrl('');
-      setAlbumArtName('');
-      setSelectedFiles([]);
-
-      // Reset file input
-      const fileInput = document.getElementById('file-input');
-      if (fileInput) fileInput.value = '';
-      setFilePreviews([]);
-
-      // Reload recent uploads and stats
       loadRecentUploads();
       loadStats();
-    } catch (error) {
-      console.error('Upload error:', error);
-      setError(error.response?.data?.error || 'Failed to upload files');
-    } finally {
-      setUploading(false);
+    } catch (err) {
+      console.error('Upload error:', err);
+      const msg = err.response?.data?.error || 'Failed to upload files';
+      setInFlightBatches((prev) =>
+        prev.map((b) => (b.id === batchId ? { ...b, status: 'error', error: msg } : b))
+      );
     }
   };
 
@@ -352,6 +354,42 @@ const AdminUpload = () => {
           borderRadius: '4px'
         }}>
           {error}
+        </div>
+      )}
+
+      {inFlightBatches.length > 0 && (
+        <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.5rem' }}>
+          {inFlightBatches.map((batch) => (
+            <div
+              key={batch.id}
+              style={{
+                padding: '0.75rem 1rem',
+                borderRadius: '4px',
+                backgroundColor: batch.status === 'error' ? '#fee2e2' : '#eff6ff',
+                color: batch.status === 'error' ? '#991b1b' : '#1e40af',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: '0.875rem',
+              }}
+            >
+              <span>
+                {batch.status === 'error'
+                  ? `Batch of ${batch.fileCount} file(s) — failed: ${batch.error}`
+                  : `Batch of ${batch.fileCount} file(s) — uploading…`}
+              </span>
+              {batch.status === 'error' && (
+                <button
+                  type="button"
+                  aria-label="Dismiss batch"
+                  onClick={() => handleDismissBatch(batch.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1rem' }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -708,19 +746,19 @@ const AdminUpload = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={uploading || selectedFiles.length === 0}
+            disabled={selectedFiles.length === 0}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: uploading ? '#9ca3af' : '#3b82f6',
+              backgroundColor: selectedFiles.length === 0 ? '#9ca3af' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               fontSize: '1rem',
-              cursor: uploading ? 'not-allowed' : 'pointer',
+              cursor: selectedFiles.length === 0 ? 'not-allowed' : 'pointer',
               fontWeight: '500',
             }}
           >
-            {uploading ? 'Uploading...' : 'Upload Tracks'}
+            Upload Tracks
           </button>
         </div>
       </form>

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import AdminUpload from './AdminUpload';
@@ -304,5 +304,61 @@ describe('AdminUpload — clearing failed uploads', () => {
     expect(window.confirm).toHaveBeenCalled();
     expect(apiService.clearFailedUploads).toHaveBeenCalled();
     expect(screen.queryByText('bad.mp3')).not.toBeInTheDocument();
+  });
+});
+
+describe('AdminUpload — concurrent batches', () => {
+  test('starting a second batch while the first is still uploading shows both in the in-flight strip, and resolves independently', async () => {
+    const user = userEvent.setup();
+    let resolveFirst;
+    let resolveSecond;
+    const firstUploadPromise = new Promise((resolve) => { resolveFirst = resolve; });
+    const secondUploadPromise = new Promise((resolve) => { resolveSecond = resolve; });
+    apiService.uploadTracks
+      .mockImplementationOnce(() => firstUploadPromise)
+      .mockImplementationOnce(() => secondUploadPromise);
+    renderUpload();
+
+    const fileA = new File([''], 'first.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), fileA);
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    // Form is usable again immediately — file input was never disabled, and
+    // the previous selection/preview is cleared so a new batch can start.
+    expect(document.getElementById('file-input')).not.toBeDisabled();
+    await screen.findByText('Batch of 1 file(s) — uploading…');
+    expect(screen.queryByText('first.mp3')).not.toBeInTheDocument();
+
+    const fileB = new File([''], 'second.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), fileB);
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    expect(screen.getAllByText('Batch of 1 file(s) — uploading…')).toHaveLength(2);
+
+    resolveFirst({ data: { queued: 1 } });
+    await waitFor(() => {
+      expect(screen.getAllByText('Batch of 1 file(s) — uploading…')).toHaveLength(1);
+    });
+
+    resolveSecond({ data: { queued: 1 } });
+    await waitFor(() => {
+      expect(screen.queryByText('Batch of 1 file(s) — uploading…')).not.toBeInTheDocument();
+    });
+  });
+
+  test('a batch that fails to submit stays visible with a Dismiss control, without blocking new selections', async () => {
+    const user = userEvent.setup();
+    apiService.uploadTracks.mockRejectedValueOnce({ response: { data: { error: 'network drop' } } });
+    renderUpload();
+
+    const file = new File([''], 'track.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), file);
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    await screen.findByText('Batch of 1 file(s) — failed: network drop');
+    expect(document.getElementById('file-input')).not.toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss batch' }));
+    expect(screen.queryByText(/Batch of 1 file\(s\)/)).not.toBeInTheDocument();
   });
 });
