@@ -111,6 +111,7 @@ interface UploadQueueTable {
   album_name: string | null
   album_id: number | null
   is_compilation: boolean
+  is_single: boolean
   genre: string | null
   track_pad: number | null
   file_path: string

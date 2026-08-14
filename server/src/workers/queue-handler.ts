@@ -20,6 +20,8 @@ import { parseFile } from 'music-metadata'
 import NodeID3 from 'node-id3'
 import { lookupAlbumMBID, lookupArtistMBID } from '../services/musicbrainz.js'
 import { fetchSimilarArtists } from '../services/lastfmSimilar.js'
+import { sql } from 'kysely'
+import { SINGLES_ALBUM_TITLE } from '../constants/singles.js'
 
 const POLL_INTERVAL_MS = 5000 // Poll every 5 seconds
 const UPLOAD_PATH = process.env.BEMUSED_UPLOAD_PATH
@@ -110,7 +112,7 @@ async function processQueueItem(item: any) {
     // a possibly-mismatched ID3 tag artist (this is exactly why an album
     // override would be used in the first place).
     let overrideAlbum = null
-    if (item.album_id) {
+    if (item.album_id && !item.is_single) {
       overrideAlbum = await db
         .selectFrom('albums')
         .selectAll()
@@ -153,15 +155,19 @@ async function processQueueItem(item: any) {
       trackArtistName = albumArtistName
     }
 
-    // Handle album similarly
-    const albumId: number | null = item.album_id || null
+    // Handle album similarly — skipped for singles, which always resolve to
+    // the artist's _Singles pseudo-album regardless of any album_id/name/tag.
+    let albumId: number | null = null
     let albumName: string = ''
 
-    if (!item.album_id) {
-      if (item.album_name) {
-        albumName = item.album_name
-      } else {
-        albumName = tags.album || 'Unknown Album'
+    if (!item.is_single) {
+      albumId = item.album_id || null
+      if (!item.album_id) {
+        if (item.album_name) {
+          albumName = item.album_name
+        } else {
+          albumName = tags.album || 'Unknown Album'
+        }
       }
     }
 
@@ -252,7 +258,23 @@ async function processQueueItem(item: any) {
 
     // Find or create album
     let album
-    if (albumId) {
+    if (item.is_single) {
+      console.log(`  💿 Finding/creating _Singles album for artist: ${albumArtist!.name}`)
+      album = await db
+        .selectFrom('albums')
+        .selectAll()
+        .where('artist_id', '=', albumArtist!.id)
+        .where('title', '=', SINGLES_ALBUM_TITLE)
+        .executeTakeFirst()
+
+      if (!album) {
+        album = await db
+          .insertInto('albums')
+          .values({ title: SINGLES_ALBUM_TITLE, artist_id: albumArtist!.id })
+          .returningAll()
+          .executeTakeFirst()
+      }
+    } else if (albumId) {
       console.log(`  💿 Using album ID: ${albumId}`)
       album = overrideAlbum
       console.log(`  💿 Found album: ${album!.title}`)
@@ -292,8 +314,11 @@ async function processQueueItem(item: any) {
         .executeTakeFirst()
     }
 
-    // Async MBID lookup — non-blocking, upload success does not depend on it
-    if (album) {
+    // Async MBID lookup — non-blocking, upload success does not depend on it.
+    // Skip for _Singles pseudo-albums: mbid-lookup.ts and backfill-release-year.ts
+    // both exclude `albums.title != '_Singles'` from this exact operation, since a
+    // shared pseudo-album titled "_Singles" can never legitimately match a release.
+    if (album && !item.is_single) {
       const trackCountResult = await db
         .selectFrom('tracks')
         .select(db.fn.count<number>('id').as('count'))
@@ -316,14 +341,26 @@ async function processQueueItem(item: any) {
       })
     }
 
-    // Calculate track number: ID3 tag > filename > null
-    let rawTrackNumber = extractTrackNumber(tags.trackNumber)
-    if (rawTrackNumber === null) {
-      rawTrackNumber = extractTrackFromFilename(item.original_filename)
-    }
+    // Calculate track number: for singles, append after the highest existing
+    // track number in that artist's _Singles album (mirrors admin.ts's
+    // make-single handler); otherwise ID3 tag > filename > null.
+    let trackNumber: string | null
 
-    const trackPad = item.track_pad || 0
-    const trackNumber = rawTrackNumber !== null ? (rawTrackNumber + trackPad).toString() : null
+    if (item.is_single) {
+      const maxRow = await db
+        .selectFrom('tracks')
+        .select(sql<number | null>`MAX(track_number::integer)`.as('max_track_number'))
+        .where('album_id', '=', album!.id)
+        .executeTakeFirst()
+      trackNumber = String((maxRow?.max_track_number ?? 0) + 1)
+    } else {
+      let rawTrackNumber = extractTrackNumber(tags.trackNumber)
+      if (rawTrackNumber === null) {
+        rawTrackNumber = extractTrackFromFilename(item.original_filename)
+      }
+      const trackPad = item.track_pad || 0
+      trackNumber = rawTrackNumber !== null ? (rawTrackNumber + trackPad).toString() : null
+    }
 
     // Determine final file location on NAS
     const sanitizedArtist = sanitizeFilename(albumArtist!.name)

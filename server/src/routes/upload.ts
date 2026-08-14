@@ -87,6 +87,7 @@ upload.post('/', async (c) => {
     const albumArtUrl = body.album_art_url as string | undefined
     const albumArtName = body.album_art_name as string | undefined
     const isCompilation = body.is_compilation === 'true'
+    const isSingle = body.is_single === 'true'
 
     // Get uploaded files
     const files = body.files
@@ -143,6 +144,7 @@ upload.post('/', async (c) => {
           album_name: albumName || null,
           album_id: albumId,
           is_compilation: isCompilation,
+          is_single: isSingle,
           genre: genre || null,
           track_pad: trackPad || 0,
           file_path: filePath,
