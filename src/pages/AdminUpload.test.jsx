@@ -248,6 +248,76 @@ describe('AdminUpload — Various artists compilation checkbox', () => {
   });
 });
 
+describe('AdminUpload — Singles checkbox', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('sends is_single=true and omits album fields in the upload FormData when checked', async () => {
+    apiService.uploadTracks.mockResolvedValue({ data: { queued: 1 } });
+    const user = userEvent.setup();
+    renderUpload();
+
+    const file = new File([''], 'track.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), file);
+
+    await user.click(screen.getByLabelText('Singles'));
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    await screen.findByText(/Successfully queued/);
+    const formData = apiService.uploadTracks.mock.calls[0][0];
+    expect(formData.get('is_single')).toBe('true');
+    expect(formData.get('album_id')).toBeNull();
+    expect(formData.get('album_name')).toBeNull();
+  });
+
+  test('defaults to is_single=false when unchecked', async () => {
+    apiService.uploadTracks.mockResolvedValue({ data: { queued: 1 } });
+    const user = userEvent.setup();
+    renderUpload();
+
+    const file = new File([''], 'track.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), file);
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    await screen.findByText(/Successfully queued/);
+    const formData = apiService.uploadTracks.mock.calls[0][0];
+    expect(formData.get('is_single')).toBe('false');
+  });
+
+  test('hides the Album and Album Art sections when checked', async () => {
+    const user = userEvent.setup();
+    renderUpload();
+
+    expect(screen.getByText('Album Art (Optional)')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by title or leave blank to use ID3 tag')).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText('Singles'));
+
+    expect(screen.queryByText('Album Art (Optional)')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Search by title or leave blank to use ID3 tag')).not.toBeInTheDocument();
+  });
+
+  test('checking Singles unchecks Various artists compilation, and vice versa', async () => {
+    const user = userEvent.setup();
+    renderUpload();
+
+    const compilationCheckbox = screen.getByLabelText('Various artists compilation');
+    const singlesCheckbox = screen.getByLabelText('Singles');
+
+    await user.click(compilationCheckbox);
+    expect(compilationCheckbox).toBeChecked();
+
+    await user.click(singlesCheckbox);
+    expect(singlesCheckbox).toBeChecked();
+    expect(compilationCheckbox).not.toBeChecked();
+
+    await user.click(compilationCheckbox);
+    expect(compilationCheckbox).toBeChecked();
+    expect(singlesCheckbox).not.toBeChecked();
+  });
+});
+
 describe('AdminUpload — clearing failed uploads', () => {
   const failedUpload = {
     id: 42, status: 'failed', original_filename: 'bad.mp3',
