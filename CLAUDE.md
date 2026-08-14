@@ -139,7 +139,7 @@ Images are served externally: `https://patf.net/images/` in production, `/images
 - `artists` — name, image path, Wikipedia text, MusicBrainz ID + confidence + status
 - `albums` — title, `artist_id`, year, disc number, genre, image path, Wikipedia, MusicBrainz metadata
 - `tracks` — title, number, year, `album_id`/`artist_id`, media file FK, Wikipedia, duration
-- `media_files` — file system records linking audio files to entities; `entity_id`/`entity_type` for current records (`track_id` is legacy)
+- `media_files` — file system records linking audio files to entities; `entity_id`/`entity_type` for current records. `tracks.media_file_id → media_files.id` has a real FK (`ON DELETE RESTRICT`); multiple tracks may share one media_files row when the same recording (matched by file_hash) appears on more than one release — going forward only, no backfill of pre-existing library duplicates yet.
 - `playlists` — named playlists with optional user ownership and auto-generated flag
 - `playlist_tracks` — ordered join table for playlist ↔ track
 - `logs` — playback events: track/album/artist IDs, action, IP, timestamp
