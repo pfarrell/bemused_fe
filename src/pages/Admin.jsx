@@ -37,6 +37,9 @@ const Admin = () => {
       <div style={cardStyle}>
         <button onClick={() => navigate('/admin/logs')} style={buttonStyle}>Logs</button>
       </div>
+      <div style={cardStyle}>
+        <button onClick={() => navigate('/admin/errors')} style={buttonStyle}>Errors</button>
+      </div>
     </div>
   );
 };

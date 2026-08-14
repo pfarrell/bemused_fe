@@ -28,6 +28,7 @@ import AdminAlbum from './pages/AdminAlbum';
 import AdminUpload from './pages/AdminUpload';
 import AdminPlaylist from './pages/AdminPlaylist';
 import AdminLogs from './pages/AdminLogs';
+import AdminErrors from './pages/AdminErrors';
 import AdminNew from './pages/AdminNew';
 import TagPage from './pages/TagPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -252,6 +253,11 @@ function App() {
                 <Route path="/admin/logs" element={
                   <ProtectedRoute requireAdmin>
                     <AdminLogs />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/errors" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminErrors />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/new" element={

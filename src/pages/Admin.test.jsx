@@ -12,6 +12,7 @@ const renderAdmin = () =>
         <Route path="/admin/upload" element={<div>Upload page</div>} />
         <Route path="/admin/new" element={<div>New page</div>} />
         <Route path="/admin/logs" element={<div>Logs page</div>} />
+        <Route path="/admin/errors" element={<div>Errors page</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -36,11 +37,12 @@ const renderProtectedAdmin = (authOverrides = {}) => {
 };
 
 describe('Admin', () => {
-  test('renders links to Upload, New, and Logs', () => {
+  test('renders links to Upload, New, Logs, and Errors', () => {
     renderAdmin();
     expect(screen.getByText('Upload')).toBeInTheDocument();
     expect(screen.getByText('New')).toBeInTheDocument();
     expect(screen.getByText('Logs')).toBeInTheDocument();
+    expect(screen.getByText('Errors')).toBeInTheDocument();
   });
 
   test('clicking Upload navigates to /admin/upload', () => {
@@ -59,6 +61,12 @@ describe('Admin', () => {
     renderAdmin();
     fireEvent.click(screen.getByText('Logs'));
     expect(screen.getByText('Logs page')).toBeInTheDocument();
+  });
+
+  test('clicking Errors navigates to /admin/errors', () => {
+    renderAdmin();
+    fireEvent.click(screen.getByText('Errors'));
+    expect(screen.getByText('Errors page')).toBeInTheDocument();
   });
 });
 
