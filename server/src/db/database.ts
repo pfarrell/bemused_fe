@@ -59,6 +59,11 @@ interface MediaFileTable {
   entity_type: string | null
   file_missing: boolean | null
   file_hash: string | null
+  chromaprint_fingerprint: string | null
+  chromaprint_duration_sec: number | null
+  musicbrainz_recording_id: string | null
+  mbid_confidence: number | null
+  mbid_status: string | null
   created_at: Date | null
   updated_at: Date | null
 }
