@@ -19,6 +19,7 @@ import path from 'path'
 import { parseFile } from 'music-metadata'
 import NodeID3 from 'node-id3'
 import { lookupAlbumMBID, lookupArtistMBID } from '../services/musicbrainz.js'
+import { resolveRecordingMbid } from '../services/recordingResolution.js'
 import { fetchSimilarArtists } from '../services/lastfmSimilar.js'
 import { sql } from 'kysely'
 import { SINGLES_ALBUM_TITLE } from '../constants/singles.js'
@@ -345,6 +346,7 @@ async function processQueueItem(item: any) {
     // track number in that artist's _Singles album (mirrors admin.ts's
     // make-single handler); otherwise ID3 tag > filename > null.
     let trackNumber: string | null
+    let rawTrackNumberForMbid: number | null = null
 
     if (item.is_single) {
       const maxRow = await db
@@ -358,6 +360,7 @@ async function processQueueItem(item: any) {
       if (rawTrackNumber === null) {
         rawTrackNumber = extractTrackFromFilename(item.original_filename)
       }
+      rawTrackNumberForMbid = rawTrackNumber
       const trackPad = item.track_pad || 0
       trackNumber = rawTrackNumber !== null ? (rawTrackNumber + trackPad).toString() : null
     }
@@ -535,6 +538,21 @@ async function processQueueItem(item: any) {
         .where('id', '=', track.id)
         .returningAll()
         .executeTakeFirst()
+    }
+
+    // Non-blocking recording-level MBID resolution + local fingerprinting —
+    // upload success does not depend on it, same pattern as the album MBID
+    // lookup above. Skip entirely if this media_files row was reused from
+    // an existing upload that's already been through this pipeline.
+    // resolveRecordingMbid never rejects (it catches and logs internally).
+    if (!mediaFile!.chromaprint_fingerprint) {
+      resolveRecordingMbid(
+        mediaFile!.id,
+        mediaFile!.absolute_path!,
+        trackTitle,
+        rawTrackNumberForMbid,
+        { id: album!.id, musicbrainz_id: album!.musicbrainz_id ?? null, mbid_status: album!.mbid_status ?? null }
+      )
     }
 
     // Handle album art if provided

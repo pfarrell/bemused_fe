@@ -279,3 +279,34 @@ export async function searchReleasesMB(query: string): Promise<MBReleaseCandidat
     disambiguation: r.disambiguation || undefined,
   }))
 }
+
+// ---- Release tracklist (for upload-time recording MBID resolution) ----
+
+export interface MBReleaseTrack {
+  discNumber: number
+  position: number
+  recordingId: string
+  recordingTitle: string
+}
+
+export async function getReleaseRecordings(releaseMbid: string): Promise<MBReleaseTrack[]> {
+  const data = await rateLimitedFetch(`${MB_BASE}/release/${releaseMbid}?fmt=json&inc=recordings`)
+  const media: any[] = data.media ?? []
+  const tracks: MBReleaseTrack[] = []
+
+  media.forEach((medium: any, mediumIndex: number) => {
+    const discNumber = medium.position ?? mediumIndex + 1
+    for (const t of medium.tracks ?? []) {
+      if (t.recording?.id && typeof t.position === 'number') {
+        tracks.push({
+          discNumber,
+          position: t.position,
+          recordingId: t.recording.id,
+          recordingTitle: t.recording.title ?? t.title ?? '',
+        })
+      }
+    }
+  })
+
+  return tracks
+}
