@@ -86,7 +86,7 @@ export async function resolveRecordingMbid(
       .execute()
 
     if (!resolvedViaRelease) {
-      await lookupRecordingMBID(mediaFileId, fp.fingerprint, fp.duration)
+      await lookupRecordingMBID(mediaFileId, fp.fingerprint, Math.round(fp.duration))
     }
   } catch (err) {
     console.warn(`  ⚠️  Recording MBID resolution failed for media_file ${mediaFileId}:`, (err as Error).message)
