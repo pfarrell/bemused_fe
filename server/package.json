@@ -10,6 +10,7 @@
     "deploy": "npm run build && ./scripts/deploy.sh",
     "deploy:status": "node ~/.claude/skills/check-deploy/check-deploy.cjs",
     "mbid-lookup": "tsx scripts/mbid-lookup.ts",
+    "backfill-chromaprint": "tsx scripts/backfill-chromaprint.ts",
     "image-lookup": "tsx scripts/image-lookup.ts",
     "similar-artists": "tsx scripts/similar-artists.ts",
     "diagnose-similar": "tsx scripts/diagnose-similar.ts",
