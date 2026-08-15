@@ -15,3 +15,11 @@ Key production dependencies and their purpose:
 | `node-fetch` | HTTP client for external service calls (MusicBrainz, Last.fm, etc.) |
 | `dotenv` | Load `.env` file into `process.env` |
 | `tsx` | TypeScript execution for dev server and scripts |
+
+## System binaries (not npm-installable)
+
+These are OS-level packages `npm install` cannot provide — install them separately on any machine running the server (dev or prod).
+
+| Binary | Purpose | Install (Debian/Ubuntu) |
+|--------|---------|--------------------------|
+| `fpcalc` | Chromaprint CLI — computes local audio fingerprints (`server/src/utils/chromaprint.ts`), used for cross-context duplicate detection and AcoustID recording-MBID lookups | `apt install libchromaprint-tools` |

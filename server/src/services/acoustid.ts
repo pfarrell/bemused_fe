@@ -43,8 +43,44 @@ export async function lookupRecordingMBID(
     return { mbid: '', confidence: 0, status: 'unmatched' }
   }
 
+  // AcoustID can return HTTP 200 with an in-body error (e.g. malformed
+  // fingerprint, body-level rate limiting). Treat that exactly like the
+  // HTTP-failure case above — do NOT write to the DB — so the row stays
+  // retryable ('unmatched') instead of being permanently marked
+  // 'not_found', which is terminal under the backfill script's default
+  // filter.
+  if (data && typeof data.status === 'string' && data.status !== 'ok') {
+    const message = `AcoustID API returned error status: ${JSON.stringify(data.error ?? data.status)}`
+    console.warn(`  ⚠️  AcoustID lookup failed for media_file ${mediaFileId}: ${message}`)
+    errorLogService.record({ source: 'acoustid', message, context: `media_file ${mediaFileId}` })
+    return { mbid: '', confidence: 0, status: 'unmatched' }
+  }
+
+  // Existing confidence, if this row was already resolved by a more
+  // precise mechanism (e.g. the release-tracklist path in
+  // recordingResolution.ts, which writes mbid_confidence: 1.0). A fresh
+  // AcoustID result must never overwrite that with a null/worse answer —
+  // there's no column marking which mechanism produced a match, so this
+  // is the cheapest guard against --force (or --id, which implicitly
+  // forces) clobbering an already-maximally-confident match.
+  const existing = await db
+    .selectFrom('media_files')
+    .select(['musicbrainz_recording_id', 'mbid_confidence'])
+    .where('id', '=', mediaFileId)
+    .executeTakeFirst()
+  // mbid_confidence is a `numeric(3,2)` column — pg/Kysely returns numeric
+  // types as strings, not JS numbers, so this must be parsed rather than
+  // compared with `===`.
+  const alreadyMaxConfidence = existing?.mbid_confidence != null && Number(existing.mbid_confidence) === 1.0
+  const unchangedResult = (): RecordingMBIDResult => ({
+    mbid: existing?.musicbrainz_recording_id ?? '',
+    confidence: 1.0,
+    status: 'auto_matched',
+  })
+
   const results: any[] = data.results ?? []
   if (results.length === 0) {
+    if (alreadyMaxConfidence) return unchangedResult()
     await updateRecordingMBID(mediaFileId, null, 0, 'not_found')
     return { mbid: '', confidence: 0, status: 'not_found' }
   }
@@ -55,6 +91,7 @@ export async function lookupRecordingMBID(
 
   let status: RecordingMBIDResult['status']
   if (!recordingId) {
+    if (alreadyMaxConfidence) return unchangedResult()
     await updateRecordingMBID(mediaFileId, null, confidence, 'not_found')
     return { mbid: '', confidence, status: 'not_found' }
   } else if (confidence >= 0.7) {
@@ -62,6 +99,7 @@ export async function lookupRecordingMBID(
   } else if (confidence >= 0.4) {
     status = 'low_confidence'
   } else {
+    if (alreadyMaxConfidence) return unchangedResult()
     await updateRecordingMBID(mediaFileId, null, confidence, 'not_found')
     return { mbid: '', confidence, status: 'not_found' }
   }

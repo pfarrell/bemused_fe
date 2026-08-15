@@ -49,6 +49,19 @@ export async function resolveRecordingMbid(
   try {
     let resolvedViaRelease = false
 
+    // Always fingerprint locally first, regardless of which path (or
+    // neither) resolves the MBID below. This must happen before the
+    // release-tracklist lookup: that lookup can throw (MusicBrainz 503s
+    // under load are routine, via rateLimitedFetch), which would otherwise
+    // skip fingerprinting entirely and leave the row permanently unretried
+    // (queue-handler.ts only re-attempts rows with no fingerprint yet).
+    const fp = await computeFingerprint(absolutePath)
+    await db
+      .updateTable('media_files')
+      .set({ chromaprint_fingerprint: fp.fingerprint, chromaprint_duration_sec: Math.round(fp.duration), updated_at: new Date() })
+      .where('id', '=', mediaFileId)
+      .execute()
+
     if (album.musicbrainz_id && album.mbid_status === 'auto_matched' && rawTrackNumber !== null) {
       const releaseTracks = await getReleaseRecordings(album.musicbrainz_id)
 
@@ -75,15 +88,6 @@ export async function resolveRecordingMbid(
         }
       }
     }
-
-    // Always fingerprint locally, regardless of which path (or neither)
-    // resolved the MBID above.
-    const fp = await computeFingerprint(absolutePath)
-    await db
-      .updateTable('media_files')
-      .set({ chromaprint_fingerprint: fp.fingerprint, chromaprint_duration_sec: Math.round(fp.duration), updated_at: new Date() })
-      .where('id', '=', mediaFileId)
-      .execute()
 
     if (!resolvedViaRelease) {
       await lookupRecordingMBID(mediaFileId, fp.fingerprint, Math.round(fp.duration))
