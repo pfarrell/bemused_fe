@@ -106,7 +106,7 @@ export const apiService = {
   previewArtistStubs: (id) => api.get(`/admin/artist/${id}/merge-stubs`),
   mergeArtists: (id, loser_ids) => api.post(`/admin/artist/${id}/merge`, { loser_ids }),
   addRelatedArtist: (artistId, relatedArtistId, kind = 'related') => api.post(`/admin/artist/${artistId}/related`, { related_artist_id: relatedArtistId, kind }),
-  removeRelatedArtist: (artistId, relatedArtistId) => api.delete(`/admin/artist/${artistId}/related/${relatedArtistId}`),
+  removeRelatedArtist: (artistId, relatedArtistId, kind) => api.delete(`/admin/artist/${artistId}/related/${relatedArtistId}`, { params: { kind } }),
   getErrors: (page = 1, limit = 25, source = null) =>
     api.get(`/admin/errors?page=${page}&limit=${limit}${source ? `&source=${encodeURIComponent(source)}` : ''}`),
   dismissError: (id) => api.delete(`/admin/errors/${id}`),

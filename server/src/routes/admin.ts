@@ -1527,11 +1527,20 @@ admin.delete('/artist/:id/albums/:album_id', async (c) => {
   }
 })
 
-// GET /admin/artist/:id/related — list related artists, members, and similar artists
+// GET /admin/artist/:id/related — list related artists, members, member-of, and similar artists
+//
+// A pair can hold a 'member' relation (one-directional, manual) alongside
+// an auto-imported 'similar'/'related' one (migration 043 lets these
+// coexist) — when both exist for the same pair, only the 'member' fact is
+// worth surfacing on this page, so similar/related entries are suppressed
+// wherever a member relation exists between the two artists in EITHER
+// direction. 'member_of' is synthesized here (not a real `kind` value in
+// the DB) for rows where THIS artist is the related_artist_id of someone
+// else's 'member' row — i.e. artists this one is a member of.
 admin.get('/artist/:id/related', async (c) => {
   const id = parseInt(c.req.param('id'))
   try {
-    const rows = await db
+    const outgoing = await db
       .selectFrom('artist_relations')
       .innerJoin('artists', 'artists.id', 'artist_relations.related_artist_id')
       .select(['artists.id', 'artists.name', 'artist_relations.kind', 'artist_relations.source', 'artist_relations.similarity', 'artist_relations.is_hidden', 'artist_relations.force_show'])
@@ -1539,6 +1548,25 @@ admin.get('/artist/:id/related', async (c) => {
       .orderBy('artist_relations.similarity', 'desc')
       .orderBy('artists.name', 'asc')
       .execute()
+
+    const memberOf = await db
+      .selectFrom('artist_relations')
+      .innerJoin('artists', 'artists.id', 'artist_relations.artist_id')
+      .select(['artists.id', 'artists.name', 'artist_relations.source', 'artist_relations.similarity', 'artist_relations.is_hidden', 'artist_relations.force_show'])
+      .where('artist_relations.related_artist_id', '=', id)
+      .where('artist_relations.kind', '=', 'member')
+      .orderBy('artists.name', 'asc')
+      .execute()
+
+    const memberPairIds = new Set<number>()
+    for (const r of outgoing) if (r.kind === 'member') memberPairIds.add(r.id)
+    for (const r of memberOf) memberPairIds.add(r.id)
+
+    const rows = [
+      ...outgoing.filter(r => r.kind === 'member' || !memberPairIds.has(r.id)),
+      ...memberOf.map(r => ({ ...r, kind: 'member_of' as const })),
+    ]
+
     return c.json(rows)
   } catch (error) {
     console.error('Error fetching related artists:', error)
@@ -1630,33 +1658,39 @@ admin.post('/artist/:id/related', async (c) => {
   }
 })
 
-// DELETE /admin/artist/:id/related/:related_id — remove relation
+// DELETE /admin/artist/:id/related/:related_id?kind=member|related|similar — remove relation
+//
+// `kind` is required. Migration 043 widened artist_relations' uniqueness to
+// (artist_id, related_artist_id, kind), so a single pair can now hold more
+// than one row simultaneously (e.g. an auto-imported 'similar' row
+// alongside a manual 'member' one) — inferring which row to delete from
+// the pair alone is no longer possible, and doing so previously deleted
+// every kind for the pair when only one was intended (a real regression
+// introduced by that migration, caught during Member Of testing).
 admin.delete('/artist/:id/related/:related_id', async (c) => {
   const artistId = parseInt(c.req.param('id'))
   const relatedId = parseInt(c.req.param('related_id'))
+  const kind = c.req.query('kind')
+
+  if (kind !== 'member' && kind !== 'related' && kind !== 'similar') {
+    return c.json({ error: 'kind query parameter is required (member, related, or similar)' }, 400)
+  }
 
   try {
-    // Look up the kind to determine if we remove one or both directions
-    const existing = await db
-      .selectFrom('artist_relations')
-      .select('kind')
-      .where('artist_id', '=', artistId)
-      .where('related_artist_id', '=', relatedId)
-      .executeTakeFirst()
-
-    const kind = existing?.kind ?? 'related'
-
     if (kind === 'member') {
       // One-directional: only remove artistId → relatedId
       await db
         .deleteFrom('artist_relations')
         .where('artist_id', '=', artistId)
         .where('related_artist_id', '=', relatedId)
+        .where('kind', '=', 'member')
         .execute()
     } else {
-      // Symmetric: remove both directions
+      // Symmetric: remove both directions, scoped to this kind only so a
+      // coexisting relation of a different kind for the same pair survives.
       await db
         .deleteFrom('artist_relations')
+        .where('kind', '=', kind)
         .where((eb) =>
           eb.or([
             eb.and([

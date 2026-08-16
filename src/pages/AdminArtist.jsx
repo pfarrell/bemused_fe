@@ -400,7 +400,7 @@ const AdminArtist = () => {
     if (addRelationQuery.length < 2) return;
     setAddRelationSearching(true);
     try {
-      if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') {
+      if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member' || relationTypeToAdd === 'member_of') {
         const response = await apiService.searchAdminArtists(addRelationQuery);
         setAddRelationResults(response.data || []);
       } else {
@@ -416,7 +416,16 @@ const AdminArtist = () => {
 
   const handleAddRelation = async (item) => {
     try {
-      if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member' || relationTypeToAdd === 'similar_artist') {
+      if (relationTypeToAdd === 'member_of') {
+        // Reverse direction from the plain 'member' case: this artist is
+        // the member, item is the band/parent — write artist_id=item.id,
+        // related_artist_id=id so it lands correctly regardless of which
+        // artist's admin page you're on, rather than requiring a trip to
+        // the parent artist's page to add it from the other side.
+        await apiService.addRelatedArtist(item.id, id, 'member');
+        const response = await apiService.getRelatedArtists(id);
+        setRelatedArtists(response.data);
+      } else if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member' || relationTypeToAdd === 'similar_artist') {
         const kind = relationTypeToAdd === 'member' ? 'member' : relationTypeToAdd === 'similar_artist' ? 'similar' : 'related';
         await apiService.addRelatedArtist(id, item.id, kind);
         const response = await apiService.getRelatedArtists(id);
@@ -434,13 +443,30 @@ const AdminArtist = () => {
     }
   };
 
-  const handleRemoveRelatedArtist = async (relatedArtistId) => {
+  // kind must be passed through (not inferred server-side) — a pair can now
+  // hold more than one relation kind at once (e.g. 'similar' alongside
+  // 'member'), so the backend needs to know exactly which one to remove.
+  const handleRemoveRelatedArtist = async (relatedArtistId, kind) => {
     if (!window.confirm('Remove this related artist?')) return;
     try {
-      await apiService.removeRelatedArtist(id, relatedArtistId);
-      setRelatedArtists(prev => prev.filter(ra => ra.id !== relatedArtistId));
+      await apiService.removeRelatedArtist(id, relatedArtistId, kind);
+      setRelatedArtists(prev => prev.filter(ra => !(ra.id === relatedArtistId && ra.kind === kind)));
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to remove related artist');
+    }
+  };
+
+  // "Member Of" rows are stored in the opposite direction from every other
+  // relation on this page (artist_id = the other artist, related_artist_id
+  // = this one) — removal must target that same direction, not the usual
+  // (id, otherArtistId) pair the other sections use. Always kind='member'.
+  const handleRemoveMemberOf = async (otherArtistId) => {
+    if (!window.confirm('Remove this "member of" relationship?')) return;
+    try {
+      await apiService.removeRelatedArtist(otherArtistId, id, 'member');
+      setRelatedArtists(prev => prev.filter(ra => !(ra.id === otherArtistId && ra.kind === 'member_of')));
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to remove relationship');
     }
   };
 
@@ -818,6 +844,7 @@ const AdminArtist = () => {
                 <option value="similar_artist">Similar Artist (Manual)</option>
                 <option value="related_artist">Related Artist</option>
                 <option value="member">Member</option>
+                <option value="member_of">Member Of</option>
                 <option value="appears_on">Appears On Album</option>
               </select>
               {relationTypeToAdd === 'appears_on' && (
@@ -869,7 +896,7 @@ const AdminArtist = () => {
                         <span style={{ fontSize: '0.8rem', color: '#6b7280', fontStyle: 'italic', marginLeft: '0.5rem' }}>(this artist)</span>
                       )}
                       {item.artist && <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>by {item.artist.name}</span>}
-                      {(relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member') && (
+                      {(relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member' || relationTypeToAdd === 'member_of') && (
                         <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>{item.album_count} album{item.album_count !== 1 ? 's' : ''} · ID {item.id}</span>
                       )}
                     </div>
@@ -936,7 +963,7 @@ const AdminArtist = () => {
                     {ra.source === 'manual' && (
                       <button
                         type="button"
-                        onClick={() => handleRemoveRelatedArtist(ra.id)}
+                        onClick={() => handleRemoveRelatedArtist(ra.id, ra.kind)}
                         style={{ padding: '0.25rem 0.5rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
                       >
                         Remove
@@ -971,7 +998,47 @@ const AdminArtist = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => handleRemoveRelatedArtist(ra.id)}
+                  onClick={() => handleRemoveRelatedArtist(ra.id, ra.kind)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Member Of */}
+        {relatedArtists.filter(r => r.kind === 'member_of').length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#166534', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Member Of
+            </div>
+            {relatedArtists.filter(r => r.kind === 'member_of').map(ra => (
+              <div key={ra.id} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #bbf7d0'
+              }}>
+                <span
+                  style={{ fontWeight: '500', color: '#7c3aed', cursor: 'pointer' }}
+                  onClick={() => navigate(`/artist/${ra.id}`)}
+                >
+                  {ra.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveMemberOf(ra.id)}
                   style={{
                     padding: '0.25rem 0.5rem',
                     backgroundColor: '#ef4444',
@@ -1011,7 +1078,7 @@ const AdminArtist = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => handleRemoveRelatedArtist(ra.id)}
+                  onClick={() => handleRemoveRelatedArtist(ra.id, ra.kind)}
                   style={{
                     padding: '0.25rem 0.5rem',
                     backgroundColor: '#ef4444',
