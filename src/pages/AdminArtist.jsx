@@ -414,6 +414,18 @@ const AdminArtist = () => {
     }
   };
 
+  const RELATION_TYPE_LABELS = {
+    member_of: 'Member Of',
+    member: 'Member',
+    similar_artist: 'Similar Artist',
+    related_artist: 'Related Artist',
+  };
+
+  // Every add here already persists immediately on the server — there's no
+  // separate "save the artist" step for relations. The only reason this
+  // ever looked like it needed one is that a successful add and a silent
+  // failure previously looked identical (list just quietly re-rendered
+  // either way) — an explicit toast per outcome closes that gap.
   const handleAddRelation = async (item) => {
     try {
       if (relationTypeToAdd === 'member_of') {
@@ -425,21 +437,24 @@ const AdminArtist = () => {
         await apiService.addRelatedArtist(item.id, id, 'member');
         const response = await apiService.getRelatedArtists(id);
         setRelatedArtists(response.data);
+        toast.success(`Added "${item.name}" as ${RELATION_TYPE_LABELS[relationTypeToAdd]}`);
       } else if (relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member' || relationTypeToAdd === 'similar_artist') {
         const kind = relationTypeToAdd === 'member' ? 'member' : relationTypeToAdd === 'similar_artist' ? 'similar' : 'related';
         await apiService.addRelatedArtist(id, item.id, kind);
         const response = await apiService.getRelatedArtists(id);
         setRelatedArtists(response.data);
+        toast.success(`Added "${item.name}" as ${RELATION_TYPE_LABELS[relationTypeToAdd]}`);
       } else {
         await apiService.addAlbumToArtist(id, item.id, addRelationRole);
         const response = await apiService.getArtistSecondaryAlbums(id);
         setAppearsOnAlbums(response.data);
+        toast.success(`Added "${item.title}" to Appears On`);
       }
       setAddRelationResults([]);
       setAddRelationQuery('');
       setShowAddRelationSection(false);
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to add relation');
+      toast.error(error.response?.data?.error || 'Failed to add relation');
     }
   };
 
