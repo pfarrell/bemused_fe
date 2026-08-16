@@ -1,0 +1,33 @@
+-- Migration: Widen artist_relations uniqueness to include kind
+-- Date: 2026-08-16
+--
+-- The old UNIQUE constraint on (artist_id, related_artist_id) treats
+-- "similar" (algorithmic, from Last.fm/ListenBrainz), "related" (manual
+-- editorial judgment), and "member" (manual biographical fact) as mutually
+-- exclusive for a given artist pair, even though they're independent facts
+-- — an artist can legitimately be both algorithmically "similar" to a band
+-- AND literally "a member" of it (e.g. Joe Walsh / Eagles). Because
+-- POST /admin/artist/:id/related inserts new relations with a bare
+-- ON CONFLICT DO NOTHING (server/src/routes/admin.ts), adding a 'member'
+-- relation for any pair that already has an auto-imported 'similar' row —
+-- which is nearly guaranteed for any two well-known artists — silently
+-- no-ops: the endpoint returns {success: true} but no row is written.
+--
+-- This widens the key to (artist_id, related_artist_id, kind) so each kind
+-- can coexist independently per pair, matching how the admin UI and public
+-- pages already treat "Similar Artists" / "Related Artists" / "Members" as
+-- separate lists. No existing data changes — the old 2-column constraint
+-- already guaranteed no duplicate (artist_id, related_artist_id) pairs, so
+-- trivially no duplicate (artist_id, related_artist_id, kind) triples can
+-- exist either; the new constraint cannot fail to apply.
+--
+-- server/src/services/lastfmSimilar.ts and listenbrainzSimilar.ts's
+-- upsert-by-similarity logic explicitly targets the old 2-column key via
+-- .onConflict(oc => oc.columns(['artist_id', 'related_artist_id'])) — that
+-- must be updated in the same deploy to target the new 3-column key
+-- (both writes always use kind: 'similar', so the migration alone would
+-- otherwise break those upserts with "no unique or exclusion constraint
+-- matching the ON CONFLICT specification" the next time either import job runs).
+
+ALTER TABLE artist_relations DROP CONSTRAINT IF EXISTS artist_relations_artist_id_related_artist_id_key;
+ALTER TABLE artist_relations ADD CONSTRAINT artist_relations_artist_id_related_artist_id_kind_key UNIQUE (artist_id, related_artist_id, kind);

@@ -119,11 +119,14 @@ export async function fetchLBSimilarArtists(
         .insertInto('artist_relations')
         .values({ artist_id: a, related_artist_id: b, kind: 'similar', source: 'listenbrainz', similarity })
         .onConflict(oc => oc
-          .columns(['artist_id', 'related_artist_id'])
+          .columns(['artist_id', 'related_artist_id', 'kind'])
+          // The conflict target now includes kind, and this upsert always writes
+          // kind: 'similar', so it can only ever collide with an existing 'similar'
+          // row — manual 'related'/'member' rows live at a different key entirely
+          // (migration 043) and are never touched by this upsert.
           .doUpdateSet({
             similarity: sql<number>`GREATEST(artist_relations.similarity, EXCLUDED.similarity)`,
             source: sql<string>`CASE
-              WHEN artist_relations.kind = 'related' THEN artist_relations.source
               WHEN EXCLUDED.similarity > COALESCE(artist_relations.similarity, -1) THEN EXCLUDED.source
               ELSE artist_relations.source
             END`,
