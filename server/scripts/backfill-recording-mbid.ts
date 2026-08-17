@@ -5,9 +5,14 @@
 // with a fingerprint already computed are eligible. Requires
 // ACOUSTID_API_KEY in the environment.
 //
-// Usage: tsx scripts/backfill-recording-mbid.ts [--limit N] [--id N] [--force] [--dry-run] [--log path] [--checkpoint N]
+// Usage: tsx scripts/backfill-recording-mbid.ts [--limit N] [--id N] [--ids-file path] [--force] [--dry-run] [--log path] [--checkpoint N]
 //   --force re-checks rows regardless of current mbid_status (default:
 //   only rows still 'unmatched', matching mbid-lookup.ts's convention).
+//   --ids-file re-checks exactly the media_file ids listed (one per line,
+//   blank lines and lines starting with # ignored) regardless of their
+//   current mbid_status — this is how you re-run just the rows flagged by
+//   audit-recording-mbid-collisions.sql instead of paying AcoustID's ~3
+//   req/s rate limit across the whole library. Overrides --id/--force.
 //   No --concurrency flag: lookupRecordingMBID's internal rate limiter
 //   already serializes all AcoustID calls, same as musicbrainz.ts.
 //
@@ -42,10 +47,28 @@ const hasFlag = (flag: string) => args.includes(flag)
 
 const limit = getArg('--limit') ? parseInt(getArg('--limit')!) : undefined
 const singleId = getArg('--id') ? parseInt(getArg('--id')!) : undefined
+const idsFilePath = getArg('--ids-file')
 const force = hasFlag('--force')
 const dryRun = hasFlag('--dry-run')
 const checkpointEvery = getArg('--checkpoint') ? parseInt(getArg('--checkpoint')!) : 100
 const logPath = getArg('--log') || 'backfill-recording-mbid.log'
+
+const idsFromFile: number[] | undefined = idsFilePath
+  ? fs.readFileSync(idsFilePath, 'utf8')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'))
+      .map(line => {
+        const id = parseInt(line)
+        if (Number.isNaN(id)) throw new Error(`--ids-file: not a valid id: "${line}"`)
+        return id
+      })
+  : undefined
+
+if (idsFromFile && idsFromFile.length === 0) {
+  console.error(`❌ Error: --ids-file ${idsFilePath} contained no ids`)
+  process.exit(1)
+}
 
 if (dryRun) console.log('🔍 Dry-run mode: no writes will occur')
 console.log(`📝 Progress log: ${logPath} (checkpoint every ${checkpointEvery} rows)`)
@@ -74,7 +97,9 @@ async function main() {
     ])
     .where('chromaprint_fingerprint', 'is not', null)
 
-  if (singleId) {
+  if (idsFromFile) {
+    query = query.where('id', 'in', idsFromFile) as typeof query
+  } else if (singleId) {
     query = query.where('id', '=', singleId) as typeof query
   } else if (!force) {
     query = query.where('mbid_status', '=', 'unmatched') as typeof query
