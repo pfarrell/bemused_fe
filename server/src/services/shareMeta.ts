@@ -37,13 +37,13 @@ function resolveImageUrl(entity: ShareEntity, fallback: string): string {
 }
 
 export function buildShareTags(entity: ShareEntity, host: string, proto: string): ShareTags {
-  const fallbackImage = `${proto}://${host}/bemused/app/icons/icon-512.png`
+  const fallbackImage = `${proto}://${host}/pshare/app/icons/icon-512.png`
 
   return {
     title: escapeHtml(entity.title),
     description: escapeHtml(entity.description),
     imageUrl: escapeHtml(resolveImageUrl(entity, fallbackImage)),
-    url: escapeHtml(`${proto}://${host}/bemused/app/${entity.type}/${entity.id}`),
+    url: escapeHtml(`${proto}://${host}/pshare/app/${entity.type}/${entity.id}`),
     siteName: 'P·Share',
   }
 }
