@@ -30,6 +30,7 @@
 
 import 'dotenv/config'
 import fs from 'fs'
+import { sql } from 'kysely'
 import { db } from '../src/db/database.js'
 import { lookupRecordingMBID } from '../src/services/acoustid.js'
 
@@ -81,24 +82,18 @@ function logLine(msg: string) {
 async function main() {
   let query = db
     .selectFrom('media_files')
-    .select(eb => [
-      'media_files.id',
-      'media_files.chromaprint_fingerprint',
-      'media_files.chromaprint_duration_sec',
-      'media_files.mbid_status',
-      // A media_file can back more than one track (same recording shared
-      // across releases) — any one of their titles is fine for the
-      // cross-check, they should all describe the same recording.
-      eb.selectFrom('tracks')
-        .select('tracks.title')
-        .whereRef('tracks.media_file_id', '=', 'media_files.id')
-        .limit(1)
-        .as('track_title'),
-    ])
+    .select(['media_files.id', 'media_files.chromaprint_fingerprint', 'media_files.chromaprint_duration_sec', 'media_files.mbid_status'])
     .where('chromaprint_fingerprint', 'is not', null)
 
   if (idsFromFile) {
-    query = query.where('id', 'in', idsFromFile) as typeof query
+    // NOT .where('id', 'in', idsFromFile) — Kysely expands an `in` array
+    // into one bind parameter per element. At the ~15k rows a suspicious-
+    // group audit can produce, that's 15k+ discrete placeholders, and
+    // Postgres's planner chokes badly on parsing/planning that many
+    // parameters (minutes, possibly much longer, with the query never
+    // completing in practice). A single array parameter bound to ANY()
+    // is one placeholder regardless of list size and stays fast.
+    query = query.where(sql<boolean>`media_files.id = any(${idsFromFile})`) as typeof query
   } else if (singleId) {
     query = query.where('id', '=', singleId) as typeof query
   } else if (!force) {
@@ -108,6 +103,31 @@ async function main() {
   if (limit) query = query.limit(limit) as typeof query
 
   const rows = await query.execute()
+
+  // Fetched separately rather than as a per-row correlated subquery:
+  // tracks.media_file_id has no index (only the bare FK constraint), so a
+  // subquery run once per candidate row means one full sequential scan of
+  // `tracks` (141k+ rows) per row — for a batch of any real size that
+  // never finishes in practice. One bulk lookup means exactly one scan of
+  // `tracks` regardless of batch size.
+  const mediaFileIds = rows.map(r => r.id)
+  const trackTitleRows = mediaFileIds.length > 0
+    ? await db
+        .selectFrom('tracks')
+        .select(['media_file_id', 'title'])
+        .where(sql<boolean>`tracks.media_file_id = any(${mediaFileIds})`)
+        .execute()
+    : []
+  const titleByMediaFileId = new Map<number, string>()
+  for (const t of trackTitleRows) {
+    // A media_file can back more than one track (same recording shared
+    // across releases) — any one of their titles is fine for the
+    // cross-check, they should all describe the same recording.
+    if (t.media_file_id != null && !titleByMediaFileId.has(t.media_file_id)) {
+      titleByMediaFileId.set(t.media_file_id, t.title)
+    }
+  }
+
   logLine(`\n🎧 Processing ${rows.length} media file(s)...`)
 
   let matched = 0, lowConf = 0, unmatched = 0, skipped = 0, processed = 0
@@ -124,7 +144,7 @@ async function main() {
     } else if (dryRun) {
       console.log(`  [${row.id}] → would look up AcoustID (dry-run)`)
     } else {
-      const result = await lookupRecordingMBID(row.id, row.chromaprint_fingerprint, row.chromaprint_duration_sec, row.track_title ?? undefined)
+      const result = await lookupRecordingMBID(row.id, row.chromaprint_fingerprint, row.chromaprint_duration_sec, titleByMediaFileId.get(row.id))
 
       if (result.status === 'auto_matched') {
         console.log(`  [${row.id}] ✅ Matched: ${result.mbid} (${(result.confidence * 100).toFixed(0)}%)`)
