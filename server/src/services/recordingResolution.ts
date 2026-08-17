@@ -17,21 +17,7 @@ import { getReleaseRecordings } from './musicbrainz.js'
 import { lookupRecordingMBID } from './acoustid.js'
 import { computeFingerprint } from '../utils/chromaprint.js'
 import { errorLogService } from './errorLogService.js'
-
-function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/\(.*?\)/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-}
-
-function titlesRoughlyMatch(a: string, b: string): boolean {
-  const na = normalizeTitle(a)
-  const nb = normalizeTitle(b)
-  if (!na || !nb) return false
-  return na === nb || na.includes(nb) || nb.includes(na)
-}
+import { titlesRoughlyMatch } from '../utils/titleMatch.js'
 
 interface AlbumForResolution {
   id: number
@@ -90,7 +76,7 @@ export async function resolveRecordingMbid(
     }
 
     if (!resolvedViaRelease) {
-      await lookupRecordingMBID(mediaFileId, fp.fingerprint, Math.round(fp.duration))
+      await lookupRecordingMBID(mediaFileId, fp.fingerprint, Math.round(fp.duration), trackTitle)
     }
   } catch (err) {
     console.warn(`  ⚠️  Recording MBID resolution failed for media_file ${mediaFileId}:`, (err as Error).message)

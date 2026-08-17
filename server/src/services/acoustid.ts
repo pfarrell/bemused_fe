@@ -1,5 +1,6 @@
 import { db } from '../db/database.js'
 import { errorLogService } from './errorLogService.js'
+import { titlesRoughlyMatch } from '../utils/titleMatch.js'
 
 const ACOUSTID_BASE = 'https://api.acoustid.org/v2/lookup'
 const RATE_LIMIT_MS = 350 // AcoustID's default key limit is ~3 req/s; stay under it
@@ -27,7 +28,8 @@ export interface RecordingMBIDResult {
 export async function lookupRecordingMBID(
   mediaFileId: number,
   fingerprint: string,
-  durationSec: number
+  durationSec: number,
+  trackTitle?: string
 ): Promise<RecordingMBIDResult> {
   const apiKey = process.env.ACOUSTID_API_KEY
   if (!apiKey) throw new Error('ACOUSTID_API_KEY is not set')
@@ -88,6 +90,7 @@ export async function lookupRecordingMBID(
   const top = results[0]
   const confidence = typeof top.score === 'number' ? top.score : 0
   const recordingId: string | undefined = top.recordings?.[0]?.id
+  const returnedTitle: string | undefined = top.recordings?.[0]?.title
 
   let status: RecordingMBIDResult['status']
   if (!recordingId) {
@@ -95,7 +98,18 @@ export async function lookupRecordingMBID(
     await updateRecordingMBID(mediaFileId, null, confidence, 'not_found')
     return { mbid: '', confidence, status: 'not_found' }
   } else if (confidence >= 0.7) {
-    status = 'auto_matched'
+    // AcoustID's own crowd-sourced fingerprint database can have a
+    // recording MBID contaminated by mistagged submissions from other
+    // users' software — this can hand back a high-confidence score for a
+    // completely unrelated song (seen in production: several dozen
+    // unrelated tracks all "matched" to the same MBID at 0.97+). When we
+    // already know the track's own title, cross-check it against the
+    // title AcoustID reports for the match before trusting it outright;
+    // a mismatch downgrades to 'low_confidence' (kept for manual review,
+    // not auto-applied) rather than being silently accepted.
+    status = (trackTitle && returnedTitle && !titlesRoughlyMatch(trackTitle, returnedTitle))
+      ? 'low_confidence'
+      : 'auto_matched'
   } else if (confidence >= 0.4) {
     status = 'low_confidence'
   } else {

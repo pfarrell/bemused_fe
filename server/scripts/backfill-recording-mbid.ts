@@ -58,7 +58,20 @@ function logLine(msg: string) {
 async function main() {
   let query = db
     .selectFrom('media_files')
-    .select(['id', 'chromaprint_fingerprint', 'chromaprint_duration_sec', 'mbid_status'])
+    .select(eb => [
+      'media_files.id',
+      'media_files.chromaprint_fingerprint',
+      'media_files.chromaprint_duration_sec',
+      'media_files.mbid_status',
+      // A media_file can back more than one track (same recording shared
+      // across releases) — any one of their titles is fine for the
+      // cross-check, they should all describe the same recording.
+      eb.selectFrom('tracks')
+        .select('tracks.title')
+        .whereRef('tracks.media_file_id', '=', 'media_files.id')
+        .limit(1)
+        .as('track_title'),
+    ])
     .where('chromaprint_fingerprint', 'is not', null)
 
   if (singleId) {
@@ -86,7 +99,7 @@ async function main() {
     } else if (dryRun) {
       console.log(`  [${row.id}] → would look up AcoustID (dry-run)`)
     } else {
-      const result = await lookupRecordingMBID(row.id, row.chromaprint_fingerprint, row.chromaprint_duration_sec)
+      const result = await lookupRecordingMBID(row.id, row.chromaprint_fingerprint, row.chromaprint_duration_sec, row.track_title ?? undefined)
 
       if (result.status === 'auto_matched') {
         console.log(`  [${row.id}] ✅ Matched: ${result.mbid} (${(result.confidence * 100).toFixed(0)}%)`)
