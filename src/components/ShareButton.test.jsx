@@ -13,7 +13,7 @@ describe('ShareButton', () => {
   const originalClipboard = navigator.clipboard;
 
   beforeEach(() => {
-    vi.stubGlobal('location', { ...window.location, href: 'https://patf.com/bemused/app/album/42' });
+    vi.stubGlobal('location', { ...window.location, href: 'https://patf.com/pshare/app/album/42' });
     toast.success.mockClear();
     toast.error.mockClear();
   });
@@ -37,7 +37,7 @@ describe('ShareButton', () => {
     expect(shareMock).toHaveBeenCalledWith({
       title: 'Abbey Road',
       text: 'Abbey Road by The Beatles',
-      url: 'https://patf.com/bemused/app/album/42',
+      url: 'https://patf.com/pshare/app/album/42',
     });
     expect(toast.success).not.toHaveBeenCalled();
   });
@@ -69,7 +69,7 @@ describe('ShareButton', () => {
     await user.click(screen.getByRole('button', { name: /share/i }));
 
     await waitFor(() => {
-      expect(writeTextMock).toHaveBeenCalledWith('https://patf.com/bemused/app/album/42');
+      expect(writeTextMock).toHaveBeenCalledWith('https://patf.com/pshare/app/album/42');
       expect(toast.success).toHaveBeenCalledWith('Link copied');
     });
   });
@@ -87,7 +87,7 @@ describe('ShareButton', () => {
     render(<ShareButton title="Abbey Road" text="Abbey Road by The Beatles" />);
     await user.click(screen.getByRole('button', { name: /share/i }));
 
-    expect(writeTextMock).toHaveBeenCalledWith('https://patf.com/bemused/app/album/42');
+    expect(writeTextMock).toHaveBeenCalledWith('https://patf.com/pshare/app/album/42');
     expect(toast.success).toHaveBeenCalledWith('Link copied');
   });
 

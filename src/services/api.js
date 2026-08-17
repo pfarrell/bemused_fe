@@ -5,7 +5,7 @@ const getBaseURL = () => {
   if (import.meta.env.DEV) {
     return '/api';
   } else {
-    return '/bemused/api';
+    return '/pshare/api';
   }
 };
 
