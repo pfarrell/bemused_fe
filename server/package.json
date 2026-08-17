@@ -19,6 +19,7 @@
     "verify-search": "tsx scripts/verify-search.ts",
     "worker": "tsx watch src/workers/queue-handler.ts",
     "db:snapshot": "mkdir -p snapshots && pg_dump bemused_dev > snapshots/$(date +%Y%m%d_%H%M%S).sql && echo 'Snapshot saved to snapshots/'",
+    "db:snapshot:prod": "bash scripts/db-snapshot-prod.sh",
     "db:restore": "bash scripts/db-restore.sh",
     "db:schema:dump": "pg_dump --schema-only --no-owner --no-privileges $BEMUSED_DB > schema.sql && echo 'Schema dumped to schema.sql'",
     "db:reset": "bash scripts/db-reset.sh"
