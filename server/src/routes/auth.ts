@@ -51,12 +51,12 @@ function cookieOptionsForRequest(c: Context): { secure: boolean; domain: string 
 }
 
 // Path must be '/', not a sub-path like '/auth/google': both nginx
-// (`rewrite ^/bemused/api/(.*) /$1 break`) and the Vite dev proxy strip the
+// (`rewrite ^/pshare/api/(.*) /$1 break`) and the Vite dev proxy strip the
 // /api prefix before the request reaches this Hono app, so the backend
 // never sees the same path the *browser* used to set the cookie. A
 // Path=/auth/google cookie set in response to a browser request for
-// /bemused/api/auth/google/start would never be sent back on
-// /bemused/api/auth/google/callback, since that's the path the browser
+// /pshare/api/auth/google/start would never be sent back on
+// /pshare/api/auth/google/callback, since that's the path the browser
 // compares against, not whatever path Hono thinks it's routing internally.
 // The existing `auth` cookie already sidesteps this the same way (path: '/').
 const GOOGLE_OAUTH_COOKIE_PATH = '/'
@@ -268,7 +268,7 @@ auth.post('/signup', async (c) => {
     const token = generateToken(user.id, user.username, user.admin)
 
     // Set httpOnly cookie
-    // Path must be '/' so cookie is sent to both /bemused/api and /bemused/app
+    // Path must be '/' so cookie is sent to both /pshare/api and /pshare/app
     setCookie(c, 'auth', token, {
       httpOnly: true,
       sameSite: 'Lax',
@@ -317,7 +317,7 @@ auth.post('/login', async (c) => {
     const token = generateToken(user.id, user.username, user.admin)
 
     // Set httpOnly cookie
-    // Path must be '/' so cookie is sent to both /bemused/api and /bemused/app
+    // Path must be '/' so cookie is sent to both /pshare/api and /pshare/app
     setCookie(c, 'auth', token, {
       httpOnly: true,
       sameSite: 'Lax',
@@ -398,7 +398,7 @@ auth.get('/recall/connect', async (c) => {
 auth.get('/recall/callback', async (c) => {
   const user = c.get('user')
   if (!user) {
-    const loginBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/bemused/app' : 'http://localhost:5173'
+    const loginBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/pshare/app' : 'http://localhost:5173'
     return c.redirect(`${loginBase}/login`)
   }
 
@@ -419,7 +419,7 @@ auth.get('/recall/callback', async (c) => {
 
   await notesService.saveConnection(user.id, encryptRecallToken(token))
 
-  const redirectBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/bemused/app' : 'http://localhost:5173'
+  const redirectBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/pshare/app' : 'http://localhost:5173'
   return c.redirect(`${redirectBase}${parsed.returnTo}`)
 })
 

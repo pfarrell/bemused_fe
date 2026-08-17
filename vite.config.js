@@ -15,17 +15,17 @@ export default defineConfig({
         theme_color: '#1a1a2e',
         background_color: '#1a1a2e',
         display: 'standalone',
-        start_url: '/bemused/app/',
-        scope: '/bemused/app/',
+        start_url: '/pshare/app/',
+        scope: '/pshare/app/',
         icons: [
           {
-            src: '/bemused/app/icons/icon-192.png',
+            src: '/pshare/app/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable any',
           },
           {
-            src: '/bemused/app/icons/icon-512.png',
+            src: '/pshare/app/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable any',
@@ -34,20 +34,20 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallback: '/bemused/app/index.html',
+        navigateFallback: '/pshare/app/index.html',
         runtimeCaching: [
           {
-            urlPattern: /\/bemused\/stream\//,
+            urlPattern: /\/pshare\/stream\//,
             handler: 'NetworkOnly',
           },
           {
             // Admin endpoints are all live, mutable state (upload queue polling,
             // logs, search) for a single admin user — never serve them stale.
-            urlPattern: /\/bemused\/api\/admin\//,
+            urlPattern: /\/pshare\/api\/admin\//,
             handler: 'NetworkOnly',
           },
           {
-            urlPattern: /\/bemused\/api\//,
+            urlPattern: /\/pshare\/api\//,
             handler: 'StaleWhileRevalidate',
           },
         ],
@@ -61,7 +61,7 @@ export default defineConfig({
       'jsmediatags': 'jsmediatags/dist/jsmediatags.min.js',
     },
   },
-  base: process.env.NODE_ENV === 'production' ? '/bemused/app/' : '/',
+  base: process.env.NODE_ENV === 'production' ? '/pshare/app/' : '/',
   server: {
     proxy: {
       '/api': {

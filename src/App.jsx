@@ -59,7 +59,7 @@ export function ScrollToTop() {
 }
 
 function App() {
-  const basename = import.meta.env.DEV ? '/' : '/bemused/app';
+  const basename = import.meta.env.DEV ? '/' : '/pshare/app';
   const [authInitialized, setAuthInitialized] = useState(false);
 
   // Initialize auth on app startup

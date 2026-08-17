@@ -38,7 +38,7 @@ ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "mkdir -p ${SHARED_DIR}"
 ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "cat > ${SHARED_DIR}/.env" <<EOF
 BEMUSED_DB=${DB_STRING}
 PORT=${PORT}
-BEMUSED_PATH=https://patf.com/bemused
+BEMUSED_PATH=https://patf.com/pshare
 NODE_ENV=production
 EOF
 

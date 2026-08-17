@@ -18,7 +18,7 @@ This guide covers developing and deploying the Bemused Node.js/Hono backend.
    BEMUSED_DB=postgres://user:password@localhost:5432/bemused
    PORT=3000
    # Optional: proxy streams from production when NAS unavailable locally
-   BEMUSED_DEV=https://patf.com/bemused
+   BEMUSED_DEV=https://patf.com/pshare
    ```
 
 3. **Start development server**:
@@ -115,7 +115,7 @@ This creates `/var/www/bemused-node/shared/.env` with:
 ```bash
 BEMUSED_DB=postgres://user:password@localhost:5432/bemused
 PORT=3000
-BEMUSED_PATH=/bemused
+BEMUSED_PATH=/pshare
 BEMUSED_UPLOAD_PATH=/path/to/nas/mp3s
 NODE_ENV=production
 ```
@@ -159,11 +159,11 @@ SSH to the server and install the nginx configuration:
 ```bash
 ssh -p 10022 pfarrell@patf.com
 
-# Copy nginx config
-sudo cp /var/www/bemused-node/current/bemused.nginx.conf /etc/nginx/sites-available/bemused
-
-# Enable site
-sudo ln -sf /etc/nginx/sites-available/bemused /etc/nginx/sites-enabled/
+# Copy the app's nginx snippet into the shared per-app directory
+# (pshare is one of several apps sharing the patf.com vhost — see
+# /etc/nginx/sites-available/patf.com, which includes
+# /etc/nginx/patf.conf.d/*.conf)
+sudo cp /var/www/bemused-node/current/nginx/pshare.conf /etc/nginx/patf.conf.d/pshare.conf
 
 # Test configuration
 sudo nginx -t
@@ -298,13 +298,13 @@ ssh -p 10022 pfarrell@patf.com 'sudo systemctl restart bemused-queue-worker'
 
 ```bash
 # Test random artists endpoint
-curl https://patf.com/bemused/api/artists/random
+curl https://patf.com/pshare/api/artists/random
 
 # Test specific artist
-curl https://patf.com/bemused/api/artist/1
+curl https://patf.com/pshare/api/artist/1
 
 # Test search
-curl 'https://patf.com/bemused/api/search?q=beatles'
+curl 'https://patf.com/pshare/api/search?q=beatles'
 ```
 
 ### Rollback to previous release
@@ -331,20 +331,20 @@ sudo systemctl restart bemused-api
 |----------|-------------|-----------|------------|
 | `BEMUSED_DB` | PostgreSQL connection string | `postgres://user:pass@localhost/bemused` | Server DB credentials |
 | `PORT` | Port for Node.js API | `3000` | `3000` |
-| `BEMUSED_PATH` | Base path prefix for stream URLs in responses | _(empty)_ | `/bemused` |
+| `BEMUSED_PATH` | Base path prefix for stream URLs in responses | _(empty)_ | `/pshare` |
 | `BEMUSED_UPLOAD_PATH` | Filesystem path where processed audio files are stored | _(local path)_ | NAS mount path |
-| `BEMUSED_DEV` | Proxy target for streams when NAS unavailable in dev | `https://patf.com/bemused` | _(not used)_ |
+| `BEMUSED_DEV` | Proxy target for streams when NAS unavailable in dev | `https://patf.com/pshare` | _(not used)_ |
 | `NODE_ENV` | Node environment | `development` | `production` |
 
 ## Nginx Configuration Notes
 
 The nginx config handles:
 
-- **`/bemused/app`** → React SPA static files
-- **`/bemused/api/*`** → Proxied to Node.js on port 3000 (strips `/bemused/api` prefix)
-- **`/bemused/stream/*`** → Proxied to Node.js for audio streaming
-- **`/bemused/images/`** → Static images from NAS (served by nginx)
-- **`/bemused/mp3s/`** → Static audio files from NAS (served by nginx, no cache)
+- **`/pshare/app`** → React SPA static files
+- **`/pshare/api/*`** → Proxied to Node.js on port 3000 (strips `/pshare/api` prefix)
+- **`/pshare/stream/*`** → Proxied to Node.js for audio streaming
+- **`/pshare/images/`** → Static images from NAS (served by nginx)
+- **`/pshare/mp3s/`** → Static audio files from NAS (served by nginx, no cache)
 
 Range requests are properly supported for audio streaming.
 
@@ -378,4 +378,4 @@ Range requests are properly supported for audio streaming.
 ### No audio playback
 - Check that `BEMUSED_PATH` is set correctly in production `.env`
 - Verify NAS mount points are accessible
-- Check nginx is serving `/bemused/mp3s/` from correct path
+- Check nginx is serving `/pshare/mp3s/` from correct path

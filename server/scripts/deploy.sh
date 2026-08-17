@@ -50,7 +50,7 @@ if ! ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "test -f ${SHARED_DIR}/
   echo "   Example content:"
   echo "   BEMUSED_DB=postgres://user:password@localhost:5432/bemused"
   echo "   PORT=3000"
-  echo "   BEMUSED_PATH=https://patf.com/bemused"
+  echo "   BEMUSED_PATH=https://patf.com/pshare"
   echo ""
   read -p "Continue anyway? (y/N) " -n 1 -r
   echo
@@ -91,6 +91,6 @@ ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} "cd ${DEPLOY_BASE}/releases 
 echo ""
 echo "✨ Deployment complete!"
 echo "   Release: ${TIMESTAMP}"
-echo "   API should be available at: https://patf.com/bemused/api"
+echo "   API should be available at: https://patf.com/pshare/api"
 echo ""
 echo "💡 To view logs: ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} 'sudo journalctl -u bemused-api -f'"
