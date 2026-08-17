@@ -22,4 +22,4 @@ rsync -avz --delete \
   ${REMOTE_USER}@${REMOTE_HOST}:${SHARED_PUBLIC_DIR}/
 
 echo "Frontend deployment complete!"
-echo "Frontend should be available at: https://patf.com/bemused/app"
+echo "Frontend should be available at: https://patf.com/pshare/app"
