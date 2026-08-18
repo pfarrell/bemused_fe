@@ -109,22 +109,42 @@ async function main() {
   // subquery run once per candidate row means one full sequential scan of
   // `tracks` (141k+ rows) per row — for a batch of any real size that
   // never finishes in practice. One bulk lookup means exactly one scan of
-  // `tracks` regardless of batch size.
+  // `tracks` (joined to artists/albums on their indexed primary keys)
+  // regardless of batch size.
   const mediaFileIds = rows.map(r => r.id)
-  const trackTitleRows = mediaFileIds.length > 0
+  const enrichRows = mediaFileIds.length > 0
     ? await db
         .selectFrom('tracks')
-        .select(['media_file_id', 'title'])
+        .leftJoin('artists', 'artists.id', 'tracks.artist_id')
+        .leftJoin('albums', 'albums.id', 'tracks.album_id')
+        .select([
+          'tracks.media_file_id',
+          'tracks.title as track_title',
+          'artists.name as artist_name',
+          'albums.musicbrainz_id as album_musicbrainz_id',
+          'albums.mbid_status as album_mbid_status',
+        ])
         .where(sql<boolean>`tracks.media_file_id = any(${mediaFileIds})`)
         .execute()
     : []
-  const titleByMediaFileId = new Map<number, string>()
-  for (const t of trackTitleRows) {
+  interface Enrichment {
+    trackTitle: string
+    artistName: string | null
+    albumMbid: string | undefined
+  }
+  const enrichByMediaFileId = new Map<number, Enrichment>()
+  for (const r of enrichRows) {
     // A media_file can back more than one track (same recording shared
-    // across releases) — any one of their titles is fine for the
-    // cross-check, they should all describe the same recording.
-    if (t.media_file_id != null && !titleByMediaFileId.has(t.media_file_id)) {
-      titleByMediaFileId.set(t.media_file_id, t.title)
+    // across releases) — any one of their tracks/artist/album is fine for
+    // the cross-check, they should all describe the same recording.
+    if (r.media_file_id != null && !enrichByMediaFileId.has(r.media_file_id)) {
+      enrichByMediaFileId.set(r.media_file_id, {
+        trackTitle: r.track_title,
+        artistName: r.artist_name,
+        // Only a CONFIDENT album MBID is usable as a cross-check signal —
+        // see the comment on lookupRecordingMBID's albumMbid parameter.
+        albumMbid: r.album_mbid_status === 'auto_matched' ? r.album_musicbrainz_id ?? undefined : undefined,
+      })
     }
   }
 
@@ -144,7 +164,15 @@ async function main() {
     } else if (dryRun) {
       console.log(`  [${row.id}] → would look up AcoustID (dry-run)`)
     } else {
-      const result = await lookupRecordingMBID(row.id, row.chromaprint_fingerprint, row.chromaprint_duration_sec, titleByMediaFileId.get(row.id))
+      const enrich = enrichByMediaFileId.get(row.id)
+      const result = await lookupRecordingMBID(
+        row.id,
+        row.chromaprint_fingerprint,
+        row.chromaprint_duration_sec,
+        enrich?.trackTitle,
+        enrich?.artistName ?? undefined,
+        enrich?.albumMbid
+      )
 
       if (result.status === 'auto_matched') {
         console.log(`  [${row.id}] ✅ Matched: ${result.mbid} (${(result.confidence * 100).toFixed(0)}%)`)

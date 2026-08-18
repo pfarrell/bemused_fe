@@ -550,6 +550,7 @@ async function processQueueItem(item: any) {
         mediaFile!.id,
         mediaFile!.absolute_path!,
         trackTitle,
+        trackArtist!.name,
         rawTrackNumberForMbid,
         { id: album!.id, musicbrainz_id: album!.musicbrainz_id ?? null, mbid_status: album!.mbid_status ?? null }
       )

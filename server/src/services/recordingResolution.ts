@@ -29,6 +29,7 @@ export async function resolveRecordingMbid(
   mediaFileId: number,
   absolutePath: string,
   trackTitle: string,
+  artistName: string,
   rawTrackNumber: number | null,
   album: AlbumForResolution
 ): Promise<void> {
@@ -76,7 +77,8 @@ export async function resolveRecordingMbid(
     }
 
     if (!resolvedViaRelease) {
-      await lookupRecordingMBID(mediaFileId, fp.fingerprint, Math.round(fp.duration), trackTitle)
+      const confidentAlbumMbid = album.mbid_status === 'auto_matched' ? album.musicbrainz_id ?? undefined : undefined
+      await lookupRecordingMBID(mediaFileId, fp.fingerprint, Math.round(fp.duration), trackTitle, artistName, confidentAlbumMbid)
     }
   } catch (err) {
     console.warn(`  ⚠️  Recording MBID resolution failed for media_file ${mediaFileId}:`, (err as Error).message)

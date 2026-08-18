@@ -29,12 +29,19 @@ export async function lookupRecordingMBID(
   mediaFileId: number,
   fingerprint: string,
   durationSec: number,
-  trackTitle?: string
+  trackTitle?: string,
+  artistName?: string,
+  // Only pass this when the track's album already has a CONFIDENT
+  // (auto_matched) musicbrainz_id — an unconfident/guessed album MBID
+  // would make the "no matching release" case meaningless.
+  albumMbid?: string
 ): Promise<RecordingMBIDResult> {
   const apiKey = process.env.ACOUSTID_API_KEY
   if (!apiKey) throw new Error('ACOUSTID_API_KEY is not set')
 
-  const url = `${ACOUSTID_BASE}?client=${apiKey}&meta=recordings&duration=${durationSec}&fingerprint=${encodeURIComponent(fingerprint)}&format=json`
+  // `releases` meta nests each candidate recording's known releases, which
+  // is what makes the albumMbid cross-check below possible.
+  const url = `${ACOUSTID_BASE}?client=${apiKey}&meta=recordings+releases&duration=${durationSec}&fingerprint=${encodeURIComponent(fingerprint)}&format=json`
 
   let data: any
   try {
@@ -91,6 +98,12 @@ export async function lookupRecordingMBID(
   const confidence = typeof top.score === 'number' ? top.score : 0
   const recordingId: string | undefined = top.recordings?.[0]?.id
   const returnedTitle: string | undefined = top.recordings?.[0]?.title
+  const returnedArtists: string[] = (top.recordings?.[0]?.artists ?? [])
+    .map((a: any) => a?.name)
+    .filter((name: unknown): name is string => typeof name === 'string')
+  const returnedReleaseIds: string[] = (top.recordings?.[0]?.releases ?? [])
+    .map((r: any) => r?.id)
+    .filter((id: unknown): id is string => typeof id === 'string')
 
   let status: RecordingMBIDResult['status']
   if (!recordingId) {
@@ -102,14 +115,27 @@ export async function lookupRecordingMBID(
     // recording MBID contaminated by mistagged submissions from other
     // users' software — this can hand back a high-confidence score for a
     // completely unrelated song (seen in production: several dozen
-    // unrelated tracks all "matched" to the same MBID at 0.97+). When we
-    // already know the track's own title, cross-check it against the
-    // title AcoustID reports for the match before trusting it outright;
-    // a mismatch downgrades to 'low_confidence' (kept for manual review,
-    // not auto-applied) rather than being silently accepted.
-    status = (trackTitle && returnedTitle && !titlesRoughlyMatch(trackTitle, returnedTitle))
-      ? 'low_confidence'
-      : 'auto_matched'
+    // unrelated tracks all "matched" to the same MBID at 0.97+). Cross-
+    // check whatever identity data we already have (from ID3/the DB)
+    // against what AcoustID reports for the match before trusting it.
+    //
+    // albumMbid is the strongest signal available — if the track's album
+    // is confidently known, whether the matched recording actually
+    // belongs to a release on that album is decisive either way, and
+    // overrides the fuzzier title/artist text comparison (which can both
+    // false-negative on messy ID3 tagging and false-positive on generic
+    // titles like "Track 04"). Absent that, fall back to requiring title
+    // AND artist to roughly agree.
+    const albumSignal: boolean | undefined = albumMbid
+      ? (returnedReleaseIds.length > 0 ? returnedReleaseIds.includes(albumMbid) : undefined)
+      : undefined
+
+    const titleOk = !trackTitle || !returnedTitle || titlesRoughlyMatch(trackTitle, returnedTitle)
+    const artistOk = !artistName || returnedArtists.length === 0 || returnedArtists.some(a => titlesRoughlyMatch(artistName, a))
+
+    const identityOk = albumSignal !== undefined ? albumSignal : (titleOk && artistOk)
+
+    status = identityOk ? 'auto_matched' : 'low_confidence'
   } else if (confidence >= 0.4) {
     status = 'low_confidence'
   } else {
