@@ -846,6 +846,13 @@ admin.put('/track/:id', async (c) => {
 
   const { title, track_number, album_id, artist_id, release_year, wikipedia } = body
 
+  if (album_id !== undefined && album_id !== null) {
+    const album = await db.selectFrom('albums').select('id').where('id', '=', album_id).executeTakeFirst()
+    if (!album) {
+      return c.json({ error: 'Album not found' }, 400)
+    }
+  }
+
   try {
     const updated = await db
       .updateTable('tracks')

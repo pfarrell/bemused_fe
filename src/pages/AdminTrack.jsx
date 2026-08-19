@@ -125,6 +125,33 @@ const AdminTrack = () => {
     }
   };
 
+  const handleNavigateAway = async (destination) => {
+    if (hasUnsavedChanges) {
+      const choice = window.confirm('You have unsaved changes. Click OK to save and leave, or Cancel to stay on this page.');
+
+      if (choice) {
+        // User clicked OK - save and navigate
+        try {
+          await saveTrack();
+          setHasUnsavedChanges(false);
+          navigate(destination);
+        } catch (err) {
+          console.error('Error saving track:', err);
+          setError(err.response?.data?.error || 'Failed to save track');
+        }
+      }
+      // If Cancel, do nothing (stay on page)
+    } else {
+      // No unsaved changes, just navigate
+      navigate(destination);
+    }
+  };
+
+  const handleNavigateBack = (e) => {
+    e.preventDefault();
+    handleNavigateAway(`/album/${detail.track.album_id}`);
+  };
+
   const handleAddCollaborator = async (newArtistId, newArtistName) => {
     try {
       const response = await apiService.addTrackCollaborator(id, newArtistId, newCollaboratorRole);
@@ -168,7 +195,7 @@ const AdminTrack = () => {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <a href={`/album/${detail.track.album_id}`} className="admin-back-link" onClick={(e) => { e.preventDefault(); navigate(`/album/${detail.track.album_id}`); }}>
+      <a href={`/album/${detail.track.album_id}`} className="admin-back-link" onClick={handleNavigateBack}>
         ← Back to Album
       </a>
 

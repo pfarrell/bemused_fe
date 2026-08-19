@@ -38,6 +38,7 @@ const renderPage = () => render(
   <MemoryRouter initialEntries={['/admin/track/1']}>
     <Routes>
       <Route path="/admin/track/:id" element={<AdminTrack />} />
+      <Route path="/album/:id" element={<div>Album Page 10</div>} />
     </Routes>
   </MemoryRouter>
 );
@@ -97,5 +98,47 @@ describe('AdminTrack', () => {
     await screen.findByText('Collab Artist');
     fireEvent.click(screen.getByText('Remove'));
     await waitFor(() => expect(apiService.removeTrackCollaborator).toHaveBeenCalledWith('1', 5));
+  });
+
+  it('warns via confirm and saves before navigating when "Back to Album" is clicked with unsaved changes', async () => {
+    apiService.updateTrack.mockResolvedValue({ data: { ...mockDetail.track, title: 'Edited Title' } });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage();
+    const titleInput = await screen.findByDisplayValue('Test Track');
+    fireEvent.change(titleInput, { target: { value: 'Edited Title' } });
+
+    fireEvent.click(screen.getByText('← Back to Album'));
+
+    expect(confirmSpy).toHaveBeenCalledWith('You have unsaved changes. Click OK to save and leave, or Cancel to stay on this page.');
+    await waitFor(() => expect(apiService.updateTrack).toHaveBeenCalledWith('1', expect.objectContaining({ title: 'Edited Title' })));
+    await waitFor(() => expect(screen.getByText('Album Page 10')).toBeInTheDocument());
+    confirmSpy.mockRestore();
+  });
+
+  it('stays on the page and does not save when "Back to Album" confirm is cancelled', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderPage();
+    const titleInput = await screen.findByDisplayValue('Test Track');
+    fireEvent.change(titleInput, { target: { value: 'Edited Title' } });
+
+    fireEvent.click(screen.getByText('← Back to Album'));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(apiService.updateTrack).not.toHaveBeenCalled();
+    expect(screen.getByDisplayValue('Edited Title')).toBeInTheDocument();
+    confirmSpy.mockRestore();
+  });
+
+  it('navigates without confirming when "Back to Album" is clicked with no unsaved changes', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm');
+    renderPage();
+    await screen.findByDisplayValue('Test Track');
+
+    fireEvent.click(screen.getByText('← Back to Album'));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(apiService.updateTrack).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText('Album Page 10')).toBeInTheDocument());
+    confirmSpy.mockRestore();
   });
 });
