@@ -829,7 +829,7 @@ admin.put('/track/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
   const body = await c.req.json()
 
-  const { title, track_number, album_id, artist_id } = body
+  const { title, track_number, album_id, artist_id, release_year, wikipedia } = body
 
   try {
     const updated = await db
@@ -839,6 +839,8 @@ admin.put('/track/:id', async (c) => {
         ...(track_number !== undefined && { track_number }),
         ...(album_id !== undefined && { album_id }),
         ...(artist_id !== undefined && { artist_id }),
+        ...(release_year !== undefined && { release_year }),
+        ...(wikipedia !== undefined && { wikipedia }),
         updated_at: new Date(),
       })
       .where('id', '=', id)
