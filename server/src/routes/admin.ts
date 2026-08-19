@@ -13,6 +13,7 @@ import {
   getReleaseByMbid,
   searchArtistsMB,
   searchReleasesMB,
+  searchRecordingsMB,
 } from '../services/musicbrainz.js'
 import { fetchAlbumArtFromCAA } from '../services/coverArtArchive.js'
 import { fetchArtistImageFromFanart } from '../services/fanart.js'
@@ -571,6 +572,20 @@ admin.get('/musicbrainz/search-release', async (c) => {
   }
 })
 
+// GET /admin/musicbrainz/search-recording?q= — proxy a recording search to MusicBrainz
+admin.get('/musicbrainz/search-recording', async (c) => {
+  const q = (c.req.query('q') ?? '').trim()
+  if (q.length < 2) return c.json([])
+
+  try {
+    const results = await searchRecordingsMB(q)
+    return c.json(results)
+  } catch (error) {
+    console.error('MusicBrainz recording search failed:', error)
+    return c.json({ error: 'Could not reach MusicBrainz to search — try again' }, 502)
+  }
+})
+
 // GET /admin/artist/:id/merge-stubs — preview which stubs would be merged
 admin.get('/artist/:id/merge-stubs', async (c) => {
   const id = parseInt(c.req.param('id'))
@@ -919,6 +934,40 @@ admin.delete('/track/:id/collaborators/:collaboratorId', async (c) => {
   } catch (error) {
     console.error('Error removing track collaborator:', error)
     return c.json({ error: 'Failed to remove collaborator' }, 500)
+  }
+})
+
+// PUT /admin/track/:id/recording-mbid — set/clear this track's media file's recording MBID
+admin.put('/track/:id/recording-mbid', async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { musicbrainz_recording_id } = body
+
+  const track = await db.selectFrom('tracks').select(['id', 'media_file_id']).where('id', '=', id).executeTakeFirst()
+  if (!track) return c.json({ error: 'Track not found' }, 404)
+  if (!track.media_file_id) return c.json({ error: 'Track has no associated media file' }, 404)
+
+  const mbid = typeof musicbrainz_recording_id === 'string' && musicbrainz_recording_id.trim()
+    ? musicbrainz_recording_id.trim()
+    : null
+
+  try {
+    const updated = await db
+      .updateTable('media_files')
+      .set({
+        musicbrainz_recording_id: mbid,
+        mbid_confidence: mbid ? 1.0 : null,
+        mbid_status: mbid ? 'manual' : 'unmatched',
+        updated_at: new Date(),
+      })
+      .where('id', '=', track.media_file_id)
+      .returningAll()
+      .executeTakeFirst()
+
+    return c.json(updated)
+  } catch (error) {
+    console.error('Error updating recording MBID:', error)
+    return c.json({ error: 'Failed to update recording MBID' }, 500)
   }
 })
 
