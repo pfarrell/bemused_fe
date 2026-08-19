@@ -786,6 +786,44 @@ admin.post('/album/:id/image', async (c) => {
   }
 })
 
+// GET /admin/track/:id — full admin detail for a single track
+admin.get('/track/:id', async (c) => {
+  const id = parseInt(c.req.param('id'))
+
+  const track = await db
+    .selectFrom('tracks')
+    .selectAll()
+    .where('id', '=', id)
+    .executeTakeFirst()
+
+  if (!track) return c.json({ error: 'Track not found' }, 404)
+
+  const [mediaFile, album, artist, collaborators] = await Promise.all([
+    track.media_file_id
+      ? db.selectFrom('media_files').selectAll().where('id', '=', track.media_file_id).executeTakeFirst()
+      : Promise.resolve(null),
+    db.selectFrom('albums').selectAll().where('id', '=', track.album_id).executeTakeFirst(),
+    track.artist_id
+      ? db.selectFrom('artists').selectAll().where('id', '=', track.artist_id).executeTakeFirst()
+      : Promise.resolve(null),
+    db
+      .selectFrom('track_artists')
+      .innerJoin('artists', 'artists.id', 'track_artists.artist_id')
+      .select([
+        'track_artists.id',
+        'track_artists.artist_id',
+        'track_artists.role',
+        'track_artists.order',
+        'artists.name as artist_name',
+      ])
+      .where('track_artists.track_id', '=', id)
+      .orderBy('track_artists.order', 'asc')
+      .execute(),
+  ])
+
+  return c.json({ track, mediaFile: mediaFile ?? null, album: album ?? null, artist: artist ?? null, collaborators })
+})
+
 // PUT /admin/track/:id — update a track
 admin.put('/track/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
