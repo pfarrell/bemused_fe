@@ -280,6 +280,29 @@ export async function searchReleasesMB(query: string): Promise<MBReleaseCandidat
   }))
 }
 
+export interface MBRecordingCandidate {
+  id: string
+  title: string
+  artistCredit?: string
+  releaseTitle?: string
+  length?: number
+  disambiguation?: string
+}
+
+export async function searchRecordingsMB(query: string): Promise<MBRecordingCandidate[]> {
+  const url = `${MB_BASE}/recording?query=${encodeURIComponent(query)}&limit=8&fmt=json`
+  const data = await rateLimitedFetch(url)
+  const recordings: any[] = data.recordings ?? []
+  return recordings.map(r => ({
+    id: r.id,
+    title: r.title,
+    artistCredit: r['artist-credit']?.map((ac: any) => ac.name).join('') || undefined,
+    releaseTitle: r.releases?.[0]?.title || undefined,
+    length: r.length || undefined,
+    disambiguation: r.disambiguation || undefined,
+  }))
+}
+
 // ---- Release tracklist (for upload-time recording MBID resolution) ----
 
 export interface MBReleaseTrack {
