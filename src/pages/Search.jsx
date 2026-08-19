@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 import Loading from '../components/Loading';
 import Track from '../components/Track';
 import SearchResultCard from '../components/SearchResultCard';
@@ -14,6 +15,7 @@ const PAGE_SIZE = 30;
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuthStore();
   const [results, setResults] = useState({ results: [], tracks: [] });
   const [resultCounts, setResultCounts] = useState(EMPTY_COUNTS);
   const [hasMore, setHasMore] = useState(false);
@@ -218,7 +220,7 @@ const Search = () => {
           <h2 className="search-section-title">Tracks ({results.tracks.length})</h2>
           <div className="track-list">
             {results.tracks.map((track, index) => (
-              <Track key={track.id} track={track} index={index} trackCount={results.tracks.length} includeMeta={true}/>
+              <Track key={track.id} track={track} index={index} trackCount={results.tracks.length} includeMeta={true} showEdit={isAdmin}/>
             ))}
           </div>
         </div>

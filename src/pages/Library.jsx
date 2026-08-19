@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 import { useFavoritesStore } from '../stores/favoritesStore';
 import { usePlayerStore } from '../stores/playerStore';
 import ArtistCard from '../components/ArtistCard';
@@ -24,6 +25,7 @@ const Library = () => {
   const navigate = useNavigate();
   const { items, loading, loaded, load } = useFavoritesStore();
   const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const { isAdmin } = useAuthStore();
   const [activeKind, setActiveKind] = useState('artist');
 
   useEffect(() => {
@@ -71,6 +73,7 @@ const Library = () => {
               index={index}
               trackCount={itemsForKind.length}
               isPlaying={currentTrack?.id === f.item.id}
+              showEdit={isAdmin}
             />
           ))}
         </div>

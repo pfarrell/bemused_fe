@@ -342,6 +342,7 @@ const Album = () => {
             trackCount={tracks.length}
             isPlaying={isTrackPlaying(track)}
             showMakeSingle={isAdmin}
+            showEdit={isAdmin}
             onMadeSingle={handleMadeSingle}
           />
         ))}

@@ -421,6 +421,30 @@ describe('Track component — Make Single menu item', () => {
   });
 });
 
+describe('Track component — Edit menu item', () => {
+  test('does not render when showEdit is false (default)', () => {
+    renderTrack();
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.queryByText('✏️ Edit')).not.toBeInTheDocument();
+  });
+
+  test('renders when showEdit is true', () => {
+    renderTrack({ showEdit: true });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    expect(screen.getByText('✏️ Edit')).toBeInTheDocument();
+  });
+
+  test('navigates to /admin/track/:id and closes the menu on click', () => {
+    const navigate = vi.fn();
+    useNavigate.mockReturnValue(navigate);
+    renderTrack({ showEdit: true });
+    fireEvent.contextMenu(screen.getByText(/Test Track/).closest('.track-item'));
+    fireEvent.click(screen.getByText('✏️ Edit'));
+    expect(navigate).toHaveBeenCalledWith('/admin/track/1');
+    expect(screen.queryByText('✏️ Edit')).not.toBeInTheDocument();
+  });
+});
+
 describe('Track component — Favorite menu item', () => {
   test('does not render when logged out', () => {
     useAuthStore.setState({ isAuthenticated: false });

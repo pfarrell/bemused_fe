@@ -367,6 +367,7 @@ const Artist = () => {
                 index={index}
                 trackCount={singles.length}
                 isPlaying={currentTrack?.id === track.id}
+                showEdit={isAdmin}
               />
             ))}
           </div>

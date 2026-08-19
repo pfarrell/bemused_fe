@@ -13,7 +13,7 @@ import ContextMenu from './ContextMenu';
 import AddToPlaylistModal from './AddToPlaylistModal';
 import TrackNotesModal from './TrackNotesModal';
 
-const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false, showMakeSingle = false, onMadeSingle }) => {
+const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false, showMakeSingle = false, showEdit = false, onMadeSingle }) => {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [pressedButton, setPressedButton] = useState(null);
@@ -117,6 +117,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
     } catch (error) {
       alert('Failed to make track a single: ' + (error.response?.data?.error || error.message));
     }
+  };
+
+  const handleEdit = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    navigate(`/admin/track/${track.id}`);
+    ctxMenu.close();
   };
 
   const handleAddToPlaylist = (e) => {
@@ -311,6 +320,16 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
             onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleMakeSingle(); }}
           >
             🎵 Make Single
+          </button>
+        )}
+
+        {showEdit && (
+          <button
+            onClick={handleEdit}
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleEdit(); }}
+          >
+            ✏️ Edit
           </button>
         )}
 
