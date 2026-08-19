@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MusicBrainzPicker from './MusicBrainzPicker';
 import { apiService } from '../services/api';
@@ -7,6 +7,7 @@ vi.mock('../services/api', () => ({
   apiService: {
     searchMusicbrainzArtist: vi.fn(),
     searchMusicbrainzRelease: vi.fn(),
+    searchMusicbrainzRecording: vi.fn(),
   },
 }));
 
@@ -152,5 +153,41 @@ describe('MusicBrainzPicker', () => {
 
     await user.click(screen.getByRole('button', { name: 'Clear' }));
     expect(onChange).toHaveBeenCalledWith('');
+  });
+});
+
+describe('MusicBrainzPicker recording support', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('links the current value to the recording MusicBrainz page', () => {
+    render(
+      <MusicBrainzPicker
+        entityType="recording"
+        value="abcd1234-abcd-1234-abcd-1234567890ab"
+        mbidStatus="manual"
+        onChange={() => {}}
+      />
+    );
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', 'https://musicbrainz.org/recording/abcd1234-abcd-1234-abcd-1234567890ab');
+  });
+
+  it('searches recordings and picks a candidate', async () => {
+    apiService.searchMusicbrainzRecording.mockResolvedValue({
+      data: [{ id: 'rec-1', title: 'Yesterday', artistCredit: 'The Beatles', releaseTitle: 'Help!' }],
+    });
+    const onChange = vi.fn();
+    render(<MusicBrainzPicker entityType="recording" value="" onChange={onChange} />);
+
+    fireEvent.click(screen.getByText('Search MusicBrainz'));
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: 'Yesterday' } });
+    fireEvent.click(screen.getByText('Search'));
+
+    await waitFor(() => expect(screen.getByText('Yesterday')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Yesterday'));
+
+    expect(onChange).toHaveBeenCalledWith('rec-1');
   });
 });

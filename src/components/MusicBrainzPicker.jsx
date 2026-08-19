@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 const MB_URL_BASE = {
   artist: 'https://musicbrainz.org/artist/',
   release: 'https://musicbrainz.org/release/',
+  recording: 'https://musicbrainz.org/recording/',
 };
 
 const UUID_IN_TEXT_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -45,7 +46,9 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, pendi
     try {
       const response = entityType === 'artist'
         ? await apiService.searchMusicbrainzArtist(query)
-        : await apiService.searchMusicbrainzRelease(query);
+        : entityType === 'recording'
+          ? await apiService.searchMusicbrainzRecording(query)
+          : await apiService.searchMusicbrainzRelease(query);
       setResults(response.data || []);
       setHasSearched(true);
     } catch (err) {
@@ -140,7 +143,7 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, pendi
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setResults([]); setHasSearched(false); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(e); } }}
-                placeholder={entityType === 'artist' ? 'Search artist name...' : 'Search release title...'}
+                placeholder={entityType === 'artist' ? 'Search artist name...' : entityType === 'recording' ? 'Search recording title...' : 'Search release title...'}
                 style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
               />
             </div>
@@ -174,7 +177,9 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, pendi
                   <div style={{ color: '#9ca3af', fontSize: '0.7rem' }}>
                     {entityType === 'artist'
                       ? [candidate.type, candidate.country, candidate.life_span].filter(Boolean).join(' · ')
-                      : [candidate.artist_credit, candidate.date, candidate.track_count ? `${candidate.track_count} tracks` : null].filter(Boolean).join(' · ')}
+                      : entityType === 'recording'
+                        ? [candidate.artistCredit, candidate.releaseTitle].filter(Boolean).join(' · ')
+                        : [candidate.artist_credit, candidate.date, candidate.track_count ? `${candidate.track_count} tracks` : null].filter(Boolean).join(' · ')}
                   </div>
                 </div>
               ))}
