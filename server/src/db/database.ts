@@ -161,6 +161,15 @@ interface ArtistAlbumTable {
   created_at: ColumnType<Date, string | Date | undefined, never>
 }
 
+interface TrackArtistTable {
+  id: Generated<number>
+  track_id: number
+  artist_id: number
+  role: 'featured' | 'guest' | 'collaborator'
+  order: number
+  created_at: ColumnType<Date, string | Date | undefined, never>
+}
+
 interface ArtistRelationTable {
   id: Generated<number>
   artist_id: number
@@ -308,6 +317,7 @@ export interface Database {
   users: UserTable
   user_playlists: UserPlaylistTable
   artist_albums: ArtistAlbumTable
+  track_artists: TrackArtistTable
   artist_relations: ArtistRelationTable
   external_lookups: ExternalLookupTable
   images: ImageTable
