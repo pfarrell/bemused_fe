@@ -858,6 +858,70 @@ admin.put('/track/:id', async (c) => {
   }
 })
 
+// POST /admin/track/:id/collaborators — add a credited (non-primary) artist to a track
+admin.post('/track/:id/collaborators', async (c) => {
+  const trackId = parseInt(c.req.param('id'))
+  const body = await c.req.json()
+  const { artist_id, role } = body
+
+  if (!artist_id || !role) {
+    return c.json({ error: 'artist_id and role are required' }, 400)
+  }
+  if (!['featured', 'guest', 'collaborator'].includes(role)) {
+    return c.json({ error: 'Invalid role. Must be featured, guest, or collaborator' }, 400)
+  }
+
+  const track = await db.selectFrom('tracks').select(['id', 'artist_id']).where('id', '=', trackId).executeTakeFirst()
+  if (!track) return c.json({ error: 'Track not found' }, 404)
+  if (track.artist_id === artist_id) {
+    return c.json({ error: 'This artist is already the primary artist on this track' }, 400)
+  }
+
+  try {
+    const existing = await db
+      .selectFrom('track_artists')
+      .select('order')
+      .where('track_id', '=', trackId)
+      .execute()
+    const nextOrder = existing.length > 0 ? Math.max(...existing.map(r => r.order)) + 1 : 1
+
+    const inserted = await db
+      .insertInto('track_artists')
+      .values({ artist_id, track_id: trackId, role, order: nextOrder })
+      .returningAll()
+      .executeTakeFirst()
+
+    return c.json(inserted)
+  } catch (error: any) {
+    if (error.code === '23505') {
+      return c.json({ error: 'This artist is already a collaborator on this track' }, 409)
+    }
+    console.error('Error adding track collaborator:', error)
+    return c.json({ error: 'Failed to add collaborator' }, 500)
+  }
+})
+
+// DELETE /admin/track/:id/collaborators/:collaboratorId — remove a credited artist from a track
+admin.delete('/track/:id/collaborators/:collaboratorId', async (c) => {
+  const collaboratorId = parseInt(c.req.param('collaboratorId'))
+
+  try {
+    const deleted = await db
+      .deleteFrom('track_artists')
+      .where('id', '=', collaboratorId)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!deleted) {
+      return c.json({ error: 'Collaborator not found' }, 404)
+    }
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error removing track collaborator:', error)
+    return c.json({ error: 'Failed to remove collaborator' }, 500)
+  }
+})
+
 // POST /admin/track/:id/make-single — removes a track from its album and files
 // it under the track's own artist's singles pseudo-album (an album titled
 // '_Singles', one per artist; read by GET /artist/:id, see routes/artists.ts).
