@@ -25,6 +25,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminArtist from './pages/AdminArtist';
 import AdminAlbum from './pages/AdminAlbum';
+import AdminTrack from './pages/AdminTrack';
 import AdminUpload from './pages/AdminUpload';
 import AdminPlaylist from './pages/AdminPlaylist';
 import AdminLogs from './pages/AdminLogs';
@@ -238,6 +239,11 @@ function App() {
                 <Route path="/admin/album/:id" element={
                   <ProtectedRoute requireAdmin>
                     <AdminAlbum />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/track/:id" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminTrack />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/upload" element={
