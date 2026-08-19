@@ -62,4 +62,40 @@ describe('AdminTrack', () => {
     fireEvent.click(screen.getByText('Save'));
     await waitFor(() => expect(apiService.updateTrack).toHaveBeenCalledWith('1', expect.objectContaining({ title: 'New Title' })));
   });
+
+  it('renders read-only media file info', async () => {
+    renderPage();
+    expect(await screen.findByText('/music/artist/album/track.mp3')).toBeInTheDocument();
+    expect(screen.getByText('abc123')).toBeInTheDocument();
+  });
+
+  it('adds a collaborator immediately (not batched with Save)', async () => {
+    apiService.addTrackCollaborator.mockResolvedValue({
+      data: { id: 99, track_id: 1, artist_id: 40, role: 'featured', order: 1 },
+    });
+    apiService.searchAdminArtists.mockResolvedValue({ data: [{ id: 40, name: 'Collab Artist' }] });
+    renderPage();
+    await screen.findByDisplayValue('Test Track');
+
+    fireEvent.click(screen.getByText('Add Collaborator'));
+    fireEvent.change(screen.getByPlaceholderText('Search artist name...'), { target: { value: 'Collab' } });
+    fireEvent.click(screen.getByText('Search', { selector: 'button' }));
+    await waitFor(() => expect(screen.getByText('Collab Artist')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Collab Artist'));
+
+    await waitFor(() => expect(apiService.addTrackCollaborator).toHaveBeenCalledWith('1', 40, 'featured'));
+    // Not part of the batched save call:
+    expect(apiService.updateTrack).not.toHaveBeenCalled();
+  });
+
+  it('removes a collaborator immediately', async () => {
+    apiService.getTrackAdminDetail.mockResolvedValue({
+      data: { ...mockDetail, collaborators: [{ id: 5, artist_id: 40, artist_name: 'Collab Artist', role: 'featured', order: 1 }] },
+    });
+    apiService.removeTrackCollaborator.mockResolvedValue({ data: { success: true } });
+    renderPage();
+    await screen.findByText('Collab Artist');
+    fireEvent.click(screen.getByText('Remove'));
+    await waitFor(() => expect(apiService.removeTrackCollaborator).toHaveBeenCalledWith('1', 5));
+  });
 });

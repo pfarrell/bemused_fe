@@ -29,6 +29,10 @@ const AdminTrack = () => {
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  const [collaborators, setCollaborators] = useState([]);
+  const [addingCollaborator, setAddingCollaborator] = useState(false);
+  const [newCollaboratorRole, setNewCollaboratorRole] = useState('featured');
+
   useEffect(() => {
     const fetchDetail = async () => {
       try {
@@ -36,6 +40,7 @@ const AdminTrack = () => {
         const response = await apiService.getTrackAdminDetail(id);
         const data = response.data;
         setDetail(data);
+        setCollaborators(data.collaborators || []);
         setTitle(data.track.title || '');
         setTrackNumber(data.track.track_number || '');
         setReleaseYear(data.track.release_year || '');
@@ -120,6 +125,26 @@ const AdminTrack = () => {
     }
   };
 
+  const handleAddCollaborator = async (newArtistId, newArtistName) => {
+    try {
+      const response = await apiService.addTrackCollaborator(id, newArtistId, newCollaboratorRole);
+      setCollaborators((prev) => [...prev, { ...response.data, artist_name: newArtistName }]);
+      setAddingCollaborator(false);
+      toast.success(`Added "${newArtistName}" as ${newCollaboratorRole}`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to add collaborator');
+    }
+  };
+
+  const handleRemoveCollaborator = async (collaboratorId) => {
+    try {
+      await apiService.removeTrackCollaborator(id, collaboratorId);
+      setCollaborators((prev) => prev.filter((c) => c.id !== collaboratorId));
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to remove collaborator');
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -186,6 +211,35 @@ const AdminTrack = () => {
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Collaborators</label>
+          {collaborators.map((c) => (
+            <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <span>{c.artist_name}</span> <span>({c.role})</span>
+              <button type="button" onClick={() => handleRemoveCollaborator(c.id)} style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', cursor: 'pointer' }}>
+                Remove
+              </button>
+            </div>
+          ))}
+          {addingCollaborator ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <select value={newCollaboratorRole} onChange={(e) => setNewCollaboratorRole(e.target.value)} style={{ padding: '0.25rem', fontSize: '0.8rem' }}>
+                <option value="featured">featured</option>
+                <option value="guest">guest</option>
+                <option value="collaborator">collaborator</option>
+              </select>
+              <TrackArtistPicker artistName="" onSelect={handleAddCollaborator} startEditing />
+              <button type="button" onClick={() => setAddingCollaborator(false)} style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setAddingCollaborator(true)} style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', cursor: 'pointer' }}>
+              Add Collaborator
+            </button>
+          )}
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Wikipedia</label>
           <textarea value={wikipedia} onChange={(e) => setWikipedia(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }} />
         </div>
@@ -206,6 +260,30 @@ const AdminTrack = () => {
           {saving ? 'Saving...' : 'Save'}
         </button>
       </form>
+
+      <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '4px', fontSize: '0.875rem' }}>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>File Info (read-only)</h2>
+        <div><strong>Track ID:</strong> {detail.track.id}</div>
+        <div><strong>Media File ID:</strong> {detail.track.media_file_id ?? '—'}</div>
+        <div><strong>Duration:</strong> {detail.track.duration_sec ? `${Math.floor(detail.track.duration_sec / 60)}:${String(detail.track.duration_sec % 60).padStart(2, '0')}` : '—'}</div>
+        <div><strong>Approved:</strong> {String(detail.track.approved)}</div>
+        <div><strong>Track Created:</strong> {detail.track.created_at}</div>
+        <div><strong>Track Updated:</strong> {detail.track.updated_at}</div>
+        {detail.mediaFile && (
+          <>
+            <div><strong>File Path:</strong> {detail.mediaFile.absolute_path}</div>
+            <div><strong>File Name:</strong> {detail.mediaFile.name}</div>
+            <div><strong>File Type:</strong> {detail.mediaFile.file_type}</div>
+            <div><strong>File Hash:</strong> {detail.mediaFile.file_hash}</div>
+            <div><strong>Chromaprint Fingerprint:</strong> {detail.mediaFile.chromaprint_fingerprint ? `${detail.mediaFile.chromaprint_fingerprint.slice(0, 40)}…` : '—'}</div>
+            <div><strong>Chromaprint Duration:</strong> {detail.mediaFile.chromaprint_duration_sec ?? '—'}</div>
+            <div><strong>Imported:</strong> {detail.mediaFile.imported_date ?? '—'}</div>
+            <div><strong>Last Modified:</strong> {detail.mediaFile.last_modified ?? '—'}</div>
+            <div><strong>MBID Status:</strong> {detail.mediaFile.mbid_status ?? '—'}</div>
+            <div><strong>MBID Confidence:</strong> {detail.mediaFile.mbid_confidence ?? '—'}</div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

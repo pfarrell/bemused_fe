@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { apiService } from '../services/api';
 
-const TrackArtistPicker = ({ artistName, onSelect }) => {
-  const [editing, setEditing] = useState(false);
+const TrackArtistPicker = ({ artistName, onSelect, startEditing = false }) => {
+  const [editing, setEditing] = useState(startEditing);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
