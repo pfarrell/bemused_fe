@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { useContextMenu } from '../hooks/useContextMenu';
+import ContextMenu from '../components/ContextMenu';
 
 const AUTO_SCROLL_EDGE_PX = 60;
 const AUTO_SCROLL_SPEED_PX = 12;
@@ -11,6 +13,159 @@ const AUTO_SCROLL_SPEED_PX = 12;
 const DropIndicator = () => (
   <div data-testid="drop-indicator" style={{ height: '3px', backgroundColor: '#3b82f6', borderRadius: '2px' }} />
 );
+
+// Right-click (desktop) / long-press (mobile) menu shared by album and stub
+// rows — moves the row to either end of the merged list in one step, without
+// needing to drag it there. A row's own action buttons (Remove/Resolve) are
+// excluded from opening it since a right-click/long-press on those is meant
+// for that button, not the row.
+const RowMoveMenu = ({ ctxMenu, item, onMoveToEdge }) => {
+  const moveTo = (edge) => {
+    ctxMenu.close();
+    onMoveToEdge(item, edge);
+  };
+  return (
+    <ContextMenu
+      open={ctxMenu.open}
+      position={ctxMenu.position}
+      openedViaTouch={ctxMenu.openedViaTouch}
+      onDismiss={ctxMenu.dismiss}
+      onSwallowTouch={ctxMenu.swallowTouch}
+      testId="collection-row-menu-backdrop"
+    >
+      <button
+        onClick={() => moveTo('top')}
+        onTouchStart={(e) => { e.stopPropagation(); }}
+        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); moveTo('top'); }}
+      >
+        ⬆ Send to Top
+      </button>
+      <button
+        onClick={() => moveTo('bottom')}
+        onTouchStart={(e) => { e.stopPropagation(); }}
+        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); moveTo('bottom'); }}
+      >
+        ⬇ Send to Bottom
+      </button>
+    </ContextMenu>
+  );
+};
+
+// Rows are their own components (rather than inline JSX in a .map()) because
+// useContextMenu is a hook — each row needs its own open/position state.
+const CollectionAlbumRow = ({ item, index, isDragged, onDragStart, onDragOver, onDragEnd, onDrop, onRemove, onMoveToEdge }) => {
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => !!e.target.closest('button') });
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, item)}
+      onDragOver={(e) => onDragOver(e, item)}
+      onDragEnd={onDragEnd}
+      onDrop={(e) => onDrop(e, item)}
+      style={{
+        padding: '1rem', borderBottom: '1px solid #e5e7eb',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        cursor: 'move',
+        backgroundColor: isDragged ? '#f3f4f6' : 'white',
+      }}
+      {...ctxMenu.triggerProps}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+        <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+          {index + 1}
+        </span>
+        <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
+        {item.data.image_path && (
+          <img
+            src={apiService.getImageUrl(item.data.image_path, 'album_small')}
+            alt={item.data.title}
+            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+            onError={(e) => {
+              if (e.target.src.includes('/sm/')) {
+                e.target.src = e.target.src.replace('/sm/', '/');
+                e.target.onerror = null;
+              }
+            }}
+          />
+        )}
+        <div>
+          <div style={{ fontWeight: '500' }}>{item.data.title}</div>
+          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            {item.data.artist?.name}
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={() => onRemove(item.data.id)}
+        style={{
+          padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
+          border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
+        }}
+      >
+        Remove
+      </button>
+      <RowMoveMenu ctxMenu={ctxMenu} item={item} onMoveToEdge={onMoveToEdge} />
+    </div>
+  );
+};
+
+const CollectionStubRow = ({ item, index, isDragged, onDragStart, onDragOver, onDragEnd, onDrop, onResolve, onRemove, onMoveToEdge }) => {
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => !!e.target.closest('button') });
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, item)}
+      onDragOver={(e) => onDragOver(e, item)}
+      onDragEnd={onDragEnd}
+      onDrop={(e) => onDrop(e, item)}
+      style={{
+        padding: '1rem', borderBottom: '1px solid #e5e7eb',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        cursor: 'move',
+        backgroundColor: isDragged ? '#f3f4f6' : '#f9fafb',
+      }}
+      {...ctxMenu.triggerProps}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+        <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+          {index + 1}
+        </span>
+        <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '4px', border: '2px dashed #9ca3af',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af',
+        }}>▢</div>
+        <div>
+          <div style={{ fontWeight: '500' }}>{item.data.title}</div>
+          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            {item.data.artist_name}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button
+          onClick={() => onResolve(item.data.id)}
+          style={{
+            padding: '0.5rem 1rem', backgroundColor: '#3b82f6', color: 'white',
+            border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
+          }}
+        >
+          Resolve
+        </button>
+        <button
+          onClick={() => onRemove(item.data.id)}
+          style={{
+            padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
+            border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
+          }}
+        >
+          Remove Placeholder
+        </button>
+      </div>
+      <RowMoveMenu ctxMenu={ctxMenu} item={item} onMoveToEdge={onMoveToEdge} />
+    </div>
+  );
+};
 
 export default function AdminCollection() {
   const { id } = useParams();
@@ -67,6 +222,12 @@ export default function AdminCollection() {
   // not window — this app's whole layout is a fixed-height flex column with
   // its own internal scroll area) while a native drag hovers near its top or
   // bottom edge, so a long list can be reordered past the current viewport.
+  //
+  // Listens on `document`, not the container itself: .app-header/.app-footer
+  // are position:fixed *siblings* of .main-content that visually overlap its
+  // top/bottom edge zones (see index.css), so a drag near either screen edge
+  // has the cursor hovering over the header/footer, not a descendant of
+  // .main-content — a listener on the container would never see that event.
   useEffect(() => {
     const container = document.querySelector('.main-content');
     if (!container) return undefined;
@@ -100,14 +261,14 @@ export default function AdminCollection() {
       }
     };
 
-    container.addEventListener('dragover', handleDragOverContainer);
-    container.addEventListener('drop', stopAutoScroll);
-    container.addEventListener('dragend', stopAutoScroll);
+    document.addEventListener('dragover', handleDragOverContainer);
+    document.addEventListener('drop', stopAutoScroll);
+    document.addEventListener('dragend', stopAutoScroll);
 
     return () => {
-      container.removeEventListener('dragover', handleDragOverContainer);
-      container.removeEventListener('drop', stopAutoScroll);
-      container.removeEventListener('dragend', stopAutoScroll);
+      document.removeEventListener('dragover', handleDragOverContainer);
+      document.removeEventListener('drop', stopAutoScroll);
+      document.removeEventListener('dragend', stopAutoScroll);
       stopAutoScroll();
     };
   }, []);
@@ -236,6 +397,25 @@ export default function AdminCollection() {
     setDragOverTarget(null);
   };
 
+  // Recomputes order for a fully-reordered merged list, applies it
+  // optimistically, then persists it — shared by drag-and-drop and the
+  // context menu's Send to Top/Bottom actions.
+  const persistReorder = async (reordered) => {
+    const withNewOrder = reordered.map((item, i) => ({ ...item, order: i + 1 }));
+    setAlbums(withNewOrder.filter((i) => i.type === 'album').map((i) => ({ ...i.data, order: i.order })));
+    setStubs(withNewOrder.filter((i) => i.type === 'stub').map((i) => ({ ...i.data, order: i.order })));
+
+    try {
+      const album_orders = withNewOrder.filter((i) => i.type === 'album').map((i) => ({ album_id: i.data.id, order: i.order }));
+      const stub_orders = withNewOrder.filter((i) => i.type === 'stub').map((i) => ({ stub_id: i.data.id, order: i.order }));
+      await apiService.reorderCollectionAlbums(id, album_orders, stub_orders);
+    } catch (err) {
+      console.error('Failed to reorder collection:', err);
+      alert('Failed to save order');
+      loadCollection();
+    }
+  };
+
   const handleDrop = async (e, targetItem) => {
     e.preventDefault();
     const dropPosition = dragOverTarget?.position ?? 'before';
@@ -256,20 +436,23 @@ export default function AdminCollection() {
     const insertAt = fromIndex < toIndex ? toIndex - 1 : toIndex;
     reordered.splice(insertAt, 0, moved);
 
-    const withNewOrder = reordered.map((item, i) => ({ ...item, order: i + 1 }));
-    setAlbums(withNewOrder.filter((i) => i.type === 'album').map((i) => ({ ...i.data, order: i.order })));
-    setStubs(withNewOrder.filter((i) => i.type === 'stub').map((i) => ({ ...i.data, order: i.order })));
     setDraggedItem(null);
+    await persistReorder(reordered);
+  };
 
-    try {
-      const album_orders = withNewOrder.filter((i) => i.type === 'album').map((i) => ({ album_id: i.data.id, order: i.order }));
-      const stub_orders = withNewOrder.filter((i) => i.type === 'stub').map((i) => ({ stub_id: i.data.id, order: i.order }));
-      await apiService.reorderCollectionAlbums(id, album_orders, stub_orders);
-    } catch (err) {
-      console.error('Failed to reorder collection:', err);
-      alert('Failed to save order');
-      loadCollection();
+  const moveToEdge = async (item, edge) => {
+    const current = buildMergedItems();
+    const fromIndex = current.findIndex((i) => i.type === item.type && i.data.id === item.data.id);
+    if (fromIndex === -1) return;
+
+    const reordered = [...current];
+    const [moved] = reordered.splice(fromIndex, 1);
+    if (edge === 'top') {
+      reordered.unshift(moved);
+    } else {
+      reordered.push(moved);
     }
+    await persistReorder(reordered);
   };
 
   const handleSave = async () => {
@@ -598,109 +781,35 @@ export default function AdminCollection() {
         ) : (
           buildMergedItems().map((item, index) => {
             const isDropTarget = dragOverTarget?.type === item.type && dragOverTarget?.id === item.data.id;
+            const isDragged = draggedItem?.type === item.type && draggedItem?.id === item.data.id;
             return (
             <div key={`${item.type}-${item.data.id}`}>
               {isDropTarget && dragOverTarget.position === 'before' && <DropIndicator />}
               {item.type === 'album' ? (
-              <div
-                draggable
-                onDragStart={(e) => handleDragStart(e, item)}
-                onDragOver={(e) => handleDragOver(e, item)}
-                onDragEnd={handleDragEnd}
-                onDrop={(e) => handleDrop(e, item)}
-                style={{
-                  padding: '1rem', borderBottom: '1px solid #e5e7eb',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  cursor: 'move',
-                  backgroundColor: draggedItem?.type === 'album' && draggedItem?.id === item.data.id ? '#f3f4f6' : 'white',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                  <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
-                    {index + 1}
-                  </span>
-                  <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
-                  {item.data.image_path && (
-                    <img
-                      src={apiService.getImageUrl(item.data.image_path, 'album_small')}
-                      alt={item.data.title}
-                      style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
-                      onError={(e) => {
-                        if (e.target.src.includes('/sm/')) {
-                          e.target.src = e.target.src.replace('/sm/', '/');
-                          e.target.onerror = null;
-                        }
-                      }}
-                    />
-                  )}
-                  <div>
-                    <div style={{ fontWeight: '500' }}>{item.data.title}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      {item.data.artist?.name}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleRemoveAlbum(item.data.id)}
-                  style={{
-                    padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <div
-                draggable
-                onDragStart={(e) => handleDragStart(e, item)}
-                onDragOver={(e) => handleDragOver(e, item)}
-                onDragEnd={handleDragEnd}
-                onDrop={(e) => handleDrop(e, item)}
-                style={{
-                  padding: '1rem', borderBottom: '1px solid #e5e7eb',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  cursor: 'move',
-                  backgroundColor: draggedItem?.type === 'stub' && draggedItem?.id === item.data.id ? '#f3f4f6' : '#f9fafb',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                  <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
-                    {index + 1}
-                  </span>
-                  <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
-                  <div style={{
-                    width: '40px', height: '40px', borderRadius: '4px', border: '2px dashed #9ca3af',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af',
-                  }}>▢</div>
-                  <div>
-                    <div style={{ fontWeight: '500' }}>{item.data.title}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      {item.data.artist_name}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => { setResolvingStubId(item.data.id); setShowSearch(true); setSearchQuery(''); setSearchResults([]); }}
-                    style={{
-                      padding: '0.5rem 1rem', backgroundColor: '#3b82f6', color: 'white',
-                      border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
-                    }}
-                  >
-                    Resolve
-                  </button>
-                  <button
-                    onClick={() => handleRemoveStub(item.data.id)}
-                    style={{
-                      padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
-                      border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
-                    }}
-                  >
-                    Remove Placeholder
-                  </button>
-                </div>
-              </div>
+                <CollectionAlbumRow
+                  item={item}
+                  index={index}
+                  isDragged={isDragged}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleDrop}
+                  onRemove={handleRemoveAlbum}
+                  onMoveToEdge={moveToEdge}
+                />
+              ) : (
+                <CollectionStubRow
+                  item={item}
+                  index={index}
+                  isDragged={isDragged}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleDrop}
+                  onResolve={(stubId) => { setResolvingStubId(stubId); setShowSearch(true); setSearchQuery(''); setSearchResults([]); }}
+                  onRemove={handleRemoveStub}
+                  onMoveToEdge={moveToEdge}
+                />
               )}
               {isDropTarget && dragOverTarget.position === 'after' && <DropIndicator />}
             </div>

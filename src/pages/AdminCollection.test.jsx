@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent, createEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, createEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminCollection from './AdminCollection';
@@ -173,6 +173,169 @@ describe('AdminCollection — placeholder stub', () => {
 
     expect(apiService.addAlbumToCollection).toHaveBeenCalledWith('7', 55);
     expect(apiService.resolveStub).not.toHaveBeenCalled();
+  });
+});
+
+describe('AdminCollection — row context menu', () => {
+  const threeRowPayload = {
+    ...collectionPayload,
+    albums: [
+      { id: 1, title: 'A', order: 1, artist: { name: 'X' } },
+      { id: 2, title: 'B', order: 2, artist: { name: 'X' } },
+    ],
+    stubs: [{ id: 9, title: 'Missing', artist_name: 'Y', order: 3 }],
+  };
+
+  test('right-click opens a menu with Send to Top / Send to Bottom', async () => {
+    apiService.getCollection.mockResolvedValue({ data: threeRowPayload });
+    renderAdminCollection();
+
+    const albumARow = (await screen.findByText('A')).closest('[draggable]');
+    expect(screen.queryByText('⬆ Send to Top')).not.toBeInTheDocument();
+
+    fireEvent.contextMenu(albumARow);
+
+    expect(screen.getByText('⬆ Send to Top')).toBeInTheDocument();
+    expect(screen.getByText('⬇ Send to Bottom')).toBeInTheDocument();
+  });
+
+  test('right-clicking the Remove button does not open the row menu', async () => {
+    apiService.getCollection.mockResolvedValue({ data: threeRowPayload });
+    renderAdminCollection();
+
+    const albumARow = (await screen.findByText('A')).closest('[draggable]');
+    const removeButton = albumARow.querySelector('button');
+    fireEvent.contextMenu(removeButton);
+
+    expect(screen.queryByText('⬆ Send to Top')).not.toBeInTheDocument();
+  });
+
+  test('Send to Top moves an album to the front of a mixed album/stub list', async () => {
+    apiService.getCollection.mockResolvedValue({ data: threeRowPayload });
+    apiService.reorderCollectionAlbums = vi.fn().mockResolvedValue({});
+    const user = userEvent.setup();
+    renderAdminCollection();
+
+    const albumBRow = (await screen.findByText('B')).closest('[draggable]');
+    fireEvent.contextMenu(albumBRow);
+    await user.click(screen.getByText('⬆ Send to Top'));
+
+    const [, albumOrders, stubOrders] = apiService.reorderCollectionAlbums.mock.calls[0];
+    const orderOf = (arr, key, id) => arr.find((x) => x[key] === id)?.order;
+    expect(orderOf(albumOrders, 'album_id', 2)).toBe(1);
+    expect(orderOf(albumOrders, 'album_id', 1)).toBeGreaterThan(1);
+    expect(orderOf(stubOrders, 'stub_id', 9)).toBeGreaterThan(orderOf(albumOrders, 'album_id', 2));
+  });
+
+  test('Send to Bottom moves a stub past all albums', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [
+          { id: 1, title: 'A', order: 2, artist: { name: 'X' } },
+          { id: 2, title: 'B', order: 3, artist: { name: 'X' } },
+        ],
+        stubs: [{ id: 9, title: 'Missing', artist_name: 'Y', order: 1 }],
+      },
+    });
+    apiService.reorderCollectionAlbums = vi.fn().mockResolvedValue({});
+    const user = userEvent.setup();
+    renderAdminCollection();
+
+    const stubRow = (await screen.findByText('Missing')).closest('[draggable]');
+    fireEvent.contextMenu(stubRow);
+    await user.click(screen.getByText('⬇ Send to Bottom'));
+
+    const [, albumOrders, stubOrders] = apiService.reorderCollectionAlbums.mock.calls[0];
+    const orderOf = (arr, key, id) => arr.find((x) => x[key] === id)?.order;
+    expect(orderOf(stubOrders, 'stub_id', 9)).toBe(3);
+    expect(orderOf(albumOrders, 'album_id', 1)).toBeLessThan(3);
+    expect(orderOf(albumOrders, 'album_id', 2)).toBeLessThan(3);
+  });
+
+  test('a long-press also opens the row menu (mobile path)', async () => {
+    apiService.getCollection.mockResolvedValue({ data: threeRowPayload });
+    renderAdminCollection();
+    const albumARow = (await screen.findByText('A')).closest('[draggable]');
+
+    // Fake timers only wrap the long-press itself — findByText above needs
+    // real timers to resolve its internal polling.
+    vi.useFakeTimers();
+    try {
+      fireEvent.touchStart(albumARow, { touches: [{ clientX: 50, clientY: 50 }] });
+      act(() => { vi.advanceTimersByTime(500); });
+      expect(screen.getByText('⬆ Send to Top')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('AdminCollection — edge auto-scroll', () => {
+  test('auto-scrolls .main-content when a drag hovers the fixed header/footer overlay at the top or bottom edge', async () => {
+    apiService.getCollection.mockResolvedValue({
+      data: {
+        ...collectionPayload,
+        albums: [{ id: 1, title: 'A', order: 1, artist: { name: 'X' } }],
+      },
+    });
+
+    // .app-header/.app-footer are position:fixed siblings of .main-content
+    // that overlap its top/bottom edges (see index.css) — a real drag near
+    // either screen edge has the cursor over one of those, not a descendant
+    // of .main-content. Reproduce that by rendering into a real `.main-content`
+    // container and dispatching the dragover on `document` (their actual
+    // common ancestor) rather than on anything inside the container.
+    const mainContentDiv = document.createElement('div');
+    mainContentDiv.className = 'main-content';
+    document.body.appendChild(mainContentDiv);
+    mainContentDiv.getBoundingClientRect = () => ({ top: 0, bottom: 500, height: 500 });
+    let scrollTopValue = 200;
+    Object.defineProperty(mainContentDiv, 'scrollTop', {
+      get: () => scrollTopValue,
+      set: (v) => { scrollTopValue = v; },
+      configurable: true,
+    });
+
+    // jsdom has no real animation-frame scheduler; capture the callback so the
+    // test can step frames manually instead of relying on one being pumped.
+    let rafCallback = null;
+    const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      rafCallback = cb;
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+    render(
+      <MemoryRouter initialEntries={['/admin/collection/7']}>
+        <Routes>
+          <Route path="/admin/collection/:id" element={<AdminCollection />} />
+        </Routes>
+      </MemoryRouter>,
+      { container: mainContentDiv }
+    );
+    await screen.findByText('A');
+
+    const dataTransfer = { effectAllowed: '', dropEffect: '' };
+    const topEdgeDragOver = createEvent.dragOver(document, { dataTransfer });
+    topEdgeDragOver.clientY = 10; // within the 60px top edge zone
+    fireEvent(document, topEdgeDragOver);
+
+    expect(rafCallback).toBeTypeOf('function');
+    rafCallback();
+    rafCallback();
+    expect(mainContentDiv.scrollTop).toBeLessThan(200);
+
+    const afterTopScroll = mainContentDiv.scrollTop;
+    const bottomEdgeDragOver = createEvent.dragOver(document, { dataTransfer });
+    bottomEdgeDragOver.clientY = 495; // within the 60px bottom edge zone
+    fireEvent(document, bottomEdgeDragOver);
+    rafCallback();
+    rafCallback();
+    expect(mainContentDiv.scrollTop).toBeGreaterThan(afterTopScroll);
+
+    rafSpy.mockRestore();
+    document.body.removeChild(mainContentDiv);
   });
 });
 

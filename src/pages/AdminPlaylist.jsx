@@ -3,6 +3,92 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { useContextMenu } from '../hooks/useContextMenu';
+import ContextMenu from '../components/ContextMenu';
+
+// Its own component (rather than inline JSX in a .map()) because
+// useContextMenu is a hook — each row needs its own open/position state.
+// Right-click (desktop) / long-press (mobile) opens a menu that moves the
+// track to either end of the list in one step, without dragging it there.
+// The Delete button is excluded from opening it (shouldIgnore below) since a
+// right-click/long-press there is meant for that button, not the row.
+const PlaylistTrackRow = ({ track, index, isDragged, onDragStart, onDragOver, onDrop, onDelete, onMoveToEdge }) => {
+  const ctxMenu = useContextMenu({ shouldIgnore: (e) => !!e.target.closest('button') });
+  const moveTo = (edge) => {
+    ctxMenu.close();
+    onMoveToEdge(track.id, edge);
+  };
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, index)}
+      onDragOver={onDragOver}
+      onDrop={(e) => onDrop(e, index)}
+      style={{
+        padding: '1rem',
+        borderBottom: '1px solid #e5e7eb',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        cursor: 'move',
+        backgroundColor: isDragged ? '#f3f4f6' : 'white'
+      }}
+      {...ctxMenu.triggerProps}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+        <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+          {index + 1}
+        </span>
+        <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>
+          ☰
+        </span>
+        <div>
+          <div style={{ fontWeight: '500' }}>{track.title}</div>
+          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            {track.artist?.name} • {track.album?.title}
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={() => onDelete(track.id)}
+        style={{
+          padding: '0.5rem 1rem',
+          backgroundColor: '#ef4444',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '0.875rem'
+        }}
+      >
+        Delete
+      </button>
+      <ContextMenu
+        open={ctxMenu.open}
+        position={ctxMenu.position}
+        openedViaTouch={ctxMenu.openedViaTouch}
+        onDismiss={ctxMenu.dismiss}
+        onSwallowTouch={ctxMenu.swallowTouch}
+        testId="playlist-row-menu-backdrop"
+      >
+        <button
+          onClick={() => moveTo('top')}
+          onTouchStart={(e) => { e.stopPropagation(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); moveTo('top'); }}
+        >
+          ⬆ Send to Top
+        </button>
+        <button
+          onClick={() => moveTo('bottom')}
+          onTouchStart={(e) => { e.stopPropagation(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); moveTo('bottom'); }}
+        >
+          ⬇ Send to Bottom
+        </button>
+      </ContextMenu>
+    </div>
+  );
+};
 
 export default function AdminPlaylist() {
   const { id } = useParams();
@@ -93,19 +179,10 @@ export default function AdminPlaylist() {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = async (e, dropIndex) => {
-    e.preventDefault();
-
-    if (draggedIndex === null || draggedIndex === dropIndex) return;
-
-    const newTracks = [...tracks];
-    const [movedTrack] = newTracks.splice(draggedIndex, 1);
-    newTracks.splice(dropIndex, 0, movedTrack);
-
+  // Applies a fully-reordered track list optimistically, then persists it —
+  // shared by drag-and-drop and the context menu's Send to Top/Bottom actions.
+  const persistReorder = async (newTracks) => {
     setTracks(newTracks);
-    setDraggedIndex(null);
-
-    // Update order on backend
     try {
       const track_orders = newTracks.map((track, index) => ({
         track_id: track.id,
@@ -118,6 +195,33 @@ export default function AdminPlaylist() {
       // Reload to get correct order
       loadPlaylist();
     }
+  };
+
+  const handleDrop = async (e, dropIndex) => {
+    e.preventDefault();
+
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    const newTracks = [...tracks];
+    const [movedTrack] = newTracks.splice(draggedIndex, 1);
+    newTracks.splice(dropIndex, 0, movedTrack);
+
+    setDraggedIndex(null);
+    await persistReorder(newTracks);
+  };
+
+  const moveTrackToEdge = async (trackId, edge) => {
+    const fromIndex = tracks.findIndex((t) => t.id === trackId);
+    if (fromIndex === -1) return;
+
+    const newTracks = [...tracks];
+    const [moved] = newTracks.splice(fromIndex, 1);
+    if (edge === 'top') {
+      newTracks.unshift(moved);
+    } else {
+      newTracks.push(moved);
+    }
+    await persistReorder(newTracks);
   };
 
   const handleSave = async () => {
@@ -435,51 +539,17 @@ export default function AdminPlaylist() {
           </div>
         ) : (
           tracks.map((track, index) => (
-            <div
+            <PlaylistTrackRow
               key={track.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, index)}
+              track={track}
+              index={index}
+              isDragged={draggedIndex === index}
+              onDragStart={handleDragStart}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, index)}
-              style={{
-                padding: '1rem',
-                borderBottom: '1px solid #e5e7eb',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'move',
-                backgroundColor: draggedIndex === index ? '#f3f4f6' : 'white'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
-                  {index + 1}
-                </span>
-                <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>
-                  ☰
-                </span>
-                <div>
-                  <div style={{ fontWeight: '500' }}>{track.title}</div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                    {track.artist?.name} • {track.album?.title}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => handleDeleteTrack(track.id)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem'
-                }}
-              >
-                Delete
-              </button>
-            </div>
+              onDrop={handleDrop}
+              onDelete={handleDeleteTrack}
+              onMoveToEdge={moveTrackToEdge}
+            />
           ))
         )}
       </div>
