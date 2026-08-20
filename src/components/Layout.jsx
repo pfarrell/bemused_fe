@@ -186,27 +186,6 @@ const Layout = ({ children }) => {
               }}>
                 {isAuthenticated && user ? (
                   <>
-                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #3a4853' }}>
-                      <button
-                        onClick={() => { setShowDropdown(false); navigate('/account'); }}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '0.5rem 1rem',
-                          background: 'none',
-                          border: 'none',
-                          color: 'inherit',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                      >
-                        {user.username}
-                      </button>
-                    </div>
-
                     <div style={{ padding: '0.5rem 0' }}>
                       <button
                         onClick={goHome}
@@ -307,6 +286,27 @@ const Layout = ({ children }) => {
                           Admin
                         </button>
                       )}
+                    </div>
+
+                    <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #3a4853' }}>
+                      <button
+                        onClick={() => { setShowDropdown(false); navigate('/account'); }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '0.5rem 1rem',
+                          background: 'none',
+                          border: 'none',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3a4853'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                        {user.username}
+                      </button>
                     </div>
                   </>
                 ) : (
