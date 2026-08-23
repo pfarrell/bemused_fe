@@ -4,6 +4,8 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useTagFilterStore } from '../stores/tagFilterStore';
 import { useHomeFeedStore } from '../stores/homeFeedStore';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
+import UnsavedChangesModal from './UnsavedChangesModal';
 import SearchBar from './SearchBar';
 import HomeViewToggle from './HomeViewToggle';
 import TagFilterControl from './TagFilterControl';
@@ -20,6 +22,7 @@ const Layout = ({ children }) => {
   const [pullDistance, setPullDistance] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const pullStartY = useRef(0);
 
   // Close dropdown when clicking outside
@@ -76,9 +79,13 @@ const Layout = ({ children }) => {
 
     const handleTouchEnd = () => {
       if (isPulling && pullDistance > 60) {
-        // Remount the current page to re-fetch data without reloading the app
-        useHomeFeedStore.getState().invalidate();
-        setRefreshKey(k => k + 1);
+        if (useUnsavedChangesStore.getState().hasUnsavedChanges) {
+          // Don't wipe out in-progress edits on an admin page — ask first
+          // instead of remounting immediately.
+          setShowUnsavedPrompt(true);
+        } else {
+          doRefresh();
+        }
       }
       setIsPulling(false);
       setPullDistance(0);
@@ -94,6 +101,29 @@ const Layout = ({ children }) => {
       mainContent.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isPulling, pullDistance]);
+
+  // Remount the current page to re-fetch data without reloading the app.
+  // Shared by the direct pull-to-refresh path and both resolutions of the
+  // unsaved-changes prompt (Save & Refresh, Discard Changes).
+  const doRefresh = () => {
+    useHomeFeedStore.getState().invalidate();
+    setRefreshKey(k => k + 1);
+  };
+
+  const handleUnsavedSave = async () => {
+    await useUnsavedChangesStore.getState().save();
+    setShowUnsavedPrompt(false);
+    doRefresh();
+  };
+
+  const handleUnsavedDiscard = () => {
+    setShowUnsavedPrompt(false);
+    doRefresh();
+  };
+
+  const handleUnsavedCancel = () => {
+    setShowUnsavedPrompt(false);
+  };
 
   // Shared by the "P·Share" logo and both "Home" menu buttons: always
   // forces a fresh random feed and a remount, even if already on '/'
@@ -445,6 +475,14 @@ const Layout = ({ children }) => {
           {children}
         </div>
       </div>
+
+      {showUnsavedPrompt && (
+        <UnsavedChangesModal
+          onSave={handleUnsavedSave}
+          onDiscard={handleUnsavedDiscard}
+          onCancel={handleUnsavedCancel}
+        />
+      )}
 
     </div>
   );

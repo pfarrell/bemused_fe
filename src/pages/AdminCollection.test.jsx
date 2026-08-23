@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminCollection from './AdminCollection';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 
 vi.mock('../services/api', () => ({
   apiService: {
@@ -664,5 +665,41 @@ describe('AdminCollection — ownership', () => {
     renderWithViewRoute();
 
     expect(await screen.findByText('Edit Collection')).toBeInTheDocument();
+  });
+});
+
+describe('AdminCollection — unsavedChangesStore registration', () => {
+  test('registers unsaved changes when a field is edited, clears on unmount', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderAdminCollection();
+    const nameInput = await screen.findByDisplayValue('Road Trip Mix');
+
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+
+    await user.type(nameInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+    expect(useUnsavedChangesStore.getState().save).toBeInstanceOf(Function);
+
+    unmount();
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+    expect(useUnsavedChangesStore.getState().save).toBe(null);
+  });
+
+  test('the registered save function persists the edited fields', async () => {
+    apiService.updateCollection.mockResolvedValue({ data: { success: true } });
+    const user = userEvent.setup();
+    renderAdminCollection();
+    const nameInput = await screen.findByDisplayValue('Road Trip Mix');
+
+    await user.type(nameInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+
+    await useUnsavedChangesStore.getState().save();
+
+    expect(apiService.updateCollection).toHaveBeenCalledWith(
+      '7',
+      expect.objectContaining({ name: 'Road Trip Mix Extra' })
+    );
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false));
   });
 });

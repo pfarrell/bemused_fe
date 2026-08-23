@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminAlbum from './AdminAlbum';
 import { apiService } from '../services/api';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 
 vi.mock('../components/TagsSection', () => ({ default: () => null }));
 vi.mock('../services/api', () => ({
@@ -225,5 +226,40 @@ describe('AdminAlbum — Make Single', () => {
 
     await screen.findByDisplayValue('_Singles');
     expect(screen.queryByRole('button', { name: 'Make Single' })).not.toBeInTheDocument();
+  });
+});
+
+describe('AdminAlbum — unsavedChangesStore registration', () => {
+  test('registers unsaved changes when a field is edited, clears on unmount', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderAdminAlbum();
+    const titleInput = await screen.findByDisplayValue('Easy Rider');
+
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+
+    await user.type(titleInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+    expect(useUnsavedChangesStore.getState().save).toBeInstanceOf(Function);
+
+    unmount();
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+    expect(useUnsavedChangesStore.getState().save).toBe(null);
+  });
+
+  test('the registered save function persists the edited fields', async () => {
+    apiService.updateAlbum.mockResolvedValue({ data: {} });
+    const user = userEvent.setup();
+    renderAdminAlbum();
+    const titleInput = await screen.findByDisplayValue('Easy Rider');
+
+    await user.type(titleInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+
+    await useUnsavedChangesStore.getState().save();
+
+    expect(apiService.updateAlbum).toHaveBeenCalledWith(
+      '10',
+      expect.objectContaining({ title: 'Easy Rider Extra' })
+    );
   });
 });

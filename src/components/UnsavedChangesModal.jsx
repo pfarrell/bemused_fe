@@ -1,0 +1,90 @@
+// src/components/UnsavedChangesModal.jsx
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+
+// Shown by Layout when a pull-to-refresh is triggered while the current
+// admin page has unsaved edits (see stores/unsavedChangesStore). Offers a
+// real Save action (unlike the browser's own beforeunload prompt, which
+// can only warn — it can't await an async save).
+const UnsavedChangesModal = ({ onSave, onDiscard, onCancel }) => {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save — try again');
+      setSaving(false);
+    }
+  };
+
+  return createPortal(
+    <div
+      data-testid="unsaved-changes-modal-backdrop"
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 2000, padding: '1rem',
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget && !saving) onCancel(); }}
+    >
+      <div
+        style={{
+          backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem',
+          maxWidth: '400px', width: '100%',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+        }}
+      >
+        <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>Unsaved changes</h2>
+        <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#6b7280' }}>
+          You have unsaved changes on this page. Refreshing will lose them unless you save first.
+        </p>
+
+        {error && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '0.75rem' }}>{error}</div>}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '0.6rem', backgroundColor: '#3b82f6', color: 'white',
+              border: 'none', borderRadius: '4px', fontWeight: 'bold',
+              cursor: saving ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {saving ? 'Saving…' : 'Save & Refresh'}
+          </button>
+          <button
+            onClick={onDiscard}
+            disabled={saving}
+            style={{
+              padding: '0.6rem', backgroundColor: 'white', color: '#ef4444',
+              border: '1px solid #ef4444', borderRadius: '4px',
+              cursor: saving ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Discard Changes
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            style={{
+              padding: '0.6rem', backgroundColor: 'white', color: '#374151',
+              border: '1px solid #d1d5db', borderRadius: '4px',
+              cursor: saving ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+export default UnsavedChangesModal;

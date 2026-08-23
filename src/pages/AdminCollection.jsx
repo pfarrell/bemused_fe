@@ -1,8 +1,9 @@
 // src/pages/AdminCollection.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import { useContextMenu } from '../hooks/useContextMenu';
 import ContextMenu from '../components/ContextMenu';
 
@@ -172,6 +173,8 @@ export default function AdminCollection() {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuthStore();
   const [collectionData, setCollectionData] = useState(null);
+  const [originalData, setOriginalData] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -278,6 +281,7 @@ export default function AdminCollection() {
       setLoading(true);
       const response = await apiService.getCollection(id);
       setCollectionData(response.data.collection);
+      setOriginalData(response.data.collection);
       setAlbums(response.data.albums || []);
       setStubs(response.data.stubs || []);
     } catch (err) {
@@ -455,14 +459,78 @@ export default function AdminCollection() {
     await persistReorder(reordered);
   };
 
+  // Track changes to the editable fields
+  useEffect(() => {
+    if (!collectionData || !originalData) return;
+    const hasChanges =
+      collectionData.name !== originalData.name ||
+      collectionData.image_path !== originalData.image_path ||
+      collectionData.wikipedia !== originalData.wikipedia;
+    setHasUnsavedChanges(hasChanges);
+  }, [collectionData, originalData]);
+
+  // Warn user before leaving page with unsaved changes (browser navigation)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Just the API call, no navigation — shared by the Save button, the
+  // link-click guard below, and the pull-to-refresh save prompt in Layout
+  // (registered via unsavedChangesStore).
+  const saveCollection = useCallback(async () => {
+    await apiService.updateCollection(id, {
+      name: collectionData.name,
+      image_path: collectionData.image_path,
+      wikipedia: collectionData.wikipedia,
+    });
+    setOriginalData(collectionData);
+    setHasUnsavedChanges(false);
+  }, [id, collectionData]);
+
+  useEffect(() => {
+    useUnsavedChangesStore.getState().setUnsavedChanges(hasUnsavedChanges, saveCollection);
+    return () => useUnsavedChangesStore.getState().clear();
+  }, [hasUnsavedChanges, saveCollection]);
+
+  // Intercept all link clicks to check for unsaved changes
+  useEffect(() => {
+    const handleClick = async (e) => {
+      if (!hasUnsavedChanges) return;
+      const link = e.target.closest('a');
+      if (!link) return;
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      if (link.classList.contains('admin-back-link')) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const choice = window.confirm('You have unsaved changes. Click OK to save and leave, or Cancel to stay on this page.');
+      if (choice) {
+        try {
+          await saveCollection();
+          setTimeout(() => navigate(href), 0);
+        } catch (err) {
+          console.error('Failed to save collection:', err);
+          alert('Failed to save collection');
+        }
+      }
+    };
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [hasUnsavedChanges, saveCollection, navigate]);
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      await apiService.updateCollection(id, {
-        name: collectionData.name,
-        image_path: collectionData.image_path,
-        wikipedia: collectionData.wikipedia,
-      });
+      await saveCollection();
       navigate(`/collection/${id}`);
     } catch (err) {
       console.error('Failed to save collection:', err);

@@ -1,7 +1,8 @@
 // src/pages/AdminAlbum.jsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import Loading from '../components/Loading';
 import TagsSection from '../components/TagsSection';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
@@ -148,6 +149,22 @@ const AdminAlbum = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+  // Just the API call, no navigation — shared by the form submit, the
+  // link-click guard below, and the pull-to-refresh save prompt in Layout
+  // (registered via unsavedChangesStore below).
+  const saveAlbum = useCallback(async () => {
+    await apiService.updateAlbum(id, {
+      title,
+      artist_id: parseInt(artistId),
+      release_year: releaseYear,
+      image_path: imagePath,
+      wikipedia,
+      is_compilation: isCompilation,
+      musicbrainz_id: musicbrainzId,
+    });
+    setHasUnsavedChanges(false);
+  }, [id, title, artistId, releaseYear, imagePath, wikipedia, isCompilation, musicbrainzId]);
+
   // Intercept all link clicks to check for unsaved changes
   useEffect(() => {
     const handleClick = async (e) => {
@@ -175,16 +192,7 @@ const AdminAlbum = () => {
       if (choice) {
         // User clicked OK - save and navigate
         try {
-          await apiService.updateAlbum(id, {
-            title,
-            artist_id: parseInt(artistId),
-            release_year: releaseYear,
-            image_path: imagePath,
-            wikipedia,
-            is_compilation: isCompilation,
-            musicbrainz_id: musicbrainzId,
-          });
-          setHasUnsavedChanges(false);
+          await saveAlbum();
           // Navigate to the link destination
           setTimeout(() => navigate(href), 0);
         } catch (error) {
@@ -197,7 +205,12 @@ const AdminAlbum = () => {
     // Add click listener to the document
     document.addEventListener('click', handleClick, true);
     return () => document.removeEventListener('click', handleClick, true);
-  }, [hasUnsavedChanges, id, title, artistId, releaseYear, imagePath, wikipedia, isCompilation, musicbrainzId, navigate]);
+  }, [hasUnsavedChanges, saveAlbum, navigate]);
+
+  useEffect(() => {
+    useUnsavedChangesStore.getState().setUnsavedChanges(hasUnsavedChanges, saveAlbum);
+    return () => useUnsavedChangesStore.getState().clear();
+  }, [hasUnsavedChanges, saveAlbum]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -205,18 +218,7 @@ const AdminAlbum = () => {
     setError(null);
 
     try {
-      await apiService.updateAlbum(id, {
-        title,
-        artist_id: parseInt(artistId),
-        release_year: releaseYear,
-        image_path: imagePath,
-        wikipedia,
-        is_compilation: isCompilation,
-        musicbrainz_id: musicbrainzId,
-      });
-
-      // Clear unsaved changes flag before navigating
-      setHasUnsavedChanges(false);
+      await saveAlbum();
 
       // Redirect to regular album page after successful save
       navigate(`/album/${id}`);

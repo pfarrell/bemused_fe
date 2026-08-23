@@ -1,7 +1,8 @@
 // src/pages/AdminArtist.jsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import Loading from '../components/Loading';
 import TagsSection from '../components/TagsSection';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
@@ -141,6 +142,19 @@ const AdminArtist = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+  // Just the API call, no navigation — shared by the form submit, the
+  // link-click guard below, and the pull-to-refresh save prompt in Layout
+  // (registered via unsavedChangesStore below).
+  const saveArtist = useCallback(async () => {
+    await apiService.updateArtist(id, {
+      name,
+      image_path: imagePath,
+      wikipedia,
+      musicbrainz_id: musicbrainzId,
+    });
+    setHasUnsavedChanges(false);
+  }, [id, name, imagePath, wikipedia, musicbrainzId]);
+
   // Intercept all link clicks to check for unsaved changes
   useEffect(() => {
     const handleClick = async (e) => {
@@ -168,13 +182,7 @@ const AdminArtist = () => {
       if (choice) {
         // User clicked OK - save and navigate
         try {
-          await apiService.updateArtist(id, {
-            name,
-            image_path: imagePath,
-            wikipedia,
-            musicbrainz_id: musicbrainzId,
-          });
-          setHasUnsavedChanges(false);
+          await saveArtist();
           // Navigate to the link destination
           setTimeout(() => navigate(href), 0);
         } catch (error) {
@@ -187,7 +195,12 @@ const AdminArtist = () => {
     // Add click listener to the document
     document.addEventListener('click', handleClick, true);
     return () => document.removeEventListener('click', handleClick, true);
-  }, [hasUnsavedChanges, id, name, imagePath, wikipedia, musicbrainzId, navigate]);
+  }, [hasUnsavedChanges, saveArtist, navigate]);
+
+  useEffect(() => {
+    useUnsavedChangesStore.getState().setUnsavedChanges(hasUnsavedChanges, saveArtist);
+    return () => useUnsavedChangesStore.getState().clear();
+  }, [hasUnsavedChanges, saveArtist]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -195,15 +208,7 @@ const AdminArtist = () => {
     setError(null);
 
     try {
-      await apiService.updateArtist(id, {
-        name,
-        image_path: imagePath,
-        wikipedia,
-        musicbrainz_id: musicbrainzId,
-      });
-
-      // Clear unsaved changes flag before navigating
-      setHasUnsavedChanges(false);
+      await saveArtist();
 
       // Redirect to regular artist page after successful save
       navigate(`/artist/${id}`);

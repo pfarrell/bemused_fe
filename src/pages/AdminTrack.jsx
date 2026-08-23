@@ -1,7 +1,8 @@
 // src/pages/AdminTrack.jsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import Loading from '../components/Loading';
 import TrackArtistPicker from '../components/TrackArtistPicker';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
@@ -84,6 +85,21 @@ const AdminTrack = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+  const saveTrack = useCallback(async () => {
+    await apiService.updateTrack(id, {
+      title,
+      track_number: trackNumber,
+      album_id: albumId === '' ? null : parseInt(albumId),
+      artist_id: artistId,
+      release_year: releaseYear,
+      wikipedia,
+    });
+    if (recordingMbid !== (detail.mediaFile?.musicbrainz_recording_id || '')) {
+      await apiService.updateTrackRecordingMbid(id, recordingMbid || null);
+    }
+    setHasUnsavedChanges(false);
+  }, [id, title, trackNumber, albumId, artistId, releaseYear, wikipedia, recordingMbid, detail]);
+
   useEffect(() => {
     const handleClick = async (e) => {
       if (!hasUnsavedChanges) return;
@@ -109,21 +125,14 @@ const AdminTrack = () => {
     };
     document.addEventListener('click', handleClick, true);
     return () => document.removeEventListener('click', handleClick, true);
-  }, [hasUnsavedChanges, id, title, trackNumber, releaseYear, wikipedia, albumId, artistId, recordingMbid, navigate]);
+  }, [hasUnsavedChanges, saveTrack, navigate]);
 
-  const saveTrack = async () => {
-    await apiService.updateTrack(id, {
-      title,
-      track_number: trackNumber,
-      album_id: albumId === '' ? null : parseInt(albumId),
-      artist_id: artistId,
-      release_year: releaseYear,
-      wikipedia,
-    });
-    if (recordingMbid !== (detail.mediaFile?.musicbrainz_recording_id || '')) {
-      await apiService.updateTrackRecordingMbid(id, recordingMbid || null);
-    }
-  };
+  // Registered so Layout's pull-to-refresh can prompt to save before
+  // remounting this page (see stores/unsavedChangesStore).
+  useEffect(() => {
+    useUnsavedChangesStore.getState().setUnsavedChanges(hasUnsavedChanges, saveTrack);
+    return () => useUnsavedChangesStore.getState().clear();
+  }, [hasUnsavedChanges, saveTrack]);
 
   const handleNavigateAway = async (destination) => {
     if (hasUnsavedChanges) {
@@ -133,7 +142,6 @@ const AdminTrack = () => {
         // User clicked OK - save and navigate
         try {
           await saveTrack();
-          setHasUnsavedChanges(false);
           navigate(destination);
         } catch (err) {
           console.error('Error saving track:', err);
@@ -178,7 +186,6 @@ const AdminTrack = () => {
     setError(null);
     try {
       await saveTrack();
-      setHasUnsavedChanges(false);
       toast.success('Track saved');
       navigate(`/album/${albumId}`);
     } catch (err) {

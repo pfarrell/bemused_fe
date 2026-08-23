@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminPlaylist from './AdminPlaylist';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 
 vi.mock('../services/api', () => ({
   apiService: {
@@ -147,5 +148,41 @@ describe('AdminPlaylist — ownership', () => {
     renderAdminPlaylist();
 
     expect(await screen.findByText('Edit Playlist')).toBeInTheDocument();
+  });
+});
+
+describe('AdminPlaylist — unsavedChangesStore registration', () => {
+  test('registers unsaved changes when a field is edited, clears on unmount', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderAdminPlaylist();
+    const nameInput = await screen.findByDisplayValue('Test Playlist');
+
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+
+    await user.type(nameInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+    expect(useUnsavedChangesStore.getState().save).toBeInstanceOf(Function);
+
+    unmount();
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+    expect(useUnsavedChangesStore.getState().save).toBe(null);
+  });
+
+  test('the registered save function persists the edited fields', async () => {
+    apiService.updatePlaylist.mockResolvedValue({ data: { success: true } });
+    const user = userEvent.setup();
+    renderAdminPlaylist();
+    const nameInput = await screen.findByDisplayValue('Test Playlist');
+
+    await user.type(nameInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+
+    await useUnsavedChangesStore.getState().save();
+
+    expect(apiService.updatePlaylist).toHaveBeenCalledWith(
+      '20',
+      expect.objectContaining({ name: 'Test Playlist Extra' })
+    );
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false));
   });
 });

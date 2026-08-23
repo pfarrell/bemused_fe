@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AdminTrack from './AdminTrack';
 import { apiService } from '../services/api';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 
 vi.mock('../services/api', () => ({
   apiService: {
@@ -140,5 +141,40 @@ describe('AdminTrack', () => {
     expect(apiService.updateTrack).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByText('Album Page 10')).toBeInTheDocument());
     confirmSpy.mockRestore();
+  });
+});
+
+describe('AdminTrack — unsavedChangesStore registration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    apiService.getTrackAdminDetail.mockResolvedValue({ data: mockDetail });
+  });
+
+  it('registers unsaved changes when a field is edited, clears on unmount', async () => {
+    const { unmount } = renderPage();
+    const titleInput = await screen.findByDisplayValue('Test Track');
+
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+
+    fireEvent.change(titleInput, { target: { value: 'New Title' } });
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+    expect(useUnsavedChangesStore.getState().save).toBeInstanceOf(Function);
+
+    unmount();
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+    expect(useUnsavedChangesStore.getState().save).toBe(null);
+  });
+
+  it('the registered save function persists the edited fields', async () => {
+    apiService.updateTrack.mockResolvedValue({ data: { ...mockDetail.track, title: 'New Title' } });
+    renderPage();
+    const titleInput = await screen.findByDisplayValue('Test Track');
+
+    fireEvent.change(titleInput, { target: { value: 'New Title' } });
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+
+    await useUnsavedChangesStore.getState().save();
+
+    expect(apiService.updateTrack).toHaveBeenCalledWith('1', expect.objectContaining({ title: 'New Title' }));
   });
 });

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import AdminArtist from './AdminArtist';
 import { apiService } from '../services/api';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 
 vi.mock('../components/TagsSection', () => ({ default: () => null }));
 vi.mock('../services/api', () => ({
@@ -152,6 +153,41 @@ describe('AdminArtist — unified merge section', () => {
         '5',
         expect.objectContaining({ musicbrainz_id: '0e8e1b3b-388f-4404-900e-db88c3b47c2a' })
       )
+    );
+  });
+});
+
+describe('AdminArtist — unsavedChangesStore registration', () => {
+  test('registers unsaved changes when a field is edited, clears on unmount', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderAdminArtist();
+    const nameInput = await screen.findByDisplayValue('EWF');
+
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+
+    await user.type(nameInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+    expect(useUnsavedChangesStore.getState().save).toBeInstanceOf(Function);
+
+    unmount();
+    expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(false);
+    expect(useUnsavedChangesStore.getState().save).toBe(null);
+  });
+
+  test('the registered save function persists the edited fields', async () => {
+    apiService.updateArtist.mockResolvedValue({ data: {} });
+    const user = userEvent.setup();
+    renderAdminArtist();
+    const nameInput = await screen.findByDisplayValue('EWF');
+
+    await user.type(nameInput, ' Extra');
+    await waitFor(() => expect(useUnsavedChangesStore.getState().hasUnsavedChanges).toBe(true));
+
+    await useUnsavedChangesStore.getState().save();
+
+    expect(apiService.updateArtist).toHaveBeenCalledWith(
+      '5',
+      expect.objectContaining({ name: 'EWF Extra' })
     );
   });
 });

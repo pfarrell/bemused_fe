@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Layout from './Layout';
 import { useAuthStore } from '../stores/authStore';
+import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 
 vi.mock('./SearchBar', () => ({ default: () => null }));
 vi.mock('../services/api', () => ({ apiService: { getTags: vi.fn(() => Promise.resolve({ data: [] })) } }));
@@ -116,5 +117,65 @@ describe('Layout — logged-out hamburger menu', () => {
     expect(screen.getByText('Login / Sign Up')).toBeInTheDocument();
     expect(screen.queryByText('Account')).not.toBeInTheDocument();
     expect(screen.queryByText('Logout')).not.toBeInTheDocument();
+  });
+});
+
+// Simulates a pull-to-refresh gesture: touchstart at the top of the
+// scroll container, then a touchmove past the 60px activation threshold,
+// then touchend to trigger the refresh (or the unsaved-changes prompt).
+const pullToRefresh = (container) => {
+  const mainContent = container.querySelector('.main-content');
+  fireEvent.touchStart(mainContent, { touches: [{ clientY: 0 }] });
+  fireEvent.touchMove(mainContent, { touches: [{ clientY: 80 }] });
+  fireEvent.touchEnd(mainContent);
+};
+
+describe('Layout — pull-to-refresh with unsaved changes', () => {
+  beforeEach(() => {
+    useUnsavedChangesStore.setState({ hasUnsavedChanges: false, save: null });
+  });
+
+  test('refreshes directly when there are no unsaved changes', () => {
+    const { container } = renderLayout();
+    pullToRefresh(container);
+    expect(screen.queryByRole('heading', { name: 'Unsaved changes' })).not.toBeInTheDocument();
+  });
+
+  test('shows the unsaved-changes prompt instead of refreshing immediately', () => {
+    useUnsavedChangesStore.setState({ hasUnsavedChanges: true, save: vi.fn() });
+    const { container } = renderLayout();
+    pullToRefresh(container);
+    expect(screen.getByRole('heading', { name: 'Unsaved changes' })).toBeInTheDocument();
+  });
+
+  test('Save & Refresh calls the registered save function and closes the prompt', async () => {
+    const save = vi.fn().mockResolvedValue();
+    useUnsavedChangesStore.setState({ hasUnsavedChanges: true, save });
+    const { container } = renderLayout();
+    pullToRefresh(container);
+    fireEvent.click(screen.getByText('Save & Refresh'));
+    await screen.findByText('page content');
+    expect(save).toHaveBeenCalled();
+    expect(screen.queryByRole('heading', { name: 'Unsaved changes' })).not.toBeInTheDocument();
+  });
+
+  test('Discard Changes closes the prompt without calling save', () => {
+    const save = vi.fn();
+    useUnsavedChangesStore.setState({ hasUnsavedChanges: true, save });
+    const { container } = renderLayout();
+    pullToRefresh(container);
+    fireEvent.click(screen.getByText('Discard Changes'));
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.queryByRole('heading', { name: 'Unsaved changes' })).not.toBeInTheDocument();
+  });
+
+  test('Cancel closes the prompt without calling save', () => {
+    const save = vi.fn();
+    useUnsavedChangesStore.setState({ hasUnsavedChanges: true, save });
+    const { container } = renderLayout();
+    pullToRefresh(container);
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.queryByRole('heading', { name: 'Unsaved changes' })).not.toBeInTheDocument();
   });
 });
