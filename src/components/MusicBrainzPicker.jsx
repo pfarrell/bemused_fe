@@ -14,7 +14,7 @@ const displayId = (raw) => {
   return match ? match[0] : raw;
 };
 
-const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, pending, onChange }) => {
+const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artistName, pending, onChange }) => {
   const [pasteText, setPasteText] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState(searchDefault || '');
@@ -47,7 +47,7 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, pendi
       const response = entityType === 'artist'
         ? await apiService.searchMusicbrainzArtist(query)
         : entityType === 'recording'
-          ? await apiService.searchMusicbrainzRecording(query)
+          ? await apiService.searchMusicbrainzRecording(query, artistName)
           : await apiService.searchMusicbrainzRelease(query);
       setResults(response.data || []);
       setHasSearched(true);

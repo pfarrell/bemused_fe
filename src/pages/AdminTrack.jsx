@@ -277,7 +277,8 @@ const AdminTrack = () => {
             entityType="recording"
             value={recordingMbid}
             mbidStatus={mbidStatus}
-            searchDefault={`${title} ${artistName}`}
+            searchDefault={title}
+            artistName={artistName}
             pending={recordingMbid !== (detail.mediaFile?.musicbrainz_recording_id || '')}
             onChange={setRecordingMbid}
           />

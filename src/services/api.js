@@ -89,7 +89,7 @@ export const apiService = {
   updateTrack: (id, data) => api.put(`/admin/track/${id}`, data),
   deleteTrack: (id) => api.delete(`/admin/track/${id}`),
   makeTrackSingle: (id) => api.post(`/admin/track/${id}/make-single`),
-  searchMusicbrainzRecording: (q) => api.get(`/admin/musicbrainz/search-recording?q=${encodeURIComponent(q)}`),
+  searchMusicbrainzRecording: (q, artist) => api.get(`/admin/musicbrainz/search-recording?q=${encodeURIComponent(q)}${artist ? `&artist=${encodeURIComponent(artist)}` : ''}`),
   getTrackAdminDetail: (id) => api.get(`/admin/track/${id}`),
   addTrackCollaborator: (trackId, artistId, role) => api.post(`/admin/track/${trackId}/collaborators`, { artist_id: artistId, role }),
   removeTrackCollaborator: (trackId, collaboratorId) => api.delete(`/admin/track/${trackId}/collaborators/${collaboratorId}`),

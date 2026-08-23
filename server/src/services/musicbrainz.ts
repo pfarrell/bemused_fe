@@ -1,7 +1,7 @@
 // server/src/services/musicbrainz.ts
 
 import { db } from '../db/database.js'
-import { fetchAlbumArtFromCAA } from './coverArtArchive.js'
+import { fetchAlbumArtFromCAA, hasCoverArt } from './coverArtArchive.js'
 import { errorLogService } from './errorLogService.js'
 
 import path from 'path'
@@ -72,31 +72,51 @@ export async function lookupAlbumMBID(
     return { mbid: '', confidence: 0, status: 'not_found' }
   }
 
-  // MB returns its own score 0-100; use it as our base
-  const top = releases[0]
-  let score = parseInt(top.score ?? '0')
+  // MB returns its own score 0-100 per candidate; use it as our base, with
+  // the same track-count/year boosts as before.
+  const scored = releases.map(r => {
+    let score = parseInt(r.score ?? '0')
+    if (trackCount && r['medium-list']?.[0]?.['track-count'] === trackCount) {
+      score = Math.min(100, score + 5)
+    }
+    if (releaseYear && r.date?.startsWith(releaseYear)) {
+      score = Math.min(100, score + 5)
+    }
+    return { release: r, score }
+  })
 
-  // Boost if track count matches
-  if (trackCount && top['medium-list']?.[0]?.['track-count'] === trackCount) {
-    score = Math.min(100, score + 5)
-  }
+  // Only candidates that clear the confidence bar are worth re-ranking by
+  // cover art/country — this is a preference among otherwise-plausible
+  // matches, not a way to promote a poor match.
+  const candidates = scored.filter(s => s.score >= 50)
 
-  // Boost if release year matches
-  if (releaseYear && top.date?.startsWith(releaseYear)) {
-    score = Math.min(100, score + 5)
-  }
-
-  const confidence = score / 100
-  let status: MBIDResult['status']
-
-  if (score >= 80) {
-    status = 'auto_matched'
-  } else if (score >= 50) {
-    status = 'low_confidence'
-  } else {
+  if (candidates.length === 0) {
+    const confidence = scored[0].score / 100
     await updateAlbumMBID(albumId, null, confidence, 'not_found')
     return { mbid: '', confidence, status: 'not_found' }
   }
+
+  // Prefer releases with confirmed Cover Art Archive artwork, then US
+  // releases, then fall back to score — matches how these get picked by
+  // hand when browsing musicbrainz.org directly, and avoids the "no CAA
+  // images for album" misses seen when a non-US or artless edition gets
+  // auto-matched instead.
+  const withCoverArt = await Promise.all(
+    candidates.map(async c => ({ ...c, coverArt: await hasCoverArt(c.release.id) }))
+  )
+
+  withCoverArt.sort((a, b) => {
+    if (a.coverArt !== b.coverArt) return a.coverArt ? -1 : 1
+    const aIsUS = a.release.country === 'US'
+    const bIsUS = b.release.country === 'US'
+    if (aIsUS !== bIsUS) return aIsUS ? -1 : 1
+    return b.score - a.score
+  })
+
+  const best = withCoverArt[0]
+  const top = best.release
+  const confidence = best.score / 100
+  const status: MBIDResult['status'] = best.score >= 80 ? 'auto_matched' : 'low_confidence'
 
   await updateAlbumMBID(albumId, top.id, confidence, status)
 
@@ -289,8 +309,9 @@ export interface MBRecordingCandidate {
   disambiguation?: string
 }
 
-export async function searchRecordingsMB(query: string): Promise<MBRecordingCandidate[]> {
-  const url = `${MB_BASE}/recording?query=${encodeURIComponent(query)}&limit=8&fmt=json`
+export async function searchRecordingsMB(query: string, artistName?: string): Promise<MBRecordingCandidate[]> {
+  const q = artistName ? `recording:"${query}" AND artist:"${artistName}"` : query
+  const url = `${MB_BASE}/recording?query=${encodeURIComponent(q)}&limit=8&fmt=json`
   const data = await rateLimitedFetch(url)
   const recordings: any[] = data.recordings ?? []
   return recordings.map(r => ({

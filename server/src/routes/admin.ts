@@ -9,12 +9,14 @@ import {
   lookupAlbumMBID,
   lookupArtistMBID,
   extractMbid,
+  searchRecordingsMB,
+} from '../services/musicbrainz.js'
+import {
   getArtistByMbid,
   getReleaseByMbid,
   searchArtistsMB,
   searchReleasesMB,
-  searchRecordingsMB,
-} from '../services/musicbrainz.js'
+} from '../services/musicbrainzLocal.js'
 import { fetchAlbumArtFromCAA } from '../services/coverArtArchive.js'
 import { fetchArtistImageFromFanart } from '../services/fanart.js'
 import { fetchSimilarArtists } from '../services/lastfmSimilar.js'
@@ -180,6 +182,7 @@ admin.put('/album/:id', async (c) => {
         'albums.mbid_status',
         'albums.musicbrainz_id',
         'albums.release_year',
+        'albums.image_path',
         'artists.name as artist_name',
       ])
       .where('albums.id', '=', id)
@@ -191,6 +194,13 @@ admin.put('/album/:id', async (c) => {
 
     let mbidUpdate: { musicbrainz_id: string | null; mbid_confidence: number | null; mbid_status: string } | null = null
     let mbidReleaseYear: string | undefined
+    // Set when the admin re-pastes the MBID that's already stored, as a way to
+    // retry a Cover Art Archive fetch that failed the first time (transient
+    // CAA/MusicBrainz errors) — the MBID fields don't need updating, just the
+    // image-fetch side effect below. Only offered while there's no image yet;
+    // once one is attached, re-submitting the same id is a no-op again so we
+    // don't re-download and accumulate duplicate image rows on every save.
+    let caaRetryMbid: string | undefined
 
     if (musicbrainz_id !== undefined) {
       const raw = typeof musicbrainz_id === 'string' ? musicbrainz_id.trim() : ''
@@ -221,6 +231,8 @@ admin.put('/album/:id', async (c) => {
           // and the point of auto-filling this is to save the admin from having
           // to go look up the original year by hand.
           mbidReleaseYear = (entity.original_date || entity.date)?.match(/^\d{4}/)?.[0]
+        } else if (current.mbid_status === 'manual' && !current.image_path) {
+          caaRetryMbid = mbid
         }
       }
     }
@@ -265,10 +277,12 @@ admin.put('/album/:id', async (c) => {
     }
 
     // Manually-set MBID: re-run the same side effect (Cover Art Archive image fetch)
-    // a fresh auto-match would trigger
-    if (mbidUpdate?.mbid_status === 'manual' && mbidUpdate.musicbrainz_id) {
+    // a fresh auto-match would trigger. Also covers the re-paste-to-retry case
+    // above, since fetchAlbumArtFromCAA logs its own failures to error_log.
+    const caaFetchMbid = mbidUpdate?.mbid_status === 'manual' ? mbidUpdate.musicbrainz_id : caaRetryMbid
+    if (caaFetchMbid) {
       const imagesDir = path.join(projectRoot, 'public', 'images')
-      fetchAlbumArtFromCAA(id, mbidUpdate.musicbrainz_id, imagesDir).catch(err =>
+      fetchAlbumArtFromCAA(id, caaFetchMbid, imagesDir).catch(err =>
         console.warn(`Manual MBID image fetch failed for album ${id}:`, err.message)
       )
     }
@@ -575,10 +589,11 @@ admin.get('/musicbrainz/search-release', async (c) => {
 // GET /admin/musicbrainz/search-recording?q= — proxy a recording search to MusicBrainz
 admin.get('/musicbrainz/search-recording', async (c) => {
   const q = (c.req.query('q') ?? '').trim()
+  const artist = (c.req.query('artist') ?? '').trim() || undefined
   if (q.length < 2) return c.json([])
 
   try {
-    const results = await searchRecordingsMB(q)
+    const results = await searchRecordingsMB(q, artist)
     return c.json(results)
   } catch (error) {
     console.error('MusicBrainz recording search failed:', error)
