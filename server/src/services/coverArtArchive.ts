@@ -4,6 +4,7 @@ import { db } from '../db/database.js'
 import fs from 'fs'
 import path from 'path'
 import { createSmallVersion } from './imageResize.js'
+import { errorLogService } from './errorLogService.js'
 
 const CAA_BASE = 'https://coverartarchive.org'
 const USER_AGENT = 'Bemused/1.0 (https://patf.net)'
@@ -26,6 +27,19 @@ async function fetchCAAImages(mbid: string): Promise<CAAImage[]> {
   return data.images ?? []
 }
 
+// Lightweight existence check for ranking release candidates (see
+// musicbrainz.ts's lookupAlbumMBID) — a candidate with confirmed cover art
+// is preferred over one without. Treats errors as "no cover art" rather
+// than throwing, since this is a soft preference signal, not a requirement.
+export async function hasCoverArt(mbid: string): Promise<boolean> {
+  try {
+    const images = await fetchCAAImages(mbid)
+    return images.length > 0
+  } catch {
+    return false
+  }
+}
+
 function selectBestImageUrl(image: CAAImage): string | null {
   // Prefer large thumbnails in order of quality
   const candidates = [
@@ -46,6 +60,7 @@ export async function fetchAlbumArtFromCAA(
     images = await fetchCAAImages(mbid)
   } catch (err) {
     console.warn(`  ⚠️  CAA fetch failed for album ${albumId}: ${(err as Error).message}`)
+    errorLogService.record({ source: 'cover_art_archive', message: (err as Error).message, context: `fetch for album ${albumId}` })
     return false
   }
 
@@ -126,6 +141,7 @@ export async function fetchAlbumArtFromCAA(
     return true
   } catch (err) {
     console.warn(`  ⚠️  CAA download failed for album ${albumId}: ${(err as Error).message}`)
+    errorLogService.record({ source: 'cover_art_archive', message: (err as Error).message, context: `download for album ${albumId}` })
     return false
   }
 }

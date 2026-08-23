@@ -8,6 +8,7 @@ const SOURCE_COLORS = {
   upload: { bg: '#fee2e2', color: '#991b1b' },
   http: { bg: '#ede9fe', color: '#5b21b6' },
   musicbrainz: { bg: '#dbeafe', color: '#1e40af' },
+  cover_art_archive: { bg: '#dbeafe', color: '#1e40af' },
   wikipedia: { bg: '#e0f2fe', color: '#075985' },
   fanart: { bg: '#fce7f3', color: '#9d174d' },
   lastfm: { bg: '#fef3c7', color: '#92400e' },
