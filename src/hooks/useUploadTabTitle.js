@@ -28,7 +28,7 @@ export function useUploadTabTitle(inFlightBatches) {
       return;
     }
 
-    const uploadingCount = inFlightBatchesRef.current.filter((b) => b.status === 'uploading').length;
+    const uploadingCount = inFlightBatchesRef.current.filter((b) => b.files.some((f) => f.status === 'uploading')).length;
 
     if (uploadingCount > 0) {
       sawUploadingRef.current = true;

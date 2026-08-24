@@ -121,8 +121,98 @@ const AdminUpload = () => {
     setFilePreviews(previews);
   };
 
-  const handleDismissBatch = (id) => {
-    setInFlightBatches((prev) => prev.filter((b) => b.id !== id));
+  // Builds the FormData for a single file's request, repeating the shared
+  // batch-level metadata (artist/album/genre/etc.) on each one — each file
+  // is its own independent request (see handleSubmit), so each needs the
+  // full field set the backend expects.
+  const buildFileFormData = (file, meta) => {
+    const formData = new FormData();
+    formData.append('files', file);
+
+    if (meta.artistId) {
+      formData.append('artist_id', String(meta.artistId));
+    } else if (meta.artistName) {
+      formData.append('artist_name', meta.artistName);
+    }
+
+    if (!meta.isSingle) {
+      if (meta.albumId) {
+        formData.append('album_id', String(meta.albumId));
+      } else if (meta.albumName) {
+        formData.append('album_name', meta.albumName);
+      }
+    }
+    formData.append('is_compilation', String(meta.isCompilation));
+    formData.append('is_single', String(meta.isSingle));
+    if (meta.genre) formData.append('genre', meta.genre);
+    if (meta.trackPad) formData.append('track_pad', meta.trackPad);
+    if (meta.albumArtUrl) formData.append('album_art_url', meta.albumArtUrl);
+    if (meta.albumArtName) formData.append('album_art_name', meta.albumArtName);
+
+    return formData;
+  };
+
+  // Submits exactly one file's request and updates its row in place. A
+  // dropped connection here only fails this one row — the rest of the
+  // batch's sequential loop (or a Retry click) is unaffected. Returns
+  // whether it succeeded, so callers can tally a batch-level count.
+  const uploadOneFile = async (batchId, fileEntry, meta) => {
+    setInFlightBatches((prev) =>
+      prev.map((b) =>
+        b.id !== batchId
+          ? b
+          : { ...b, files: b.files.map((f) => (f.id === fileEntry.id ? { ...f, status: 'uploading', error: undefined } : f)) }
+      )
+    );
+
+    try {
+      await apiService.uploadTracks(buildFileFormData(fileEntry.file, meta));
+      setInFlightBatches((prev) =>
+        prev
+          .map((b) => (b.id !== batchId ? b : { ...b, files: b.files.filter((f) => f.id !== fileEntry.id) }))
+          .filter((b) => b.files.length > 0)
+      );
+      return true;
+    } catch (err) {
+      console.error('Upload error:', err);
+      const msg = err.response?.data?.error || 'Failed to upload file';
+      setInFlightBatches((prev) =>
+        prev.map((b) =>
+          b.id !== batchId
+            ? b
+            : { ...b, files: b.files.map((f) => (f.id === fileEntry.id ? { ...f, status: 'failed', error: msg } : f)) }
+        )
+      );
+      return false;
+    }
+  };
+
+  const handleDismissFile = (batchId, fileId) => {
+    setInFlightBatches((prev) =>
+      prev
+        .map((b) => (b.id !== batchId ? b : { ...b, files: b.files.filter((f) => f.id !== fileId) }))
+        .filter((b) => b.files.length > 0)
+    );
+  };
+
+  const handleRetryFile = (batchId, fileEntry) => {
+    const batch = inFlightBatches.find((b) => b.id === batchId);
+    if (!batch) return;
+    uploadOneFile(batchId, fileEntry, batch.meta).then(() => {
+      loadRecentUploads();
+      loadStats();
+    });
+  };
+
+  const handleRetryAllFailed = async (batchId) => {
+    const batch = inFlightBatches.find((b) => b.id === batchId);
+    if (!batch) return;
+    const failedEntries = batch.files.filter((f) => f.status === 'failed');
+    for (const fileEntry of failedEntries) {
+      await uploadOneFile(batchId, fileEntry, batch.meta);
+    }
+    loadRecentUploads();
+    loadStats();
   };
 
   const handleSubmit = async (e) => {
@@ -135,38 +225,33 @@ const AdminUpload = () => {
 
     setError(null);
 
-    const formData = new FormData();
-
-    selectedFiles.forEach((file) => {
-      formData.append('files', file);
-    });
-
-    if (selectedArtist) {
-      formData.append('artist_id', String(selectedArtist.id));
-    } else if (artistQuery.trim()) {
-      formData.append('artist_name', artistQuery.trim());
-    }
-
-    if (!isSingle) {
-      if (selectedAlbum) {
-        formData.append('album_id', String(selectedAlbum.id));
-      } else if (albumQuery.trim()) {
-        formData.append('album_name', albumQuery.trim());
-      }
-    }
-    formData.append('is_compilation', String(isCompilation));
-    formData.append('is_single', String(isSingle));
-    if (genre) formData.append('genre', genre);
-    if (trackPad) formData.append('track_pad', trackPad);
-    if (albumArtUrl) formData.append('album_art_url', albumArtUrl);
-    if (albumArtName) formData.append('album_art_name', albumArtName);
+    const filesToUpload = selectedFiles;
+    const meta = {
+      artistId: selectedArtist ? selectedArtist.id : null,
+      artistName: !selectedArtist && artistQuery.trim() ? artistQuery.trim() : null,
+      albumId: !isSingle && selectedAlbum ? selectedAlbum.id : null,
+      albumName: !isSingle && !selectedAlbum && albumQuery.trim() ? albumQuery.trim() : null,
+      isCompilation,
+      isSingle,
+      genre,
+      trackPad,
+      albumArtUrl,
+      albumArtName,
+    };
 
     const batchId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    setInFlightBatches((prev) => [...prev, { id: batchId, fileCount: selectedFiles.length, status: 'uploading' }]);
+    setInFlightBatches((prev) => [
+      ...prev,
+      {
+        id: batchId,
+        meta,
+        files: filesToUpload.map((file, i) => ({ id: `${batchId}-${i}`, file, name: file.name, status: 'queued' })),
+      },
+    ]);
 
     // Reset the form immediately so a new batch can be started right away —
-    // the FormData above was already built from the current state, so a
-    // later selection can't corrupt this in-flight submission.
+    // meta/filesToUpload above were already captured from the current
+    // state, so a later selection can't corrupt this in-flight submission.
     setArtistQuery('');
     setSelectedArtist(null);
     setArtistResults([]);
@@ -184,22 +269,23 @@ const AdminUpload = () => {
     const fileInput = document.getElementById('file-input');
     if (fileInput) fileInput.value = '';
 
-    try {
-      const response = await apiService.uploadTracks(formData);
-
-      setInFlightBatches((prev) => prev.filter((b) => b.id !== batchId));
-      setMessage(`Successfully queued ${response.data.queued} file(s) for processing`);
-      setTimeout(() => setMessage(null), 5000);
-
-      loadRecentUploads();
-      loadStats();
-    } catch (err) {
-      console.error('Upload error:', err);
-      const msg = err.response?.data?.error || 'Failed to upload files';
-      setInFlightBatches((prev) =>
-        prev.map((b) => (b.id === batchId ? { ...b, status: 'error', error: msg } : b))
-      );
+    // Files go one at a time, not bundled into one request: a single
+    // dropped connection during a large batch only loses the file in
+    // flight, not everything queued behind it.
+    let successCount = 0;
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const fileEntry = { id: `${batchId}-${i}`, file: filesToUpload[i], name: filesToUpload[i].name };
+      const ok = await uploadOneFile(batchId, fileEntry, meta);
+      if (ok) successCount++;
     }
+
+    if (successCount > 0) {
+      setMessage(`Successfully queued ${successCount} file(s) for processing`);
+      setTimeout(() => setMessage(null), 5000);
+    }
+
+    loadRecentUploads();
+    loadStats();
   };
 
   const handleRetry = async (id) => {
@@ -365,38 +451,77 @@ const AdminUpload = () => {
       )}
 
       {inFlightBatches.length > 0 && (
-        <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.5rem' }}>
-          {inFlightBatches.map((batch) => (
-            <div
-              key={batch.id}
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: '4px',
-                backgroundColor: batch.status === 'error' ? '#fee2e2' : '#eff6ff',
-                color: batch.status === 'error' ? '#991b1b' : '#1e40af',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontSize: '0.875rem',
-              }}
-            >
-              <span>
-                {batch.status === 'error'
-                  ? `Batch of ${batch.fileCount} file(s) — failed: ${batch.error}`
-                  : `Batch of ${batch.fileCount} file(s) — uploading…`}
-              </span>
-              {batch.status === 'error' && (
-                <button
-                  type="button"
-                  aria-label="Dismiss batch"
-                  onClick={() => handleDismissBatch(batch.id)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1rem' }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
+        <div style={{ marginBottom: '1rem', maxHeight: '260px', overflowY: 'auto', display: 'grid', gap: '0.5rem' }}>
+          {inFlightBatches.map((batch) => {
+            const failedCount = batch.files.filter((f) => f.status === 'failed').length;
+            return (
+              <div key={batch.id} style={{ border: '1px solid #e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: '#f3f4f6',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <span>Batch of {batch.files.length} file(s)</span>
+                  {failedCount > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRetryAllFailed(batch.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: '0.8rem' }}
+                    >
+                      Retry all failed
+                    </button>
+                  )}
+                </div>
+                {batch.files.map((f) => (
+                  <div
+                    key={f.id}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderTop: '1px solid #e5e7eb',
+                      backgroundColor: f.status === 'failed' ? '#fee2e2' : '#eff6ff',
+                      color: f.status === 'failed' ? '#991b1b' : '#1e40af',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    <span>
+                      {f.status === 'failed'
+                        ? `${f.name} — failed: ${f.error}`
+                        : f.status === 'uploading'
+                        ? `${f.name} — uploading…`
+                        : `${f.name} — waiting…`}
+                    </span>
+                    {f.status === 'failed' && (
+                      <span style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          type="button"
+                          aria-label={`Retry ${f.name}`}
+                          onClick={() => handleRetryFile(batch.id, f)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '0.75rem', textDecoration: 'underline' }}
+                        >
+                          Retry
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Dismiss ${f.name}`}
+                          onClick={() => handleDismissFile(batch.id, f.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1rem' }}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
 

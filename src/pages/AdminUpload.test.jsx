@@ -393,6 +393,10 @@ describe('AdminUpload — clearing failed uploads', () => {
 });
 
 describe('AdminUpload — concurrent batches', () => {
+  beforeEach(() => {
+    apiService.uploadTracks.mockReset();
+  });
+
   test('starting a second batch while the first is still uploading shows both in the in-flight strip, and resolves independently', async () => {
     const user = userEvent.setup();
     let resolveFirst;
@@ -411,27 +415,83 @@ describe('AdminUpload — concurrent batches', () => {
     // Form is usable again immediately — file input was never disabled, and
     // the previous selection/preview is cleared so a new batch can start.
     expect(document.getElementById('file-input')).not.toBeDisabled();
-    await screen.findByText('Batch of 1 file(s) — uploading…');
+    await screen.findByText('first.mp3 — uploading…');
     expect(screen.queryByText('first.mp3')).not.toBeInTheDocument();
 
     const fileB = new File([''], 'second.mp3', { type: 'audio/mpeg' });
     await user.upload(document.getElementById('file-input'), fileB);
     await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
 
-    expect(screen.getAllByText('Batch of 1 file(s) — uploading…')).toHaveLength(2);
+    await screen.findByText('second.mp3 — uploading…');
+    expect(screen.getByText('first.mp3 — uploading…')).toBeInTheDocument();
 
     resolveFirst({ data: { queued: 1 } });
     await waitFor(() => {
-      expect(screen.getAllByText('Batch of 1 file(s) — uploading…')).toHaveLength(1);
+      expect(screen.queryByText('first.mp3 — uploading…')).not.toBeInTheDocument();
     });
+    expect(screen.getByText('second.mp3 — uploading…')).toBeInTheDocument();
 
     resolveSecond({ data: { queued: 1 } });
     await waitFor(() => {
-      expect(screen.queryByText('Batch of 1 file(s) — uploading…')).not.toBeInTheDocument();
+      expect(screen.queryByText('second.mp3 — uploading…')).not.toBeInTheDocument();
     });
   });
 
-  test('a batch that fails to submit stays visible with a Dismiss control, without blocking new selections', async () => {
+  test('uploads multiple files in one batch sequentially, one request at a time', async () => {
+    const user = userEvent.setup();
+    let resolveFirst;
+    let resolveSecond;
+    const firstUploadPromise = new Promise((resolve) => { resolveFirst = resolve; });
+    const secondUploadPromise = new Promise((resolve) => { resolveSecond = resolve; });
+    apiService.uploadTracks
+      .mockImplementationOnce(() => firstUploadPromise)
+      .mockImplementationOnce(() => secondUploadPromise);
+    renderUpload();
+
+    const fileA = new File([''], 'one.mp3', { type: 'audio/mpeg' });
+    const fileB = new File([''], 'two.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), [fileA, fileB]);
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    await screen.findByText('one.mp3 — uploading…');
+    expect(screen.getByText('two.mp3 — waiting…')).toBeInTheDocument();
+    expect(apiService.uploadTracks).toHaveBeenCalledTimes(1);
+
+    resolveFirst({ data: { queued: 1 } });
+    await screen.findByText('two.mp3 — uploading…');
+    expect(screen.queryByText('one.mp3 — uploading…')).not.toBeInTheDocument();
+    expect(apiService.uploadTracks).toHaveBeenCalledTimes(2);
+
+    resolveSecond({ data: { queued: 1 } });
+    await screen.findByText(/Successfully queued 2 file\(s\)/);
+  });
+
+  test('a file that fails within a batch shows a per-file failed row, does not block the remaining files, and Retry resubmits just that file', async () => {
+    const user = userEvent.setup();
+    apiService.uploadTracks
+      .mockRejectedValueOnce({ response: { data: { error: 'network drop' } } })
+      .mockResolvedValueOnce({ data: { queued: 1 } })
+      .mockResolvedValueOnce({ data: { queued: 1 } });
+    renderUpload();
+
+    const fileA = new File([''], 'bad.mp3', { type: 'audio/mpeg' });
+    const fileB = new File([''], 'good.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), [fileA, fileB]);
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    await screen.findByText('bad.mp3 — failed: network drop');
+    await waitFor(() => {
+      expect(screen.queryByText(/good\.mp3/)).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Retry bad.mp3' }));
+    await waitFor(() => {
+      expect(screen.queryByText('bad.mp3 — failed: network drop')).not.toBeInTheDocument();
+    });
+    expect(apiService.uploadTracks).toHaveBeenCalledTimes(3);
+  });
+
+  test('a failed file stays visible with a Dismiss control, and dismissing it removes just that row without blocking new selections', async () => {
     const user = userEvent.setup();
     apiService.uploadTracks.mockRejectedValueOnce({ response: { data: { error: 'network drop' } } });
     renderUpload();
@@ -440,10 +500,33 @@ describe('AdminUpload — concurrent batches', () => {
     await user.upload(document.getElementById('file-input'), file);
     await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
 
-    await screen.findByText('Batch of 1 file(s) — failed: network drop');
+    await screen.findByText('track.mp3 — failed: network drop');
     expect(document.getElementById('file-input')).not.toBeDisabled();
 
-    await user.click(screen.getByRole('button', { name: 'Dismiss batch' }));
-    expect(screen.queryByText(/Batch of 1 file\(s\)/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Dismiss track.mp3' }));
+    expect(screen.queryByText(/track\.mp3/)).not.toBeInTheDocument();
+  });
+
+  test('shows a "Retry all failed" button when a batch has more than one failed file, and it resubmits each', async () => {
+    const user = userEvent.setup();
+    apiService.uploadTracks
+      .mockRejectedValueOnce({ response: { data: { error: 'a' } } })
+      .mockRejectedValueOnce({ response: { data: { error: 'b' } } })
+      .mockResolvedValueOnce({ data: { queued: 1 } })
+      .mockResolvedValueOnce({ data: { queued: 1 } });
+    renderUpload();
+
+    const fileA = new File([''], 'one.mp3', { type: 'audio/mpeg' });
+    const fileB = new File([''], 'two.mp3', { type: 'audio/mpeg' });
+    await user.upload(document.getElementById('file-input'), [fileA, fileB]);
+    await user.click(screen.getByRole('button', { name: 'Upload Tracks' }));
+
+    await screen.findByText('two.mp3 — failed: b');
+    await user.click(screen.getByRole('button', { name: 'Retry all failed' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/one\.mp3|two\.mp3/)).not.toBeInTheDocument();
+    });
+    expect(apiService.uploadTracks).toHaveBeenCalledTimes(4);
   });
 });
