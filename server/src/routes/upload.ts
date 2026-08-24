@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { calculateFileHash } from '../utils/fileHash.js'
+import { errorLogService } from '../services/errorLogService.js'
 
 const upload = new Hono()
 
@@ -142,8 +143,13 @@ upload.post('/', async (c) => {
       queued: queuedFiles.length,
       files: queuedFiles,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Upload error:', error)
+    await errorLogService.record({
+      source: 'upload',
+      message: error.message,
+      context: 'POST /admin/upload',
+    })
     return c.json({ error: 'Failed to process upload' }, 500)
   }
 })
@@ -176,8 +182,13 @@ upload.get('/status', async (c) => {
       stats,
       recent: recentJobs,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Status error:', error)
+    await errorLogService.record({
+      source: 'upload',
+      message: error.message,
+      context: 'GET /admin/upload/status',
+    })
     return c.json({ error: 'Failed to get upload status' }, 500)
   }
 })
@@ -208,8 +219,13 @@ upload.get('/recent', async (c) => {
       .execute()
 
     return c.json(recent)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Recent uploads error:', error)
+    await errorLogService.record({
+      source: 'upload',
+      message: error.message,
+      context: 'GET /admin/upload/recent',
+    })
     return c.json({ error: 'Failed to get recent uploads' }, 500)
   }
 })
@@ -238,8 +254,13 @@ upload.post('/:id/retry', async (c) => {
     }
 
     return c.json(item)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Retry upload error:', error)
+    await errorLogService.record({
+      source: 'upload',
+      message: error.message,
+      context: `POST /admin/upload/${id}/retry`,
+    })
     return c.json({ error: 'Failed to retry upload' }, 500)
   }
 })
@@ -255,8 +276,13 @@ upload.delete('/failed', async (c) => {
       .executeTakeFirst()
 
     return c.json({ success: true, deleted: Number(result.numDeletedRows) })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Clear failed uploads error:', error)
+    await errorLogService.record({
+      source: 'upload',
+      message: error.message,
+      context: 'DELETE /admin/upload/failed',
+    })
     return c.json({ error: 'Failed to clear failed uploads' }, 500)
   }
 })
@@ -281,8 +307,13 @@ upload.delete('/:id', async (c) => {
     }
 
     return c.json({ success: true })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Dismiss upload error:', error)
+    await errorLogService.record({
+      source: 'upload',
+      message: error.message,
+      context: `DELETE /admin/upload/${id}`,
+    })
     return c.json({ error: 'Failed to dismiss upload' }, 500)
   }
 })
