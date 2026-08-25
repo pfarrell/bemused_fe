@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiService } from '../services/api';
+import { overtoneUrl } from '../utils/overtoneUrl';
 
 const MB_URL_BASE = {
   artist: 'https://musicbrainz.org/artist/',
@@ -80,14 +81,24 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
   return (
     <div>
       {value ? (
-        <a
-          href={`${MB_URL_BASE[entityType]}${displayId(value)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: '#3b82f6', fontSize: '0.875rem', wordBreak: 'break-all' }}
-        >
-          {displayId(value)}
-        </a>
+        <>
+          <a
+            href={`${MB_URL_BASE[entityType]}${displayId(value)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#3b82f6', fontSize: '0.875rem', wordBreak: 'break-all' }}
+          >
+            {displayId(value)}
+          </a>
+          <a
+            href={overtoneUrl(displayId(value))}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#3b82f6', fontSize: '0.875rem', marginLeft: '0.5rem' }}
+          >
+            Overtone
+          </a>
+        </>
       ) : (
         <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>{statusLabel}</span>
       )}

@@ -48,6 +48,29 @@ beforeEach(() => {
   useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
 });
 
+describe('Artist page — Overtone link', () => {
+  test('shows a link to Overtone when the artist has a musicbrainz_id', async () => {
+    apiService.getArtist.mockResolvedValue({
+      data: { ...artistData, artist: { ...artistData.artist, musicbrainz_id: 'abc-123' }, albums: [] },
+    });
+    renderArtist();
+    await screen.findByText('Test Artist');
+
+    expect(screen.getByRole('link', { name: 'Overtone' })).toHaveAttribute(
+      'href',
+      'https://patf.com/overtone/entity/abc-123'
+    );
+  });
+
+  test('does not show an Overtone link when the artist has no musicbrainz_id', async () => {
+    apiService.getArtist.mockResolvedValue({ data: { ...artistData, albums: [] } });
+    renderArtist();
+    await screen.findByText('Test Artist');
+
+    expect(screen.queryByRole('link', { name: 'Overtone' })).not.toBeInTheDocument();
+  });
+});
+
 describe('Artist page — dated/undated album divider', () => {
   test('renders a divider once when the album list mixes dated and undated albums', async () => {
     apiService.getArtist.mockResolvedValue({

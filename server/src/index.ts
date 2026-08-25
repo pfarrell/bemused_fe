@@ -14,6 +14,7 @@ import collections from './routes/collections.js'
 import favorites from './routes/favorites.js'
 import tags from './routes/tags.js'
 import share from './routes/share.js'
+import lookup from './routes/lookup.js'
 import admin from './routes/admin.js'
 import upload from './routes/upload.js'
 import auth from './routes/auth.js'
@@ -82,6 +83,7 @@ app.route('/collections', collections)
 app.route('/favorites', favorites)
 app.route('/tags', tags)
 app.route('/share', share)
+app.route('/lookup', lookup)
 app.route('/top', playlists)
 app.route('/newborns', playlists)
 app.route('/surprise', playlists)

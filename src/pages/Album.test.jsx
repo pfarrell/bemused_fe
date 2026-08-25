@@ -43,6 +43,28 @@ beforeEach(() => {
   useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
 });
 
+describe('Album page — Overtone link', () => {
+  test('shows a link to Overtone when the album has a musicbrainz_id', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: { ...albumData, album: { ...albumData.album, musicbrainz_id: 'xyz-789' } },
+    });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    expect(screen.getByRole('link', { name: 'Overtone' })).toHaveAttribute(
+      'href',
+      'https://patf.com/overtone/entity/xyz-789'
+    );
+  });
+
+  test('does not show an Overtone link when the album has no musicbrainz_id', async () => {
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    expect(screen.queryByRole('link', { name: 'Overtone' })).not.toBeInTheDocument();
+  });
+});
+
 describe('Album page', () => {
   test('Add to Queue calls addTracks with flashActivity', async () => {
     const addTracks = vi.fn();

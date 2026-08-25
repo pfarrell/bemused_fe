@@ -30,6 +30,37 @@ describe('MusicBrainzPicker', () => {
     expect(screen.getByText('Status: manually set')).toBeInTheDocument();
   });
 
+  test('shows an Overtone link alongside the MusicBrainz link when a value is set', () => {
+    render(
+      <MusicBrainzPicker
+        entityType="artist"
+        value="abc-123"
+        mbidStatus="manual"
+        searchDefault="Hamilton"
+        pending={false}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('link', { name: 'Overtone' })).toHaveAttribute(
+      'href',
+      'https://patf.com/overtone/entity/abc-123'
+    );
+  });
+
+  test('does not show an Overtone link when there is no value', () => {
+    render(
+      <MusicBrainzPicker
+        entityType="artist"
+        value=""
+        mbidStatus=""
+        searchDefault="Hamilton"
+        pending={false}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole('link', { name: 'Overtone' })).not.toBeInTheDocument();
+  });
+
   test('rendering with a full-URL value (e.g. right after pasting, before Save) still shows a clean link with just the id', () => {
     render(
       <MusicBrainzPicker
@@ -170,7 +201,7 @@ describe('MusicBrainzPicker recording support', () => {
         onChange={() => {}}
       />
     );
-    const link = screen.getByRole('link');
+    const link = screen.getByRole('link', { name: 'abcd1234-abcd-1234-abcd-1234567890ab' });
     expect(link).toHaveAttribute('href', 'https://musicbrainz.org/recording/abcd1234-abcd-1234-abcd-1234567890ab');
   });
 

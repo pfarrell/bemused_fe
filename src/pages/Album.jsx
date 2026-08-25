@@ -16,6 +16,7 @@ import AddToCollectionModal from '../components/AddToCollectionModal';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { overtoneUrl } from '../utils/overtoneUrl';
 
 const Album = () => {
   const { id } = useParams();
@@ -281,6 +282,16 @@ const Album = () => {
               </button>
             )}
             <ShareButton title={album.title} text={`${album.title} by ${artist.name}`} />
+            {album.musicbrainz_id && (
+              <a
+                href={overtoneUrl(album.musicbrainz_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '0.875rem', color: '#3b82f6', alignSelf: 'center' }}
+              >
+                Overtone
+              </a>
+            )}
           </div>
 
           {/* Album Description */}

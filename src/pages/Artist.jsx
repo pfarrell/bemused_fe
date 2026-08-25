@@ -17,6 +17,7 @@ import ContextMenu from '../components/ContextMenu';
 import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { overtoneUrl } from '../utils/overtoneUrl';
 
 const Artist = () => {
   const { id } = useParams();
@@ -189,6 +190,16 @@ const Artist = () => {
               </button>
             )}
             <ShareButton title={artist.name} text={artist.name} />
+            {artist.musicbrainz_id && (
+              <a
+                href={overtoneUrl(artist.musicbrainz_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '0.875rem', color: '#3b82f6' }}
+              >
+                Overtone
+              </a>
+            )}
           </div>
 
           {/* Wikipedia summary */}
