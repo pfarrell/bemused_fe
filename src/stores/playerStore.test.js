@@ -301,6 +301,48 @@ describe('playNext / playback modes', () => {
   });
 });
 
+describe('playPrev restart threshold', () => {
+  test('more than 3s into the track restarts it instead of moving to the previous track, while playing', () => {
+    const audioElement = mockAudioElement();
+    audioElement.paused = false;
+    setActiveAudio(audioElement, { playlist: [track(1), track(2)], currentTrackIndex: 1, currentTime: 3.5 });
+    usePlayerStore.getState().playPrev();
+    const state = usePlayerStore.getState();
+    expect(state.currentTrackIndex).toBe(1);
+    expect(audioElement.currentTime).toBe(0);
+  });
+
+  test('more than 3s into the track restarts it instead of moving to the previous track, while paused', () => {
+    const audioElement = mockAudioElement();
+    audioElement.paused = true;
+    setActiveAudio(audioElement, { playlist: [track(1), track(2)], currentTrackIndex: 1, currentTime: 10 });
+    usePlayerStore.getState().playPrev();
+    const state = usePlayerStore.getState();
+    expect(state.currentTrackIndex).toBe(1);
+    expect(audioElement.currentTime).toBe(0);
+  });
+
+  test('3s or less into the track moves to the previous track as before', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, { playlist: [track(1), track(2)], currentTrackIndex: 1, currentTime: 3 });
+    usePlayerStore.getState().playPrev();
+    expect(usePlayerStore.getState().currentTrackIndex).toBe(0);
+  });
+
+  test('restarting the track leaves shuffle history untouched', () => {
+    const audioElement = mockAudioElement();
+    setActiveAudio(audioElement, {
+      playlist: [track(1), track(2), track(3)],
+      currentTrackIndex: 2,
+      currentTime: 8,
+      playbackMode: 'shuffle',
+      shuffleHistory: [0, 2],
+    });
+    usePlayerStore.getState().playPrev();
+    expect(usePlayerStore.getState().shuffleHistory).toEqual([0, 2]);
+  });
+});
+
 describe('clearPlaylist', () => {
   test('resets all playback state and stops the audio element', () => {
     const audioElement = mockAudioElement();

@@ -193,8 +193,12 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   playPrev: () => {
-    const { playbackMode, shuffleHistory, playlist, currentTrackIndex } = get();
+    const { playbackMode, shuffleHistory, playlist, currentTrackIndex, currentTime } = get();
     if (playlist.length === 0) return;
+    if (currentTime > 3) {
+      get().seek(0);
+      return;
+    }
     set({ playlistFinished: false });
     if (playbackMode === 'shuffle' && shuffleHistory.length > 1) {
       const newHistory = shuffleHistory.slice(0, -1);
