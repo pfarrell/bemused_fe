@@ -284,7 +284,7 @@ const Album = () => {
             <ShareButton title={album.title} text={`${album.title} by ${artist.name}`} />
             {album.musicbrainz_id && (
               <a
-                href={overtoneUrl(album.musicbrainz_id)}
+                href={overtoneUrl(album.musicbrainz_id, 'release')}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ fontSize: '0.875rem', color: '#3b82f6', alignSelf: 'center' }}

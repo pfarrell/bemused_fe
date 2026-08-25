@@ -47,6 +47,23 @@ describe('MusicBrainzPicker', () => {
     );
   });
 
+  test('points the Overtone link at /release/ for a release entityType', () => {
+    render(
+      <MusicBrainzPicker
+        entityType="release"
+        value="xyz-789"
+        mbidStatus="manual"
+        searchDefault="Hamilton"
+        pending={false}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('link', { name: 'Overtone' })).toHaveAttribute(
+      'href',
+      'https://patf.com/overtone/release/xyz-789'
+    );
+  });
+
   test('does not show an Overtone link when there is no value', () => {
     render(
       <MusicBrainzPicker

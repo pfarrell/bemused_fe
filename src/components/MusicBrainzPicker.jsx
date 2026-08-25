@@ -91,7 +91,7 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
             {displayId(value)}
           </a>
           <a
-            href={overtoneUrl(displayId(value))}
+            href={overtoneUrl(displayId(value), entityType)}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: '#3b82f6', fontSize: '0.875rem', marginLeft: '0.5rem' }}

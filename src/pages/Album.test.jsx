@@ -53,7 +53,7 @@ describe('Album page — Overtone link', () => {
 
     expect(screen.getByRole('link', { name: 'Overtone' })).toHaveAttribute(
       'href',
-      'https://patf.com/overtone/entity/xyz-789'
+      'https://patf.com/overtone/release/xyz-789'
     );
   });
 
