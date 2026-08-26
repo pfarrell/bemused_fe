@@ -82,7 +82,7 @@ lookup.get('/mbids', async (c) => {
   for (const artist of artists) {
     results.push({
       type: 'artist',
-      musicbrainz_id: artist.musicbrainz_id as string,
+      musicbrainz_id: (artist.musicbrainz_id as string).toLowerCase(),
       url: `${baseUrl}/artist/${artist.id}`,
     })
   }
@@ -101,10 +101,10 @@ lookup.get('/mbids', async (c) => {
   for (const album of albums) {
     const url = `${baseUrl}/album/${album.id}`
     if (album.musicbrainz_id) {
-      results.push({ type: 'album', musicbrainz_id: album.musicbrainz_id, url })
+      results.push({ type: 'album', musicbrainz_id: album.musicbrainz_id.toLowerCase(), url })
     }
     if (album.release_group_musicbrainz_id) {
-      results.push({ type: 'album', musicbrainz_id: album.release_group_musicbrainz_id, url })
+      results.push({ type: 'album', musicbrainz_id: album.release_group_musicbrainz_id.toLowerCase(), url })
     }
   }
 
