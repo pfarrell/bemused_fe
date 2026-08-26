@@ -13,6 +13,7 @@
     "report-missing-media-files": "tsx scripts/report-missing-media-files.ts",
     "backfill-chromaprint": "tsx scripts/backfill-chromaprint.ts",
     "recording-mbid-lookup": "tsx scripts/backfill-recording-mbid.ts",
+    "backfill-release-group-mbid": "tsx scripts/backfill-release-group-mbid.ts",
     "image-lookup": "tsx scripts/image-lookup.ts",
     "similar-artists": "tsx scripts/similar-artists.ts",
     "diagnose-similar": "tsx scripts/diagnose-similar.ts",
