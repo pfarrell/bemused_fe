@@ -58,7 +58,7 @@ interface ReleaseDateRow {
   gid: string
   title: string
   artist_credit: string
-  rg_gid: string
+  rg_gid: string | null
   this_year: number | null
   this_month: number | null
   this_day: number | null

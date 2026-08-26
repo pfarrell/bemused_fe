@@ -40,6 +40,7 @@ lookup.get('/mbid/:mbid', async (c) => {
     .selectFrom('albums')
     .select(['id', 'title', 'artist_id', 'musicbrainz_id'])
     .where('musicbrainz_id', '=', mbid)
+    .orderBy('id')
     .executeTakeFirst()
 
   if (!album) {
@@ -47,6 +48,7 @@ lookup.get('/mbid/:mbid', async (c) => {
       .selectFrom('albums')
       .select(['id', 'title', 'artist_id', 'musicbrainz_id'])
       .where('release_group_musicbrainz_id', '=', mbid)
+      .orderBy('id')
       .executeTakeFirst()
   }
 
