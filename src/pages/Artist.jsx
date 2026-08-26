@@ -173,6 +173,12 @@ const Artist = () => {
             >
               {artist.name}
             </h1>
+          </div>
+
+
+          {/* Wikipedia summary */}
+          <Wikipedia summary={summary} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
             {isAdmin && (
               <button
                 onClick={() => navigate(`/admin/artist/${id}`)}
@@ -201,10 +207,6 @@ const Artist = () => {
               </a>
             )}
           </div>
-
-          {/* Wikipedia summary */}
-          <Wikipedia summary={summary} />
-
           {member_of && member_of.length > 0 && (
             <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
               Member of:{' '}

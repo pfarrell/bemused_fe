@@ -259,12 +259,14 @@ const Album = () => {
           )}
 
           {/* Action Buttons */}
-          <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <PlayActionsMenu
               onPlayNow={handlePlayNow}
               onPlayNext={handlePlayNext}
               onAddToQueue={handleAddToQueue}
             />
+          </div>
+          <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
             {isAdmin && (
               <button
                 onClick={() => navigate(`/admin/album/${id}`)}
