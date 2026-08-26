@@ -287,7 +287,7 @@ const Album = () => {
             {album.musicbrainz_id && (
               <a
                 href={overtoneUrl(album.musicbrainz_id, 'release')}
-                target="_blank"
+                target="overtone-bemused-bridge"
                 rel="noopener noreferrer"
                 style={{ fontSize: '0.875rem', color: '#3b82f6', alignSelf: 'center' }}
               >

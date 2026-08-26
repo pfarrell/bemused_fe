@@ -199,7 +199,7 @@ const Artist = () => {
             {artist.musicbrainz_id && (
               <a
                 href={overtoneUrl(artist.musicbrainz_id)}
-                target="_blank"
+                target="overtone-bemused-bridge"
                 rel="noopener noreferrer"
                 style={{ fontSize: '0.875rem', color: '#3b82f6' }}
               >
