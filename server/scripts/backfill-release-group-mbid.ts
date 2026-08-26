@@ -1,15 +1,16 @@
 #!/usr/bin/env tsx
 // server/scripts/backfill-release-group-mbid.ts
 // Populates albums.release_group_musicbrainz_id for albums that already have
-// a musicbrainz_id but predate the release-group column. Uses the live
-// MusicBrainz API (rate-limited to ~1 req/sec) rather than the local mirror,
-// since this is a one-off batch job, not an interactive admin lookup.
+// a musicbrainz_id but predate the release-group column. Uses bemused's own
+// local MusicBrainz mirror (musicbrainzLocal.ts) rather than the live,
+// rate-limited API — unlike the older backfill-release-year.ts, which
+// predates that mirror and had no faster option available at the time.
 //
 // Usage: tsx scripts/backfill-release-group-mbid.ts [--limit N] [--id N] [--dry-run]
 
 import 'dotenv/config'
 import { db } from '../src/db/database.js'
-import { getReleaseByMbid } from '../src/services/musicbrainz.js'
+import { getReleaseByMbid } from '../src/services/musicbrainzLocal.js'
 
 const args = process.argv.slice(2)
 const getArg = (flag: string) => {
