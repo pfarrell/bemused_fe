@@ -66,4 +66,49 @@ lookup.get('/mbid/:mbid', async (c) => {
   return c.json({ error: 'Not found' }, 404)
 })
 
+// GET /lookup/mbids — bulk MBID enumeration. Public (no auth), same trust
+// model as /lookup/mbid/:mbid. Lets external sites (Overtone) mirror the
+// full set of resolvable MBIDs locally instead of one call per entity.
+lookup.get('/mbids', async (c) => {
+  const baseUrl = bemusedPublicUrl()
+  const results: Array<{ type: 'artist' | 'album'; musicbrainz_id: string; url: string }> = []
+
+  const artists = await db
+    .selectFrom('artists')
+    .select(['id', 'musicbrainz_id'])
+    .where('musicbrainz_id', 'is not', null)
+    .execute()
+
+  for (const artist of artists) {
+    results.push({
+      type: 'artist',
+      musicbrainz_id: artist.musicbrainz_id as string,
+      url: `${baseUrl}/artist/${artist.id}`,
+    })
+  }
+
+  const albums = await db
+    .selectFrom('albums')
+    .select(['id', 'musicbrainz_id', 'release_group_musicbrainz_id'])
+    .where((eb) =>
+      eb.or([
+        eb('musicbrainz_id', 'is not', null),
+        eb('release_group_musicbrainz_id', 'is not', null),
+      ]),
+    )
+    .execute()
+
+  for (const album of albums) {
+    const url = `${baseUrl}/album/${album.id}`
+    if (album.musicbrainz_id) {
+      results.push({ type: 'album', musicbrainz_id: album.musicbrainz_id, url })
+    }
+    if (album.release_group_musicbrainz_id) {
+      results.push({ type: 'album', musicbrainz_id: album.release_group_musicbrainz_id, url })
+    }
+  }
+
+  return c.json(results)
+})
+
 export default lookup
