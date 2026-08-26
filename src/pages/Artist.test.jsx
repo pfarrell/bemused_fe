@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Artist from './Artist';
 import { useAuthStore } from '../stores/authStore';
@@ -68,6 +69,18 @@ describe('Artist page — Overtone link', () => {
     await screen.findByText('Test Artist');
 
     expect(screen.queryByRole('link', { name: 'Overtone' })).not.toBeInTheDocument();
+  });
+
+  test('clicking the link opens Overtone in a modal instead of navigating', async () => {
+    apiService.getArtist.mockResolvedValue({
+      data: { ...artistData, artist: { ...artistData.artist, musicbrainz_id: 'abc-123' }, albums: [] },
+    });
+    renderArtist();
+    await screen.findByText('Test Artist');
+
+    await userEvent.click(screen.getByRole('link', { name: 'Overtone' }));
+
+    expect(screen.getByTitle('Overtone')).toHaveAttribute('src', 'https://patf.com/overtone/entity/abc-123');
   });
 });
 

@@ -18,7 +18,7 @@ import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
 import { overtoneUrl } from '../utils/overtoneUrl';
-import { handleBridgeLinkClick } from '../utils/tabBridge';
+import OvertoneModal from '../components/OvertoneModal';
 
 const Artist = () => {
   const { id } = useParams();
@@ -32,6 +32,7 @@ const Artist = () => {
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAllSimilar, setShowAllSimilar] = useState(false);
+  const [showOvertone, setShowOvertone] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [showArtistModal, setShowArtistModal] = useState(false);
   const isFavorite = useFavoritesStore((s) => s.isFavorite('artist', parseInt(id)));
@@ -200,12 +201,21 @@ const Artist = () => {
             {artist.musicbrainz_id && (
               <a
                 href={overtoneUrl(artist.musicbrainz_id)}
-                onClick={(e) => handleBridgeLinkClick(e, 'overtone', overtoneUrl(artist.musicbrainz_id))}
-                rel="noreferrer"
+                onClick={(e) => {
+                  // A modified click (ctrl/cmd/shift, middle-click) is the
+                  // user asking for a real new tab — let the browser do that.
+                  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  setShowOvertone(true);
+                }}
+                rel="noopener noreferrer"
                 style={{ fontSize: '0.875rem', color: '#3b82f6' }}
               >
                 Overtone
               </a>
+            )}
+            {showOvertone && (
+              <OvertoneModal url={overtoneUrl(artist.musicbrainz_id)} onClose={() => setShowOvertone(false)} />
             )}
           </div>
           {member_of && member_of.length > 0 && (

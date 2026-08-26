@@ -63,6 +63,18 @@ describe('Album page — Overtone link', () => {
 
     expect(screen.queryByRole('link', { name: 'Overtone' })).not.toBeInTheDocument();
   });
+
+  test('clicking the link opens Overtone in a modal instead of navigating', async () => {
+    apiService.getAlbum.mockResolvedValue({
+      data: { ...albumData, album: { ...albumData.album, musicbrainz_id: 'xyz-789' } },
+    });
+    renderAlbum();
+    await screen.findByText('Test Album');
+
+    fireEvent.click(screen.getByRole('link', { name: 'Overtone' }));
+
+    expect(screen.getByTitle('Overtone')).toHaveAttribute('src', 'https://patf.com/overtone/release/xyz-789');
+  });
 });
 
 describe('Album page', () => {

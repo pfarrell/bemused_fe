@@ -17,7 +17,7 @@ import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
 import { overtoneUrl } from '../utils/overtoneUrl';
-import { handleBridgeLinkClick } from '../utils/tabBridge';
+import OvertoneModal from '../components/OvertoneModal';
 
 const Album = () => {
   const { id } = useParams();
@@ -33,6 +33,7 @@ const Album = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAlbumModal, setShowAlbumModal] = useState(false);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [showOvertone, setShowOvertone] = useState(false);
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', parseInt(id)));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
@@ -288,12 +289,24 @@ const Album = () => {
             {album.musicbrainz_id && (
               <a
                 href={overtoneUrl(album.musicbrainz_id, 'release')}
-                onClick={(e) => handleBridgeLinkClick(e, 'overtone', overtoneUrl(album.musicbrainz_id, 'release'))}
-                rel="noreferrer"
+                onClick={(e) => {
+                  // A modified click (ctrl/cmd/shift, middle-click) is the
+                  // user asking for a real new tab — let the browser do that.
+                  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  setShowOvertone(true);
+                }}
+                rel="noopener noreferrer"
                 style={{ fontSize: '0.875rem', color: '#3b82f6', alignSelf: 'center' }}
               >
                 Overtone
               </a>
+            )}
+            {showOvertone && (
+              <OvertoneModal
+                url={overtoneUrl(album.musicbrainz_id, 'release')}
+                onClose={() => setShowOvertone(false)}
+              />
             )}
           </div>
 
