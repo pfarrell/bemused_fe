@@ -118,7 +118,7 @@ export async function lookupAlbumMBID(
   const confidence = best.score / 100
   const status: MBIDResult['status'] = best.score >= 80 ? 'auto_matched' : 'low_confidence'
 
-  await updateAlbumMBID(albumId, top.id, confidence, status)
+  await updateAlbumMBID(albumId, top.id, confidence, status, top['release-group']?.id ?? null)
 
   // Async image fetch from Cover Art Archive — non-blocking
   fetchAlbumArtFromCAA(albumId, top.id, IMAGES_DIR).catch(err => {
@@ -133,11 +133,17 @@ async function updateAlbumMBID(
   albumId: number,
   mbid: string | null,
   confidence: number,
-  status: string
+  status: string,
+  releaseGroupMbid: string | null = null
 ): Promise<void> {
   await db
     .updateTable('albums')
-    .set({ musicbrainz_id: mbid, mbid_confidence: confidence, mbid_status: status })
+    .set({
+      musicbrainz_id: mbid,
+      mbid_confidence: confidence,
+      mbid_status: status,
+      release_group_musicbrainz_id: releaseGroupMbid,
+    })
     .where('id', '=', albumId)
     .execute()
 }
@@ -232,7 +238,7 @@ export async function getArtistByMbid(
 
 export async function getReleaseByMbid(
   mbid: string
-): Promise<{ id: string; title: string; artist_credit?: string; date?: string; original_date?: string } | null> {
+): Promise<{ id: string; title: string; artist_credit?: string; date?: string; original_date?: string; release_group_id?: string } | null> {
   const res = await rateLimitedFetchRaw(`${MB_BASE}/release/${mbid}?fmt=json&inc=artist-credits+release-groups`)
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`MusicBrainz API error: ${res.status}`)
@@ -247,6 +253,7 @@ export async function getReleaseByMbid(
     // year (e.g. 1969 for a Beatles album), independent of which specific
     // edition/remaster/reissue this particular release mbid points at.
     original_date: data['release-group']?.['first-release-date'] || undefined,
+    release_group_id: data['release-group']?.id || undefined,
   }
 }
 
