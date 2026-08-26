@@ -25,6 +25,7 @@ interface AlbumTable {
   image_path: string | null
   wikipedia: string | null
   musicbrainz_id: string | null
+  release_group_musicbrainz_id: string | null
   mbid_confidence: number | null
   mbid_status: string | null
   is_compilation: boolean
