@@ -36,11 +36,19 @@ lookup.get('/mbid/:mbid', async (c) => {
     })
   }
 
-  const album = await db
+  let album = await db
     .selectFrom('albums')
     .select(['id', 'title', 'artist_id', 'musicbrainz_id'])
     .where('musicbrainz_id', '=', mbid)
     .executeTakeFirst()
+
+  if (!album) {
+    album = await db
+      .selectFrom('albums')
+      .select(['id', 'title', 'artist_id', 'musicbrainz_id'])
+      .where('release_group_musicbrainz_id', '=', mbid)
+      .executeTakeFirst()
+  }
 
   if (album) {
     return c.json({
