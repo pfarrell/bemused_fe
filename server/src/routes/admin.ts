@@ -192,7 +192,7 @@ admin.put('/album/:id', async (c) => {
       return c.json({ error: 'Album not found' }, 404)
     }
 
-    let mbidUpdate: { musicbrainz_id: string | null; mbid_confidence: number | null; mbid_status: string } | null = null
+    let mbidUpdate: { musicbrainz_id: string | null; mbid_confidence: number | null; mbid_status: string; release_group_musicbrainz_id: string | null } | null = null
     let mbidReleaseYear: string | undefined
     // Set when the admin re-pastes the MBID that's already stored, as a way to
     // retry a Cover Art Archive fetch that failed the first time (transient
@@ -206,7 +206,7 @@ admin.put('/album/:id', async (c) => {
       const raw = typeof musicbrainz_id === 'string' ? musicbrainz_id.trim() : ''
       if (!raw) {
         if (current.musicbrainz_id) {
-          mbidUpdate = { musicbrainz_id: null, mbid_confidence: null, mbid_status: 'unmatched' }
+          mbidUpdate = { musicbrainz_id: null, mbid_confidence: null, mbid_status: 'unmatched', release_group_musicbrainz_id: null }
         }
       } else {
         let mbid: string
@@ -225,7 +225,7 @@ admin.put('/album/:id', async (c) => {
           if (!entity) {
             return c.json({ error: 'No such release found on MusicBrainz' }, 400)
           }
-          mbidUpdate = { musicbrainz_id: mbid, mbid_confidence: 1.0, mbid_status: 'manual' }
+          mbidUpdate = { musicbrainz_id: mbid, mbid_confidence: 1.0, mbid_status: 'manual', release_group_musicbrainz_id: entity.release_group_id ?? null }
           // Prefer the release-group's original release date over this specific
           // edition's — a manually-pasted MBID is often for a remaster/reissue,
           // and the point of auto-filling this is to save the admin from having
