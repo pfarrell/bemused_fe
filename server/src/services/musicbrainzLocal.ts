@@ -69,7 +69,7 @@ interface ReleaseDateRow {
 
 export async function getReleaseByMbid(
   mbid: string
-): Promise<{ id: string; title: string; artist_credit?: string; date?: string; original_date?: string } | null> {
+): Promise<{ id: string; title: string; artist_credit?: string; date?: string; original_date?: string; release_group_id?: string } | null> {
   const result = await sql<ReleaseDateRow>`
     WITH target AS (
       SELECT r.id AS release_id, r.gid, r.name AS title, r.release_group AS rg_id, ac.name AS artist_credit
@@ -127,6 +127,7 @@ export async function getReleaseByMbid(
     artist_credit: row.artist_credit || undefined,
     date: formatPartialDate(row.this_year, row.this_month, row.this_day),
     original_date: formatPartialDate(row.orig_year, row.orig_month, row.orig_day),
+    release_group_id: row.rg_gid || undefined,
   }
 }
 
