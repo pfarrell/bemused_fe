@@ -35,6 +35,7 @@ import TagPage from './pages/TagPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import MusicPlayerWrapper from './components/player/MusicPlayerWrapper';
 import NowPlaying from './components/NowPlaying';
+import { useTabBridge } from './utils/tabBridge';
 
 // Handle scroll to top on route changes
 export function ScrollToTop() {
@@ -62,6 +63,8 @@ export function ScrollToTop() {
 function App() {
   const basename = import.meta.env.DEV ? '/' : '/pshare/app';
   const [authInitialized, setAuthInitialized] = useState(false);
+
+  useTabBridge('pshare');
 
   // Initialize auth on app startup
   useEffect(() => {

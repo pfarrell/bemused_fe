@@ -17,6 +17,7 @@ import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
 import { overtoneUrl } from '../utils/overtoneUrl';
+import { handleBridgeLinkClick } from '../utils/tabBridge';
 
 const Album = () => {
   const { id } = useParams();
@@ -287,8 +288,8 @@ const Album = () => {
             {album.musicbrainz_id && (
               <a
                 href={overtoneUrl(album.musicbrainz_id, 'release')}
-                target="overtone-bemused-bridge"
-                rel="noopener noreferrer"
+                onClick={(e) => handleBridgeLinkClick(e, 'overtone', overtoneUrl(album.musicbrainz_id, 'release'))}
+                rel="noreferrer"
                 style={{ fontSize: '0.875rem', color: '#3b82f6', alignSelf: 'center' }}
               >
                 Overtone

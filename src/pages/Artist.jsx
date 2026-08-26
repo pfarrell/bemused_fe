@@ -18,6 +18,7 @@ import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
 import { overtoneUrl } from '../utils/overtoneUrl';
+import { handleBridgeLinkClick } from '../utils/tabBridge';
 
 const Artist = () => {
   const { id } = useParams();
@@ -199,8 +200,8 @@ const Artist = () => {
             {artist.musicbrainz_id && (
               <a
                 href={overtoneUrl(artist.musicbrainz_id)}
-                target="overtone-bemused-bridge"
-                rel="noopener noreferrer"
+                onClick={(e) => handleBridgeLinkClick(e, 'overtone', overtoneUrl(artist.musicbrainz_id))}
+                rel="noreferrer"
                 style={{ fontSize: '0.875rem', color: '#3b82f6' }}
               >
                 Overtone
