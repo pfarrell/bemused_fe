@@ -5,23 +5,10 @@ const OvertoneModal = ({ url, onClose }) => {
   return createPortal(
     <div
       data-testid="overtone-modal-backdrop"
-      style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: '1rem',
-      }}
+      className="overtone-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div
-        style={{
-          backgroundColor: 'white', borderRadius: '8px',
-          width: '100%', maxWidth: '900px', height: '90vh',
-          display: 'flex', flexDirection: 'column',
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="overtone-modal-box">
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',

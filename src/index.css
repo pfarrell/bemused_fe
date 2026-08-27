@@ -977,6 +977,41 @@
   overflow: visible;
 }
 
+/* =================================
+   OVERTONE MODAL
+   ================================= */
+
+/* Bounded between .app-header and .app-footer (both fixed, 4.5em on desktop)
+   rather than the full viewport, so the modal never renders under either bar.
+   z-index only needs to clear .music-player-playlist-container (1000) — it's
+   not opened alongside the higher overlays (context menu 1200, header/footer
+   1100), since those bars now sit outside this modal's bounds entirely. */
+.overtone-modal-backdrop {
+  position: fixed;
+  top: 4.5em;
+  left: 0;
+  right: 0;
+  bottom: 4.5em;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.overtone-modal-box {
+  background-color: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 900px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
 .music-player-playlist-container .track-item {
   display: flex;
   align-items: center;
@@ -1569,7 +1604,20 @@
     flex-direction: column !important;
     align-items: stretch !important;
   }
-  
+
+  /* Mobile Overtone modal: mirror the playlist container's header/footer
+     clearance above, since --mb and the safe-area insets only differ from
+     the desktop 4.5em fallback in this breakpoint. */
+  .overtone-modal-backdrop {
+    top: calc(var(--mb, 4.5em) + env(safe-area-inset-top, 0)) !important;
+    bottom: calc(var(--mb, 4.5em) + env(safe-area-inset-bottom, 0)) !important;
+    padding: 0.5rem !important;
+  }
+
+  .overtone-modal-box {
+    max-width: 100% !important;
+  }
+
   .music-player-playlist-container .playlist {
     text-align: left !important;
     width: 100% !important;
