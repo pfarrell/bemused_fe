@@ -209,8 +209,20 @@ const Artist = () => {
                   setShowOvertone(true);
                 }}
                 rel="noopener noreferrer"
-                style={{ fontSize: '0.875rem', color: '#3b82f6' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  color: '#111827',
+                  textDecoration: 'none',
+                }}
               >
+                <span aria-hidden="true">🔍</span>
                 Overtone
               </a>
             )}
