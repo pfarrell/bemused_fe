@@ -8,14 +8,27 @@ import Retry from '../components/Retry';
 import PlaylistResultCard from '../components/PlaylistResultCard';
 import CoverCollage from '../components/CoverCollage';
 import CardGrid from '../components/CardGrid';
+import PlaylistSortToggle from '../components/PlaylistSortToggle';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useViewModeStore } from '../stores/viewModeStore';
+import { usePlaylistSortStore } from '../stores/playlistSortStore';
 import { formatCount } from '../utils/formatters';
+
+const sortPlaylists = (playlists, sortBy) => {
+  const sorted = [...playlists];
+  if (sortBy === 'alpha') {
+    sorted.sort((a, b) => a.name.localeCompare(b.name));
+  } else {
+    sorted.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+  }
+  return sorted;
+};
 
 export default function Playlists() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const viewMode = useViewModeStore((s) => s.mode);
+  const sortBy = usePlaylistSortStore((s) => s.sortBy);
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,8 +54,15 @@ export default function Playlists() {
   if (loading) return <Loading />;
   if (error) return <Retry message={error} onRetry={loadPlaylists} />;
 
+  const sortedPlaylists = sortPlaylists(playlists, sortBy);
+
   return (
     <div style={{ padding: '2rem', paddingBottom: '8rem', maxWidth: '1400px', margin: '0 auto' }}>
+      {playlists.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <PlaylistSortToggle />
+        </div>
+      )}
       {playlists.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
           <p style={{ fontSize: '1.125rem' }}>No playlists found</p>
@@ -50,7 +70,7 @@ export default function Playlists() {
       ) : (isMobile || viewMode === 'list') ? (
         <div className="artist-grid">
           <CardGrid>
-            {playlists.map((playlist) => (
+            {sortedPlaylists.map((playlist) => (
               <PlaylistResultCard
                 key={playlist.id}
                 playlist={playlist}
@@ -67,7 +87,7 @@ export default function Playlists() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: '1.5rem'
         }}>
-          {playlists.map((playlist) => (
+          {sortedPlaylists.map((playlist) => (
             <div
               key={playlist.id}
               onClick={() => navigate(`/playlist/${playlist.id}`)}
