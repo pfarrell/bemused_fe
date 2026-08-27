@@ -209,6 +209,8 @@ const Artist = () => {
                   setShowOvertone(true);
                 }}
                 rel="noopener noreferrer"
+                title="Overtone Info"
+                aria-label="Overtone"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -223,11 +225,14 @@ const Artist = () => {
                 }}
               >
                 <span aria-hidden="true">🔍</span>
-                Overtone
               </a>
             )}
             {showOvertone && (
-              <OvertoneModal url={overtoneUrl(artist.musicbrainz_id)} onClose={() => setShowOvertone(false)} />
+              <OvertoneModal
+                url={overtoneUrl(artist.musicbrainz_id)}
+                onClose={() => setShowOvertone(false)}
+                onNavigate={navigate}
+              />
             )}
           </div>
           {member_of && member_of.length > 0 && (

@@ -14,7 +14,7 @@ afterEach(() => {
 test('renders the desktop Wikipedia URL on a desktop viewport', () => {
   Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
   render(<Wikipedia summary={summary} />);
-  expect(screen.getByText('...more at wikipedia')).toHaveAttribute(
+  expect(screen.getByText('... Continue in wikipedia')).toHaveAttribute(
     'href',
     'https://en.wikipedia.org/wiki/Some_Artist'
   );
@@ -23,7 +23,7 @@ test('renders the desktop Wikipedia URL on a desktop viewport', () => {
 test('rewrites the link to the mobile Wikipedia domain on a mobile viewport', () => {
   Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true });
   render(<Wikipedia summary={summary} />);
-  expect(screen.getByText('...more at wikipedia')).toHaveAttribute(
+  expect(screen.getByText('... Continue in wikipedia')).toHaveAttribute(
     'href',
     'https://en.m.wikipedia.org/wiki/Some_Artist'
   );

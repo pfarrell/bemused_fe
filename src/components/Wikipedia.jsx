@@ -29,7 +29,7 @@ const Wikipedia = ({ summary }) => {
           target="_blank"
           rel="noopener noreferrer"
           href={href}
-        >...more at wikipedia </a>
+        >... Continue in wikipedia </a>
       </p>
       <button
         className="wikipedia-toggle"

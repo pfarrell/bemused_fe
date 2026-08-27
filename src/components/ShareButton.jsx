@@ -32,7 +32,7 @@ const ShareButton = ({ title, text }) => {
   };
 
   return (
-    <button onClick={handleShare} style={buttonStyle} aria-label="Share">
+    <button onClick={handleShare} style={buttonStyle} title="Share" aria-label="Share">
       📤
     </button>
   );

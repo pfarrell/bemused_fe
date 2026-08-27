@@ -297,6 +297,8 @@ const Album = () => {
                   setShowOvertone(true);
                 }}
                 rel="noopener noreferrer"
+                title="Overtone Info"
+                aria-label="Overtone"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -312,13 +314,13 @@ const Album = () => {
                 }}
               >
                 <span aria-hidden="true">🔍</span>
-                Overtone
               </a>
             )}
             {showOvertone && (
               <OvertoneModal
                 url={overtoneUrl(album.musicbrainz_id, 'release')}
                 onClose={() => setShowOvertone(false)}
+                onNavigate={navigate}
               />
             )}
           </div>
