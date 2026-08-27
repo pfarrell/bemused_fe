@@ -8,9 +8,9 @@
 // musicbrainz.org's uptime for these lookups.
 //
 // NOT covered here (still use ./musicbrainz.ts's web-API versions):
-//   - getReleaseRecordings: needs the `track` table, which was not
-//     imported (its row count rivals `recording`'s ~40M, and it only
-//     serves this one, infrequently-called function).
+//   - getReleaseRecordings: a different query shape (full ordered
+//     tracklist for one release, used at upload time) — out of scope
+//     for the admin-search migration below.
 //   - lookupArtistMBID / lookupAlbumMBID: the confidence-scored automatic
 //     upload-time matching. These need their score thresholds recalibrated
 //     against pg_trgm similarity (which is not directly comparable to
@@ -25,10 +25,24 @@
 // doesn't have. Acceptable here because these functions feed an
 // admin-reviewed candidate list, not automatic matching — the correct
 // entity still appears, just not always first.
+//
+// searchRecordingsMB specifically: `recording` is ~40M rows (vs ~2-3M for
+// `artist`/`release`), and GIN trgm's `%` operator can't do index-accelerated
+// top-N ordering — it materializes every row clearing the similarity
+// threshold before sorting. At the default 0.3 threshold and default
+// work_mem, common titles produced 30-70s queries (170k+ candidate rows for
+// "Yesterday", worse from lossy bitmap recheck under low work_mem). Each
+// call runs inside a transaction with SET LOCAL work_mem/similarity_threshold
+// tuned to keep typical multi-word titles well under a second, plus a
+// statement_timeout — short/common single-word titles (e.g. "Love") can
+// still exceed it even tuned, so a timeout or any other local-mirror error
+// falls back to the rate-limited musicbrainz.ts web-API version rather than
+// surfacing a multi-second hang to the admin UI.
 
 import { sql } from 'kysely'
 import { mbDb } from '../db/musicbrainzDb.js'
-import type { MBArtistCandidate, MBReleaseCandidate } from './musicbrainz.js'
+import { searchRecordingsMB as searchRecordingsMBWeb } from './musicbrainz.js'
+import type { MBArtistCandidate, MBReleaseCandidate, MBRecordingCandidate } from './musicbrainz.js'
 
 function formatPartialDate(
   year: number | null,
@@ -211,4 +225,61 @@ export async function searchReleasesMB(query: string): Promise<MBReleaseCandidat
     track_count: r.track_count || undefined,
     disambiguation: r.comment || undefined,
   }))
+}
+
+interface RecordingSearchRow {
+  gid: string
+  title: string
+  comment: string
+  length: number | null
+  artist_credit: string
+  release_title: string | null
+}
+
+export async function searchRecordingsMB(query: string, artistName?: string): Promise<MBRecordingCandidate[]> {
+  try {
+    return await mbDb.transaction().execute(async (trx) => {
+      await sql`SET LOCAL work_mem = '64MB'`.execute(trx)
+      await sql`SET LOCAL pg_trgm.similarity_threshold = 0.6`.execute(trx)
+      await sql`SET LOCAL statement_timeout = '4000'`.execute(trx)
+
+      const artistFilter = artistName ? sql`AND ac.name % ${artistName}` : sql``
+
+      const result = await sql<RecordingSearchRow>`
+        SELECT
+          rec.gid,
+          rec.name AS title,
+          rec.comment,
+          rec.length,
+          ac.name AS artist_credit,
+          (
+            SELECT rel.name
+            FROM track t
+            JOIN medium m ON m.id = t.medium
+            JOIN release rel ON rel.id = m.release
+            WHERE t.recording = rec.id
+            ORDER BY t.id
+            LIMIT 1
+          ) AS release_title
+        FROM recording rec
+        JOIN artist_credit ac ON ac.id = rec.artist_credit
+        WHERE rec.name % ${query}
+        ${artistFilter}
+        ORDER BY similarity(rec.name, ${query}) DESC
+        LIMIT 8
+      `.execute(trx)
+
+      return result.rows.map(r => ({
+        id: r.gid,
+        title: r.title,
+        artistCredit: r.artist_credit || undefined,
+        releaseTitle: r.release_title || undefined,
+        length: r.length || undefined,
+        disambiguation: r.comment || undefined,
+      }))
+    })
+  } catch (error) {
+    console.warn('Local recording-mirror search failed (timeout or error), falling back to web API:', error)
+    return searchRecordingsMBWeb(query, artistName)
+  }
 }

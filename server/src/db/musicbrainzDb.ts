@@ -5,12 +5,14 @@ import pg from 'pg'
 //
 // Subset of the official MusicBrainz schema mirrored locally (see
 // docs/superpowers/specs — MusicBrainz local mirror). Only the tables
-// needed for artist/release MBID lookups and admin search are modeled
-// here; the mirror has ~375 tables total, most unused by bemused.
-// `track`/`recording`-to-release joins are intentionally NOT covered —
-// the `track` table was not imported (too large relative to its single
-// caller), so `getReleaseRecordings` continues to use the MusicBrainz
-// web API.
+// needed for artist/release/recording MBID lookups and admin search are
+// modeled here; the mirror has ~375 tables total, most unused by bemused.
+//
+// `recording`/`track` are modeled for admin recording search
+// (`searchRecordingsMB`) only. `getReleaseRecordings` (full ordered
+// tracklist for a release, used at upload time) still uses the
+// MusicBrainz web API in ./musicbrainz.ts — it's a different query shape
+// and out of scope for this migration.
 
 interface MBArtistTable {
   id: number
@@ -63,6 +65,21 @@ interface MBReleaseUnknownCountryTable {
   date_day: number | null
 }
 
+interface MBRecordingTable {
+  id: number
+  gid: string
+  name: string
+  artist_credit: number
+  length: number | null
+  comment: string
+}
+
+interface MBTrackTable {
+  id: number
+  recording: number
+  medium: number
+}
+
 interface MusicbrainzMirrorDatabase {
   artist: MBArtistTable
   artist_credit: MBArtistCreditTable
@@ -71,6 +88,8 @@ interface MusicbrainzMirrorDatabase {
   release_country: MBReleaseCountryTable
   release_unknown_country: MBReleaseUnknownCountryTable
   medium: MBMediumTable
+  recording: MBRecordingTable
+  track: MBTrackTable
 }
 
 // ---- DB instance ----

@@ -9,13 +9,13 @@ import {
   lookupAlbumMBID,
   lookupArtistMBID,
   extractMbid,
-  searchRecordingsMB,
 } from '../services/musicbrainz.js'
 import {
   getArtistByMbid,
   getReleaseByMbid,
   searchArtistsMB,
   searchReleasesMB,
+  searchRecordingsMB,
 } from '../services/musicbrainzLocal.js'
 import { fetchAlbumArtFromCAA } from '../services/coverArtArchive.js'
 import { fetchArtistImageFromFanart } from '../services/fanart.js'
@@ -586,7 +586,7 @@ admin.get('/musicbrainz/search-release', async (c) => {
   }
 })
 
-// GET /admin/musicbrainz/search-recording?q= — proxy a recording search to MusicBrainz
+// GET /admin/musicbrainz/search-recording?q= — recording search against the local MusicBrainz mirror
 admin.get('/musicbrainz/search-recording', async (c) => {
   const q = (c.req.query('q') ?? '').trim()
   const artist = (c.req.query('artist') ?? '').trim() || undefined
