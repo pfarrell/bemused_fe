@@ -142,6 +142,7 @@ export const apiService = {
   getCollection: (id) => api.get(`/collection/${id}`),
   createCollection: (name) => api.post('/collections', { name }),
   updateCollection: (id, data) => api.put(`/collection/${id}`, data),
+  deleteCollection: (id) => api.delete(`/collection/${id}`),
   addAlbumToCollection: (collectionId, albumId) => api.post(`/collection/${collectionId}/albums`, { album_id: albumId }),
   addStubToCollection: (collectionId, title, artist_name) =>
     api.post(`/collection/${collectionId}/stubs`, { title, artist_name }),

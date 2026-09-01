@@ -10,6 +10,7 @@ vi.mock('../services/api', () => ({
   apiService: {
     getCollection: vi.fn(),
     updateCollection: vi.fn(),
+    deleteCollection: vi.fn(),
     search: vi.fn(),
     addStubToCollection: vi.fn(),
     removeStubFromCollection: vi.fn(),
@@ -33,6 +34,7 @@ const renderAdminCollection = () =>
     <MemoryRouter initialEntries={['/admin/collection/7']}>
       <Routes>
         <Route path="/admin/collection/:id" element={<AdminCollection />} />
+        <Route path="/collections" element={<div>Collections Page</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -70,6 +72,49 @@ describe('AdminCollection — wikipedia field', () => {
       '7',
       expect.objectContaining({ wikipedia: 'Kind_of_Blue' })
     ));
+  });
+});
+
+describe('AdminCollection — delete', () => {
+  test('confirms, calls deleteCollection, and navigates to the collections list', async () => {
+    window.confirm = vi.fn(() => true);
+    apiService.deleteCollection.mockResolvedValue({ data: { success: true } });
+    const user = userEvent.setup();
+    renderAdminCollection();
+
+    await screen.findByDisplayValue('Road Trip Mix');
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Are you sure you want to delete "Road Trip Mix"? This does not delete any albums — only the collection itself. This cannot be undone.'
+    );
+    await waitFor(() => expect(apiService.deleteCollection).toHaveBeenCalledWith('7'));
+    await waitFor(() => expect(screen.getByText('Collections Page')).toBeInTheDocument());
+  });
+
+  test('does nothing when the confirm dialog is dismissed', async () => {
+    window.confirm = vi.fn(() => false);
+    const user = userEvent.setup();
+    renderAdminCollection();
+
+    await screen.findByDisplayValue('Road Trip Mix');
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(apiService.deleteCollection).not.toHaveBeenCalled();
+  });
+
+  test('shows an error and stays on the page when the delete request fails', async () => {
+    window.confirm = vi.fn(() => true);
+    window.alert = vi.fn();
+    apiService.deleteCollection.mockRejectedValue({ response: { data: { error: 'Nope' } } });
+    const user = userEvent.setup();
+    renderAdminCollection();
+
+    await screen.findByDisplayValue('Road Trip Mix');
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(window.alert).toHaveBeenCalledWith('Nope'));
+    expect(screen.getByText('Edit Collection')).toBeInTheDocument();
   });
 });
 

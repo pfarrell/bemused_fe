@@ -165,6 +165,21 @@ collections.put('/:id', requireAuth, async (c) => {
   return c.json({ success: true })
 })
 
+// DELETE /collection/:id — deletes only the collection row; collection_albums and
+// album_stubs rows referencing it cascade via FK (ON DELETE CASCADE), but the
+// albums/artists themselves are untouched.
+collections.delete('/:id', requireAuth, async (c) => {
+  const id = parseInt(c.req.param('id'))
+  const user = c.get('user')!
+
+  const collection = await db.selectFrom('collections').selectAll().where('id', '=', id).executeTakeFirst()
+  if (!collection) return c.json({ error: 'Not found' }, 404)
+  if (!canModify(user, collection)) return c.json({ error: 'Not permitted' }, 403)
+
+  await db.deleteFrom('collections').where('id', '=', id).execute()
+  return c.json({ success: true })
+})
+
 // POST /collection/:id/albums
 collections.post('/:id/albums', requireAuth, async (c) => {
   const collectionId = parseInt(c.req.param('id'))

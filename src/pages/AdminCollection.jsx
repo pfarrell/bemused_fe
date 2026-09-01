@@ -541,6 +541,23 @@ export default function AdminCollection() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete "${collectionData?.name}"? This does not delete any albums — only the collection itself. This cannot be undone.`)) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      await apiService.deleteCollection(id);
+      navigate('/collections');
+    } catch (err) {
+      console.error('Failed to delete collection:', err);
+      alert(err.response?.data?.error || 'Failed to delete collection');
+      setSaving(false);
+    }
+  };
+
   const handleDownloadImage = async (e) => {
     e.preventDefault();
     if (!imageUrl || !imageName) {
@@ -592,6 +609,17 @@ export default function AdminCollection() {
             }}
           >
             {saving ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={saving}
+            style={{
+              padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white',
+              border: 'none', borderRadius: '4px',
+              cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1,
+            }}
+          >
+            Delete
           </button>
         </div>
       </div>
