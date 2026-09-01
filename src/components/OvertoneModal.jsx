@@ -45,10 +45,10 @@ const OvertoneModal = ({ url, onClose, onNavigate }) => {
   return createPortal(
     <div
       data-testid="overtone-modal-backdrop"
-      className="overtone-modal-backdrop"
+      className="iframe-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="overtone-modal-box">
+      <div className="iframe-modal-box">
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',

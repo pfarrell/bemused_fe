@@ -978,7 +978,7 @@
 }
 
 /* =================================
-   OVERTONE MODAL
+   IFRAME MODAL (Overtone, Wikipedia)
    ================================= */
 
 /* Bounded between .app-header and .app-footer (both fixed, 4.5em on desktop)
@@ -986,7 +986,7 @@
    z-index only needs to clear .music-player-playlist-container (1000) — it's
    not opened alongside the higher overlays (context menu 1200, header/footer
    1100), since those bars now sit outside this modal's bounds entirely. */
-.overtone-modal-backdrop {
+.iframe-modal-backdrop {
   position: fixed;
   top: 4.5em;
   left: 0;
@@ -1000,7 +1000,7 @@
   padding: 1rem;
 }
 
-.overtone-modal-box {
+.iframe-modal-box {
   background-color: white;
   border-radius: 8px;
   width: 100%;
@@ -1605,16 +1605,16 @@
     align-items: stretch !important;
   }
 
-  /* Mobile Overtone modal: mirror the playlist container's header/footer
+  /* Mobile iframe modal: mirror the playlist container's header/footer
      clearance above, since --mb and the safe-area insets only differ from
      the desktop 4.5em fallback in this breakpoint. */
-  .overtone-modal-backdrop {
+  .iframe-modal-backdrop {
     top: calc(var(--mb, 4.5em) + env(safe-area-inset-top, 0)) !important;
     bottom: calc(var(--mb, 4.5em) + env(safe-area-inset-bottom, 0)) !important;
     padding: 0.5rem !important;
   }
 
-  .overtone-modal-box {
+  .iframe-modal-box {
     max-width: 100% !important;
   }
 

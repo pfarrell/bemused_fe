@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { isMobileDevice } from '../utils/device';
+import WikipediaModal from './WikipediaModal';
 
 const toMobileUrl = (url) => url.replace('en.wikipedia.org', 'en.m.wikipedia.org');
 
 const Wikipedia = ({ summary }) => {
   const [expanded, setExpanded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   if(Object.keys(summary).length === 0){
     console.log("empty wikipedia data");
@@ -29,6 +31,13 @@ const Wikipedia = ({ summary }) => {
           target="_blank"
           rel="noopener noreferrer"
           href={href}
+          onClick={(e) => {
+            // A modified click (ctrl/cmd/shift, middle-click) is the
+            // user asking for a real new tab — let the browser do that.
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            e.preventDefault();
+            setShowModal(true);
+          }}
         >... Continue in wikipedia </a>
       </p>
       <button
@@ -37,6 +46,9 @@ const Wikipedia = ({ summary }) => {
       >
         {expanded ? 'Show less' : 'Show more'}
       </button>
+      {showModal && (
+        <WikipediaModal url={href} onClose={() => setShowModal(false)} />
+      )}
     </div>
   );
 };

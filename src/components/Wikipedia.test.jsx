@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Wikipedia from './Wikipedia';
 
@@ -55,4 +55,34 @@ test('shows a "Show more" toggle that expands to "Show less"', async () => {
 
   expect(screen.getByRole('button', { name: 'Show less' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
+});
+
+test('clicking the continue link opens the Wikipedia modal instead of navigating', async () => {
+  const user = userEvent.setup();
+  render(<Wikipedia summary={summary} />);
+
+  expect(screen.queryByTitle('Wikipedia')).not.toBeInTheDocument();
+
+  await user.click(screen.getByText('... Continue in wikipedia'));
+
+  expect(screen.getByTitle('Wikipedia')).toHaveAttribute('src', summary.url);
+});
+
+test('closing the modal removes it', async () => {
+  const user = userEvent.setup();
+  render(<Wikipedia summary={summary} />);
+
+  await user.click(screen.getByText('... Continue in wikipedia'));
+  await user.click(screen.getByRole('button', { name: 'Close' }));
+
+  expect(screen.queryByTitle('Wikipedia')).not.toBeInTheDocument();
+});
+
+test('a modified click on the continue link is not intercepted', () => {
+  render(<Wikipedia summary={summary} />);
+  const link = screen.getByText('... Continue in wikipedia');
+
+  fireEvent.click(link, { ctrlKey: true });
+
+  expect(screen.queryByTitle('Wikipedia')).not.toBeInTheDocument();
 });
