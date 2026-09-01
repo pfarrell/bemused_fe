@@ -51,11 +51,10 @@ const OvertoneModal = ({ url, onClose, onNavigate }) => {
       <div className="iframe-modal-box">
         <div
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
             padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#1f2937' }}>Overtone</span>
           <button
             onClick={onClose}
             aria-label="Close"

@@ -142,6 +142,32 @@ describe('AdminTrack', () => {
     await waitFor(() => expect(screen.getByText('Album Page 10')).toBeInTheDocument());
     confirmSpy.mockRestore();
   });
+
+  it('opens the MusicBrainz link in an in-app modal instead of navigating', async () => {
+    renderPage();
+    const link = await screen.findByText('View album on MusicBrainz ↗');
+
+    expect(screen.queryByTitle('MusicBrainz')).not.toBeInTheDocument();
+
+    fireEvent.click(link);
+
+    expect(screen.getByTitle('MusicBrainz')).toHaveAttribute(
+      'src',
+      'https://musicbrainz.org/release/release-uuid-1'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByTitle('MusicBrainz')).not.toBeInTheDocument();
+  });
+
+  it('lets a modified click on the MusicBrainz link open a real new tab', async () => {
+    renderPage();
+    const link = await screen.findByText('View album on MusicBrainz ↗');
+
+    fireEvent.click(link, { ctrlKey: true });
+
+    expect(screen.queryByTitle('MusicBrainz')).not.toBeInTheDocument();
+  });
 });
 
 describe('AdminTrack — unsavedChangesStore registration', () => {

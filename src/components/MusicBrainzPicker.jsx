@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { apiService } from '../services/api';
 import { overtoneUrl } from '../utils/overtoneUrl';
+import MusicBrainzModal from './MusicBrainzModal';
 
 const MB_URL_BASE = {
   artist: 'https://musicbrainz.org/artist/',
@@ -24,6 +25,7 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
   const [hasSearched, setHasSearched] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [pickedName, setPickedName] = useState(null);
+  const [showMusicBrainz, setShowMusicBrainz] = useState(false);
 
   const handleUse = () => {
     if (!pasteText.trim()) return;
@@ -84,7 +86,13 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
         <>
           <a
             href={`${MB_URL_BASE[entityType]}${displayId(value)}`}
-            target="_blank"
+            onClick={(e) => {
+              // A modified click (ctrl/cmd/shift, middle-click) is the
+              // user asking for a real new tab — let the browser do that.
+              if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              setShowMusicBrainz(true);
+            }}
             rel="noopener noreferrer"
             style={{ color: '#3b82f6', fontSize: '0.875rem', wordBreak: 'break-all' }}
           >
@@ -98,6 +106,12 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
           >
             Overtone
           </a>
+          {showMusicBrainz && (
+            <MusicBrainzModal
+              url={`${MB_URL_BASE[entityType]}${displayId(value)}`}
+              onClose={() => setShowMusicBrainz(false)}
+            />
+          )}
         </>
       ) : (
         <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>{statusLabel}</span>

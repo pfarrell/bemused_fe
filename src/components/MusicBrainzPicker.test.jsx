@@ -30,6 +30,49 @@ describe('MusicBrainzPicker', () => {
     expect(screen.getByText('Status: manually set')).toBeInTheDocument();
   });
 
+  test('clicking the MusicBrainz link opens an in-app modal instead of navigating', async () => {
+    const user = userEvent.setup();
+    render(
+      <MusicBrainzPicker
+        entityType="artist"
+        value="abc-123"
+        mbidStatus="manual"
+        searchDefault="Hamilton"
+        pending={false}
+        onChange={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTitle('MusicBrainz')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'abc-123' }));
+
+    expect(screen.getByTitle('MusicBrainz')).toHaveAttribute(
+      'src',
+      'https://musicbrainz.org/artist/abc-123'
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByTitle('MusicBrainz')).not.toBeInTheDocument();
+  });
+
+  test('a modified click on the MusicBrainz link is not intercepted', () => {
+    render(
+      <MusicBrainzPicker
+        entityType="artist"
+        value="abc-123"
+        mbidStatus="manual"
+        searchDefault="Hamilton"
+        pending={false}
+        onChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'abc-123' }), { ctrlKey: true });
+
+    expect(screen.queryByTitle('MusicBrainz')).not.toBeInTheDocument();
+  });
+
   test('shows an Overtone link alongside the MusicBrainz link when a value is set', () => {
     render(
       <MusicBrainzPicker

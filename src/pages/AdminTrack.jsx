@@ -6,6 +6,7 @@ import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import Loading from '../components/Loading';
 import TrackArtistPicker from '../components/TrackArtistPicker';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
+import MusicBrainzModal from '../components/MusicBrainzModal';
 import toast from 'react-hot-toast';
 
 const AdminTrack = () => {
@@ -29,6 +30,7 @@ const AdminTrack = () => {
   const [mbidStatus, setMbidStatus] = useState('');
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showMusicBrainz, setShowMusicBrainz] = useState(false);
 
   const [collaborators, setCollaborators] = useState([]);
   const [addingCollaborator, setAddingCollaborator] = useState(false);
@@ -230,9 +232,26 @@ const AdminTrack = () => {
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Album ID</label>
           <input type="number" value={albumId} onChange={(e) => setAlbumId(e.target.value)} style={{ width: '100px', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }} />
           {detail.album?.musicbrainz_id && (
-            <a href={`https://musicbrainz.org/release/${detail.album.musicbrainz_id}`} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '0.75rem', fontSize: '0.875rem', color: '#3b82f6' }}>
+            <a
+              href={`https://musicbrainz.org/release/${detail.album.musicbrainz_id}`}
+              onClick={(e) => {
+                // A modified click (ctrl/cmd/shift, middle-click) is the
+                // user asking for a real new tab — let the browser do that.
+                if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                e.preventDefault();
+                setShowMusicBrainz(true);
+              }}
+              rel="noopener noreferrer"
+              style={{ marginLeft: '0.75rem', fontSize: '0.875rem', color: '#3b82f6' }}
+            >
               View album on MusicBrainz ↗
             </a>
+          )}
+          {showMusicBrainz && (
+            <MusicBrainzModal
+              url={`https://musicbrainz.org/release/${detail.album.musicbrainz_id}`}
+              onClose={() => setShowMusicBrainz(false)}
+            />
           )}
         </div>
 
