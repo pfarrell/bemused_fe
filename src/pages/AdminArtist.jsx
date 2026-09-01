@@ -6,6 +6,7 @@ import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import Loading from '../components/Loading';
 import TagsSection from '../components/TagsSection';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
+import { parseWikipediaSlug } from '../utils/wikipediaSlug';
 import toast from 'react-hot-toast';
 
 const toFilename = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
@@ -731,7 +732,15 @@ const AdminArtist = () => {
             type="text"
             value={wikipedia}
             onChange={(e) => setWikipedia(e.target.value)}
-            placeholder="e.g., The_Beatles"
+            onPaste={(e) => {
+              const text = e.clipboardData.getData('text');
+              const parsed = parseWikipediaSlug(text);
+              if (parsed !== text) {
+                e.preventDefault();
+                setWikipedia(parsed);
+              }
+            }}
+            placeholder="e.g., The_Beatles or a full wikipedia.org URL"
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"

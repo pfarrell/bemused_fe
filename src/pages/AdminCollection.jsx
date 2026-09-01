@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import { useContextMenu } from '../hooks/useContextMenu';
 import ContextMenu from '../components/ContextMenu';
+import { parseWikipediaSlug } from '../utils/wikipediaSlug';
 
 const AUTO_SCROLL_EDGE_PX = 60;
 const AUTO_SCROLL_SPEED_PX = 12;
@@ -624,7 +625,15 @@ export default function AdminCollection() {
             type="text"
             value={collectionData?.wikipedia || ''}
             onChange={(e) => setCollectionData({ ...collectionData, wikipedia: e.target.value })}
-            placeholder="e.g., Kind_of_Blue"
+            onPaste={(e) => {
+              const text = e.clipboardData.getData('text');
+              const parsed = parseWikipediaSlug(text);
+              if (parsed !== text) {
+                e.preventDefault();
+                setCollectionData({ ...collectionData, wikipedia: parsed });
+              }
+            }}
+            placeholder="e.g., Kind_of_Blue or a full wikipedia.org URL"
             style={{
               width: '100%', padding: '0.5rem', border: '1px solid #d1d5db',
               borderRadius: '4px', fontSize: '1rem',

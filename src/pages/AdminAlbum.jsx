@@ -8,6 +8,7 @@ import TagsSection from '../components/TagsSection';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
 import TrackArtistPicker from '../components/TrackArtistPicker';
 import ReprocessAlbumModal from '../components/ReprocessAlbumModal';
+import { parseWikipediaSlug } from '../utils/wikipediaSlug';
 import toast from 'react-hot-toast';
 
 const toFilename = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
@@ -792,7 +793,15 @@ const AdminAlbum = () => {
             type="text"
             value={wikipedia}
             onChange={(e) => setWikipedia(e.target.value)}
-            placeholder="e.g., Abbey_Road"
+            onPaste={(e) => {
+              const text = e.clipboardData.getData('text');
+              const parsed = parseWikipediaSlug(text);
+              if (parsed !== text) {
+                e.preventDefault();
+                setWikipedia(parsed);
+              }
+            }}
+            placeholder="e.g., Abbey_Road or a full wikipedia.org URL"
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"
