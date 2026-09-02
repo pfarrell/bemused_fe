@@ -44,6 +44,7 @@ const Account = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [settingPassword, setSettingPassword] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectingRecall, setDisconnectingRecall] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -100,6 +101,19 @@ const Account = () => {
     }
   };
 
+  const handleDisconnectRecall = async () => {
+    setDisconnectingRecall(true);
+    try {
+      await apiService.disconnectRecall();
+      setUser({ ...user, recall_connected: false });
+      toast.success('Recall account disconnected');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to disconnect Recall');
+    } finally {
+      setDisconnectingRecall(false);
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
   };
@@ -129,6 +143,11 @@ const Account = () => {
       {error === 'google_already_linked' && (
         <div style={{ backgroundColor: '#7f1d1d', border: '1px solid #991b1b', borderRadius: '6px', padding: '0.75rem 1rem', color: '#fca5a5', fontSize: '0.875rem', marginBottom: '1rem' }}>
           That Google account is already linked to another user.
+        </div>
+      )}
+      {linked === 'recall' && (
+        <div style={{ backgroundColor: '#065f46', border: '1px solid #10b981', borderRadius: '6px', padding: '0.75rem 1rem', color: '#a7f3d0', fontSize: '0.875rem', marginBottom: '1rem' }}>
+          Recall account connected.
         </div>
       )}
 
@@ -177,6 +196,24 @@ const Account = () => {
             Connect Google Account
           </a>
         ) : null}
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: user?.google_connected || !isLanAccess() ? '0.75rem' : 0 }}>
+          {user?.recall_connected ? (
+            <>
+              <span style={{ color: '#111827', fontSize: '0.875rem' }}>Recall — connected</span>
+              <button onClick={handleDisconnectRecall} disabled={disconnectingRecall} style={{ ...buttonStyle, backgroundColor: '#ef4444' }}>
+                {disconnectingRecall ? 'Disconnecting...' : 'Disconnect'}
+              </button>
+            </>
+          ) : !isLanAccess() ? (
+            <a
+              href={apiService.getRecallStartUrl('/account')}
+              style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}
+            >
+              Connect Recall Account
+            </a>
+          ) : null}
+        </div>
       </div>
 
       {!user?.has_password && (

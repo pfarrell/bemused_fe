@@ -33,6 +33,13 @@ export const apiService = {
     return `${getBaseURL()}/auth/google/start${qs ? `?${qs}` : ''}`;
   },
   disconnectGoogle: () => api.delete('/auth/google/disconnect'),
+  getRecallStartUrl: (returnTo = null) => {
+    const params = new URLSearchParams();
+    if (returnTo) params.set('return_to', returnTo);
+    const qs = params.toString();
+    return `${getBaseURL()}/auth/recall/connect${qs ? `?${qs}` : ''}`;
+  },
+  disconnectRecall: () => api.delete('/auth/recall/connect'),
   setPassword: (password) => api.put('/auth/set-password', { password }),
   changePassword: (currentPassword, newPassword) => api.put('/auth/change-password', { currentPassword, newPassword }),
 

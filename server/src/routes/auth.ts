@@ -420,7 +420,8 @@ auth.get('/recall/callback', async (c) => {
   await notesService.saveConnection(user.id, encryptRecallToken(token))
 
   const redirectBase = process.env.NODE_ENV === 'production' ? 'https://patf.com/pshare/app' : 'http://localhost:5173'
-  return c.redirect(`${redirectBase}${parsed.returnTo}`)
+  const separator = parsed.returnTo.includes('?') ? '&' : '?'
+  return c.redirect(`${redirectBase}${parsed.returnTo}${separator}linked=recall`)
 })
 
 // DELETE /auth/recall/connect — disconnect locally; does not revoke the token on Recall's side

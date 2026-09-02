@@ -15,6 +15,13 @@ vi.mock('../services/api', () => ({
       return `/api/auth/google/start${qs ? `?${qs}` : ''}`;
     },
     disconnectGoogle: vi.fn(),
+    getRecallStartUrl: (returnTo) => {
+      const params = new URLSearchParams();
+      if (returnTo) params.set('return_to', returnTo);
+      const qs = params.toString();
+      return `/api/auth/recall/connect${qs ? `?${qs}` : ''}`;
+    },
+    disconnectRecall: vi.fn(),
     setPassword: vi.fn(),
     changePassword: vi.fn(),
     getTags: vi.fn(() => Promise.resolve({ data: [] })),
