@@ -14,7 +14,7 @@ afterEach(() => {
 test('renders the desktop Wikipedia URL on a desktop viewport', () => {
   Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
   render(<Wikipedia summary={summary} />);
-  expect(screen.getByText('... Continue in wikipedia')).toHaveAttribute(
+  expect(screen.getByText('... more')).toHaveAttribute(
     'href',
     'https://en.wikipedia.org/wiki/Some_Artist'
   );
@@ -23,7 +23,7 @@ test('renders the desktop Wikipedia URL on a desktop viewport', () => {
 test('rewrites the link to the mobile Wikipedia domain on a mobile viewport', () => {
   Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true });
   render(<Wikipedia summary={summary} />);
-  expect(screen.getByText('... Continue in wikipedia')).toHaveAttribute(
+  expect(screen.getByText('... more')).toHaveAttribute(
     'href',
     'https://en.m.wikipedia.org/wiki/Some_Artist'
   );
@@ -63,7 +63,7 @@ test('clicking the continue link opens the Wikipedia modal instead of navigating
 
   expect(screen.queryByTitle('Wikipedia')).not.toBeInTheDocument();
 
-  await user.click(screen.getByText('... Continue in wikipedia'));
+  await user.click(screen.getByText('... more'));
 
   expect(screen.getByTitle('Wikipedia')).toHaveAttribute('src', summary.url);
 });
@@ -72,7 +72,7 @@ test('closing the modal removes it', async () => {
   const user = userEvent.setup();
   render(<Wikipedia summary={summary} />);
 
-  await user.click(screen.getByText('... Continue in wikipedia'));
+  await user.click(screen.getByText('... more'));
   await user.click(screen.getByRole('button', { name: 'Close' }));
 
   expect(screen.queryByTitle('Wikipedia')).not.toBeInTheDocument();
@@ -80,7 +80,7 @@ test('closing the modal removes it', async () => {
 
 test('a modified click on the continue link is not intercepted', () => {
   render(<Wikipedia summary={summary} />);
-  const link = screen.getByText('... Continue in wikipedia');
+  const link = screen.getByText('... more');
 
   fireEvent.click(link, { ctrlKey: true });
 

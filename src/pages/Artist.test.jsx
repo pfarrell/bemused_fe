@@ -49,36 +49,38 @@ beforeEach(() => {
   useFavoritesStore.setState({ isFavorite: () => false, toggleFavorite: vi.fn() });
 });
 
-describe('Artist page — Overtone link', () => {
-  test('shows a link to Overtone when the artist has a musicbrainz_id', async () => {
+describe('Artist page — Overtone menu item', () => {
+  test('shows Overtone in the overflow menu when the artist has a musicbrainz_id', async () => {
     apiService.getArtist.mockResolvedValue({
       data: { ...artistData, artist: { ...artistData.artist, musicbrainz_id: 'abc-123' }, albums: [] },
     });
     renderArtist();
     await screen.findByText('Test Artist');
 
-    expect(screen.getByRole('link', { name: 'Overtone' })).toHaveAttribute(
-      'href',
-      'https://patf.com/overtone/entity/abc-123'
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+    expect(screen.getByRole('button', { name: '🔍 Overtone' })).toBeInTheDocument();
   });
 
-  test('does not show an Overtone link when the artist has no musicbrainz_id', async () => {
+  test('does not show Overtone in the overflow menu when the artist has no musicbrainz_id', async () => {
     apiService.getArtist.mockResolvedValue({ data: { ...artistData, albums: [] } });
     renderArtist();
     await screen.findByText('Test Artist');
 
-    expect(screen.queryByRole('link', { name: 'Overtone' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+    expect(screen.queryByRole('button', { name: '🔍 Overtone' })).not.toBeInTheDocument();
   });
 
-  test('clicking the link opens Overtone in a modal instead of navigating', async () => {
+  test('clicking Overtone opens it in a modal instead of navigating', async () => {
     apiService.getArtist.mockResolvedValue({
       data: { ...artistData, artist: { ...artistData.artist, musicbrainz_id: 'abc-123' }, albums: [] },
     });
     renderArtist();
     await screen.findByText('Test Artist');
 
-    await userEvent.click(screen.getByRole('link', { name: 'Overtone' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    await userEvent.click(screen.getByRole('button', { name: '🔍 Overtone' }));
 
     expect(screen.getByTitle('Overtone')).toHaveAttribute('src', 'https://patf.com/overtone/entity/abc-123');
   });

@@ -15,6 +15,7 @@ import AddToCollectionModal from '../components/AddToCollectionModal';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useOvertoneAction } from '../hooks/useOvertoneAction';
 import { shareLink } from '../utils/shareLink';
 
 const Album = () => {
@@ -34,6 +35,7 @@ const Album = () => {
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', parseInt(id)));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
+  const { overflowAction: overtoneAction, modal: overtoneModal } = useOvertoneAction(albumData?.album?.musicbrainz_id, 'release');
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -266,17 +268,17 @@ const Album = () => {
                   label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
                   onClick: handleToggleFavorite,
                 },
+                overtoneAction,
                 { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: album.title, text: `${album.title} by ${artist.name}` }) },
               ].filter(Boolean)}
             />
+            {overtoneModal}
           </div>
 
           <div className="album-header-about">
             <AboutSection
               heading="About this album"
               summary={summary}
-              musicbrainzId={album.musicbrainz_id}
-              entityType="release"
             />
           </div>
 

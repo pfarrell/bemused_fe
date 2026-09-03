@@ -38,7 +38,7 @@ const Wikipedia = ({ summary }) => {
             e.preventDefault();
             setShowModal(true);
           }}
-        >... Continue in wikipedia </a>
+        >... more</a>
       </p>
       <button
         className="wikipedia-toggle"

@@ -17,6 +17,7 @@ import ContextMenu from '../components/ContextMenu';
 import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { useOvertoneAction } from '../hooks/useOvertoneAction';
 import { shareLink } from '../utils/shareLink';
 
 const Artist = () => {
@@ -36,6 +37,7 @@ const Artist = () => {
   const isFavorite = useFavoritesStore((s) => s.isFavorite('artist', parseInt(id)));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
+  const { overflowAction: overtoneAction, modal: overtoneModal } = useOvertoneAction(artistData?.artist?.musicbrainz_id);
 
   const handleToggleFavorite = () => {
     if (!artistData?.artist) return;
@@ -186,15 +188,16 @@ const Artist = () => {
                   label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
                   onClick: handleToggleFavorite,
                 },
+                overtoneAction,
                 { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: artist.name, text: artist.name }) },
               ].filter(Boolean)}
             />
+            {overtoneModal}
           </div>
 
           <AboutSection
             heading="About this artist"
             summary={summary}
-            musicbrainzId={artist.musicbrainz_id}
           />
 
           {member_of && member_of.length > 0 && (

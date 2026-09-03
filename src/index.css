@@ -736,20 +736,6 @@
   margin: 0 0 0.5rem 0;
 }
 
-.about-section-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: #3b82f6;
-  text-decoration: none;
-}
-
-.about-section-link:hover {
-  text-decoration: underline;
-}
-
 .wikipedia-toggle {
   display: none;
 }
