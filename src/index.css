@@ -662,6 +662,45 @@
   align-items: center;
 }
 
+.play-now-circle {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.play-now-circle:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
+}
+
+.play-now-circle:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.play-now-circle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.play-now-circle-triangle {
+  width: 0;
+  height: 0;
+  margin-left: 4px; /* optical centering: a triangle's visual weight sits left of its bounding box */
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 16px solid white;
+}
+
 .play-menu-toggle {
   background: none;
   border: 1px solid #d1d5db;

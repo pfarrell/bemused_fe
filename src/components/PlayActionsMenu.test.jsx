@@ -9,14 +9,14 @@ describe('PlayActionsMenu', () => {
     const user = userEvent.setup();
     render(<PlayActionsMenu onPlayNow={onPlayNow} onPlayNext={vi.fn()} onAddToQueue={vi.fn()} />);
 
-    await user.click(screen.getByRole('button', { name: '▶ Play Now' }));
+    await user.click(screen.getByRole('button', { name: 'Play Now' }));
 
     expect(onPlayNow).toHaveBeenCalledTimes(1);
   });
 
   test('omits the Play Now button when onPlayNow is not provided', () => {
     render(<PlayActionsMenu onPlayNext={vi.fn()} onAddToQueue={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: '▶ Play Now' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Play Now' })).not.toBeInTheDocument();
   });
 
   test('omits the ▾ toggle when neither onPlayNext nor onAddToQueue is provided', () => {
@@ -84,7 +84,7 @@ describe('PlayActionsMenu', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: '▶ Play Now' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Play Now' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'More play options' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'More actions' })).toBeEnabled();
   });

@@ -1,17 +1,6 @@
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-const playNowStyle = {
-  padding: '0.5rem 1rem',
-  backgroundColor: '#3b82f6',
-  color: 'white',
-  border: 'none',
-  borderRadius: '4px',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: '500',
-};
-
 const getMenuPosition = (toggleRef, menuWidth, menuHeight) => {
   if (!toggleRef.current) return { top: 0, left: 0 };
   const rect = toggleRef.current.getBoundingClientRect();
@@ -76,9 +65,11 @@ const PlayActionsMenu = ({ onPlayNow, onPlayNext, onAddToQueue, overflowActions 
         <button
           onClick={onPlayNow}
           disabled={disabled}
-          style={{ ...playNowStyle, ...(disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+          className="play-now-circle"
+          aria-label="Play Now"
+          title="Play Now"
         >
-          ▶ Play Now
+          <span className="play-now-circle-triangle" aria-hidden="true" />
         </button>
       )}
 
