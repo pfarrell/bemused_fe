@@ -19,19 +19,39 @@ describe('PlayActionsMenu', () => {
     expect(screen.queryByRole('button', { name: 'Play Now' })).not.toBeInTheDocument();
   });
 
-  test('omits the ▾ toggle when neither onPlayNext nor onAddToQueue is provided', () => {
+  test('renders Play Now alone (no toggle) when there is nothing to put in a menu', () => {
     render(<PlayActionsMenu onPlayNow={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: 'More play options' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play Now' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More options' })).not.toBeInTheDocument();
   });
 
-  test('▾ toggle opens a menu with Play Next and Add to Queue', async () => {
+  test('renders just the toggle (no Play Now) when onPlayNow is absent but menu items exist', () => {
+    render(<PlayActionsMenu overflowActions={[{ key: 'share', icon: '📤', label: 'Share', onClick: vi.fn() }]} />);
+    expect(screen.queryByRole('button', { name: 'Play Now' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'More options' })).toBeInTheDocument();
+  });
+
+  test('renders nothing at all when there is no Play Now and no menu items', () => {
+    const { container } = render(<PlayActionsMenu />);
+    expect(container.querySelector('.play-actions-bar')).toBeEmptyDOMElement();
+  });
+
+  test('the toggle opens one combined menu with Play Next, Add to Queue, and overflow actions in that order', async () => {
     const user = userEvent.setup();
-    render(<PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={vi.fn()} onAddToQueue={vi.fn()} />);
+    render(
+      <PlayActionsMenu
+        onPlayNow={vi.fn()}
+        onPlayNext={vi.fn()}
+        onAddToQueue={vi.fn()}
+        overflowActions={[{ key: 'edit', icon: '✎', label: 'Edit', onClick: vi.fn() }]}
+      />
+    );
 
-    await user.click(screen.getByRole('button', { name: 'More play options' }));
+    await user.click(screen.getByRole('button', { name: 'More options' }));
 
-    expect(screen.getByRole('button', { name: '⏭ Play Next' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '➕ Add to Queue' })).toBeInTheDocument();
+    const dropdown = screen.getByRole('button', { name: '⏭ Play Next' }).closest('.track-dropdown');
+    const labels = Array.from(dropdown.querySelectorAll('button')).map((b) => b.textContent);
+    expect(labels).toEqual(['⏭ Play Next', '➕ Add to Queue', '✎ Edit']);
   });
 
   test('clicking Play Next in the menu calls onPlayNext and closes the menu', async () => {
@@ -39,7 +59,7 @@ describe('PlayActionsMenu', () => {
     const user = userEvent.setup();
     render(<PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={onPlayNext} onAddToQueue={vi.fn()} />);
 
-    await user.click(screen.getByRole('button', { name: 'More play options' }));
+    await user.click(screen.getByRole('button', { name: 'More options' }));
     await user.click(screen.getByRole('button', { name: '⏭ Play Next' }));
 
     expect(onPlayNext).toHaveBeenCalledTimes(1);
@@ -51,50 +71,14 @@ describe('PlayActionsMenu', () => {
     const user = userEvent.setup();
     render(<PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={vi.fn()} onAddToQueue={onAddToQueue} />);
 
-    await user.click(screen.getByRole('button', { name: 'More play options' }));
+    await user.click(screen.getByRole('button', { name: 'More options' }));
     await user.click(screen.getByRole('button', { name: '➕ Add to Queue' }));
 
     expect(onAddToQueue).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: '➕ Add to Queue' })).not.toBeInTheDocument();
   });
 
-  test('clicking the backdrop closes the play menu without calling any handler', async () => {
-    const onPlayNext = vi.fn();
-    const onAddToQueue = vi.fn();
-    const user = userEvent.setup();
-    render(<PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={onPlayNext} onAddToQueue={onAddToQueue} />);
-
-    await user.click(screen.getByRole('button', { name: 'More play options' }));
-    expect(screen.getByRole('button', { name: '⏭ Play Next' })).toBeInTheDocument();
-
-    await user.click(screen.getByTestId('play-menu-backdrop'));
-
-    expect(screen.queryByRole('button', { name: '⏭ Play Next' })).not.toBeInTheDocument();
-    expect(onPlayNext).not.toHaveBeenCalled();
-    expect(onAddToQueue).not.toHaveBeenCalled();
-  });
-
-  test('disabled disables Play Now and the ▾ toggle but not the ⋯ toggle', () => {
-    render(
-      <PlayActionsMenu
-        onPlayNow={vi.fn()}
-        onPlayNext={vi.fn()}
-        overflowActions={[{ key: 'share', icon: '📤', label: 'Share', onClick: vi.fn() }]}
-        disabled
-      />
-    );
-
-    expect(screen.getByRole('button', { name: 'Play Now' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'More play options' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'More actions' })).toBeEnabled();
-  });
-
-  test('omits the ⋯ toggle when no overflowActions are provided', () => {
-    render(<PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={vi.fn()} onAddToQueue={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
-  });
-
-  test('⋯ toggle opens a menu listing each overflow action and invokes its onClick, closing the menu', async () => {
+  test('clicking an overflow action calls its onClick and closes the menu', async () => {
     const onEdit = vi.fn();
     const onShare = vi.fn();
     const user = userEvent.setup();
@@ -108,7 +92,7 @@ describe('PlayActionsMenu', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    await user.click(screen.getByRole('button', { name: 'More options' }));
     expect(screen.getByRole('button', { name: '✎ Edit' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '📤 Share' }));
@@ -118,21 +102,27 @@ describe('PlayActionsMenu', () => {
     expect(screen.queryByRole('button', { name: '📤 Share' })).not.toBeInTheDocument();
   });
 
-  test('clicking the backdrop closes the overflow menu without calling any handler', async () => {
-    const onEdit = vi.fn();
+  test('clicking the backdrop closes the menu without calling any handler', async () => {
+    const onPlayNext = vi.fn();
+    const onAddToQueue = vi.fn();
     const user = userEvent.setup();
-    render(
-      <PlayActionsMenu
-        onPlayNow={vi.fn()}
-        overflowActions={[{ key: 'edit', icon: '✎', label: 'Edit', onClick: onEdit }]}
-      />
-    );
+    render(<PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={onPlayNext} onAddToQueue={onAddToQueue} />);
 
-    await user.click(screen.getByRole('button', { name: 'More actions' }));
-    await user.click(screen.getByTestId('overflow-menu-backdrop'));
+    await user.click(screen.getByRole('button', { name: 'More options' }));
+    expect(screen.getByRole('button', { name: '⏭ Play Next' })).toBeInTheDocument();
 
-    expect(screen.queryByRole('button', { name: '✎ Edit' })).not.toBeInTheDocument();
-    expect(onEdit).not.toHaveBeenCalled();
+    await user.click(screen.getByTestId('play-actions-menu-backdrop'));
+
+    expect(screen.queryByRole('button', { name: '⏭ Play Next' })).not.toBeInTheDocument();
+    expect(onPlayNext).not.toHaveBeenCalled();
+    expect(onAddToQueue).not.toHaveBeenCalled();
+  });
+
+  test('disabled disables both halves of the split button', () => {
+    render(<PlayActionsMenu onPlayNow={vi.fn()} onPlayNext={vi.fn()} disabled />);
+
+    expect(screen.getByRole('button', { name: 'Play Now' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'More options' })).toBeDisabled();
   });
 
   test('clamps dropdown menu to viewport bounds when toggle button is near right edge', async () => {
@@ -152,7 +142,7 @@ describe('PlayActionsMenu', () => {
     });
 
     // Find the toggle button (▾) and mock its getBoundingClientRect
-    const toggleButton = screen.getByRole('button', { name: 'More play options' });
+    const toggleButton = screen.getByRole('button', { name: 'More options' });
     const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = vi.fn(function() {
       // If this is the toggle button, return a rect positioned near the right edge

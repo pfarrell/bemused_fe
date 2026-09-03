@@ -51,7 +51,7 @@ describe('Album page — Overtone menu item', () => {
     renderAlbum();
     await screen.findByText('Test Album');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.getByRole('button', { name: '🔍 Overtone' })).toBeInTheDocument();
   });
@@ -60,7 +60,7 @@ describe('Album page — Overtone menu item', () => {
     renderAlbum();
     await screen.findByText('Test Album');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.queryByRole('button', { name: '🔍 Overtone' })).not.toBeInTheDocument();
   });
@@ -72,7 +72,7 @@ describe('Album page — Overtone menu item', () => {
     renderAlbum();
     await screen.findByText('Test Album');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
     fireEvent.click(screen.getByRole('button', { name: '🔍 Overtone' }));
 
     expect(screen.getByTitle('Overtone')).toHaveAttribute('src', 'https://patf.com/overtone/release/xyz-789');
@@ -87,7 +87,7 @@ describe('Album page', () => {
     renderAlbum();
     await screen.findByText('Test Album');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More play options' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
     fireEvent.click(screen.getByText('➕ Add to Queue'));
 
     expect(addTracks).toHaveBeenCalledWith(albumData.tracks, false, { flashActivity: true });

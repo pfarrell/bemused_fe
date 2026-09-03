@@ -701,6 +701,57 @@
   border-left: 16px solid white;
 }
 
+/* Fused "split button": Play Now (circle) + "▾" (tab) rendered as one
+   continuous gradient shape with two independent click targets. The tab
+   keeps a hairline border for a subtle seam rather than a hard divider. */
+.play-split {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+.play-split-disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.play-split-play,
+.play-split-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-split-play {
+  width: 56px;
+  height: 56px;
+}
+
+.play-split-toggle {
+  width: 32px;
+  height: 56px;
+  font-size: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.play-split-play:hover:not(:disabled),
+.play-split-toggle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.play-split-play:disabled,
+.play-split-toggle:disabled {
+  cursor: not-allowed;
+}
+
 .play-menu-toggle {
   background: none;
   border: 1px solid #d1d5db;

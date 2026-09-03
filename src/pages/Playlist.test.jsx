@@ -161,7 +161,7 @@ describe('Playlist page — Edit button access', () => {
     renderPlaylist();
     await screen.findByText('Test Playlist');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.getByText('✎ Edit')).toBeInTheDocument();
   });
@@ -171,7 +171,7 @@ describe('Playlist page — Edit button access', () => {
     renderPlaylist();
     await screen.findByText('Test Playlist');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.queryByText('✎ Edit')).not.toBeInTheDocument();
   });

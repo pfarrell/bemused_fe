@@ -57,7 +57,7 @@ describe('Artist page — Overtone menu item', () => {
     renderArtist();
     await screen.findByText('Test Artist');
 
-    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.getByRole('button', { name: '🔍 Overtone' })).toBeInTheDocument();
   });
@@ -67,7 +67,7 @@ describe('Artist page — Overtone menu item', () => {
     renderArtist();
     await screen.findByText('Test Artist');
 
-    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.queryByRole('button', { name: '🔍 Overtone' })).not.toBeInTheDocument();
   });
@@ -79,7 +79,7 @@ describe('Artist page — Overtone menu item', () => {
     renderArtist();
     await screen.findByText('Test Artist');
 
-    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More options' }));
     await userEvent.click(screen.getByRole('button', { name: '🔍 Overtone' }));
 
     expect(screen.getByTitle('Overtone')).toHaveAttribute('src', 'https://patf.com/overtone/entity/abc-123');

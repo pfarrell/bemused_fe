@@ -85,7 +85,7 @@ describe('Collection page — Edit button access', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.getByText('✎ Edit')).toBeInTheDocument();
   });
@@ -98,7 +98,7 @@ describe('Collection page — Edit button access', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.queryByText('✎ Edit')).not.toBeInTheDocument();
   });
