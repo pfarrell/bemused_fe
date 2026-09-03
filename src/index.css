@@ -791,6 +791,10 @@
   display: none;
 }
 
+.wikipedia-content a {
+  text-decoration: none;
+}
+
 .track-item:hover .track-ellipsis {
   opacity: 1;
 }
@@ -1920,11 +1924,19 @@
     margin-top: 1rem !important;
   }
 
+  /* About heading takes up a line better spent on more of the excerpt
+     itself on a small screen — the "About this X" label mostly just
+     repeats the "About" framing that's already obvious from the excerpt
+     sitting right under the play button. */
+  .about-section-heading {
+    display: none;
+  }
+
   .wikipedia-content-truncated {
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
     overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
   }
 
   .wikipedia-toggle {
