@@ -8,11 +8,12 @@ import { useAuthStore } from '../stores/authStore';
 import Track from '../components/Track';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
-import ShareButton from '../components/ShareButton';
+import PlayActionsMenu from '../components/PlayActionsMenu';
 import CoverCollage from '../components/CoverCollage';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { shareLink } from '../utils/shareLink';
 
 export default function Playlist() {
   const { id } = useParams();
@@ -74,6 +75,11 @@ export default function Playlist() {
     addTracks(playlistData.tracks);
   };
 
+  const handlePlayNext = () => {
+    if (!playlistData?.tracks?.length) return;
+    addTracks(playlistData.tracks, true, { flashActivity: true });
+  };
+
   const handleAddToQueue = () => {
     if (!playlistData?.tracks?.length) return;
     addTracks(playlistData.tracks, false, { flashActivity: true });
@@ -132,22 +138,6 @@ export default function Playlist() {
             <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>
               {playlist.name}
             </h1>
-            {canEdit && (
-              <button
-                onClick={() => navigate(`/admin/playlist/${id}`)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
-                Edit
-              </button>
-            )}
           </div>
 
           <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
@@ -155,43 +145,22 @@ export default function Playlist() {
           </p>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={handlePlayAll}
-              disabled={!tracks?.length}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: tracks?.length ? 'pointer' : 'not-allowed',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                opacity: tracks?.length ? 1 : 0.5
-              }}
-            >
-              ▶ Play Now
-            </button>
-            <button
-              onClick={handleAddToQueue}
-              disabled={!tracks?.length}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: tracks?.length ? 'pointer' : 'not-allowed',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                opacity: tracks?.length ? 1 : 0.5
-              }}
-            >
-              + Add to Queue
-            </button>
-            <ShareButton title={playlist.name} text={`${playlist.name} playlist`} />
-          </div>
+          <PlayActionsMenu
+            onPlayNow={handlePlayAll}
+            onPlayNext={handlePlayNext}
+            onAddToQueue={handleAddToQueue}
+            disabled={!tracks?.length}
+            overflowActions={[
+              canEdit && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/playlist/${id}`) },
+              isAuthenticated && {
+                key: 'favorite',
+                icon: isFavorite ? '★' : '☆',
+                label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                onClick: handleToggleFavorite,
+              },
+              { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: playlist.name, text: `${playlist.name} playlist` }) },
+            ].filter(Boolean)}
+          />
         </div>
       </div>
 

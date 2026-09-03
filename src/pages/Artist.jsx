@@ -8,17 +8,16 @@ import { useAuthStore } from '../stores/authStore';
 import { usePlayerStore } from '../stores/playerStore';
 import AlbumCard from '../components/AlbumCard';
 import Track from '../components/Track';
-import Wikipedia from '../components/Wikipedia';
+import AboutSection from '../components/AboutSection';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import TagsSection from '../components/TagsSection';
-import ShareButton from '../components/ShareButton';
+import PlayActionsMenu from '../components/PlayActionsMenu';
 import ContextMenu from '../components/ContextMenu';
 import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
-import { overtoneUrl } from '../utils/overtoneUrl';
-import OvertoneModal from '../components/OvertoneModal';
+import { shareLink } from '../utils/shareLink';
 
 const Artist = () => {
   const { id } = useParams();
@@ -32,7 +31,6 @@ const Artist = () => {
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAllSimilar, setShowAllSimilar] = useState(false);
-  const [showOvertone, setShowOvertone] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [showArtistModal, setShowArtistModal] = useState(false);
   const isFavorite = useFavoritesStore((s) => s.isFavorite('artist', parseInt(id)));
@@ -178,63 +176,27 @@ const Artist = () => {
           </div>
 
 
-          {/* Wikipedia summary */}
-          <Wikipedia summary={summary} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            {isAdmin && (
-              <button
-                onClick={() => navigate(`/admin/artist/${id}`)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
-                Edit
-              </button>
-            )}
-            <ShareButton title={artist.name} text={artist.name} />
-            {artist.musicbrainz_id && (
-              <a
-                href={overtoneUrl(artist.musicbrainz_id)}
-                onClick={(e) => {
-                  // A modified click (ctrl/cmd/shift, middle-click) is the
-                  // user asking for a real new tab — let the browser do that.
-                  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                  e.preventDefault();
-                  setShowOvertone(true);
-                }}
-                rel="noopener noreferrer"
-                title="Overtone Info"
-                aria-label="Overtone"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.375rem',
-                  padding: '0.5rem 1rem',
-                  backgroundColor: 'white',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  color: '#111827',
-                  textDecoration: 'none',
-                }}
-              >
-                <span aria-hidden="true">🔍</span>
-              </a>
-            )}
-            {showOvertone && (
-              <OvertoneModal
-                url={overtoneUrl(artist.musicbrainz_id)}
-                onClose={() => setShowOvertone(false)}
-                onNavigate={navigate}
-              />
-            )}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <PlayActionsMenu
+              overflowActions={[
+                isAdmin && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/artist/${id}`) },
+                isAuthenticated && {
+                  key: 'favorite',
+                  icon: isFavorite ? '★' : '☆',
+                  label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                  onClick: handleToggleFavorite,
+                },
+                { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: artist.name, text: artist.name }) },
+              ].filter(Boolean)}
+            />
           </div>
+
+          <AboutSection
+            heading="About this artist"
+            summary={summary}
+            musicbrainzId={artist.musicbrainz_id}
+          />
+
           {member_of && member_of.length > 0 && (
             <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
               Member of:{' '}

@@ -12,94 +12,136 @@ const playNowStyle = {
   fontWeight: '500',
 };
 
-const secondaryStyle = {
-  padding: '0.5rem 1rem',
-  backgroundColor: 'white',
-  border: '1px solid #d1d5db',
-  borderRadius: '4px',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
+const getMenuPosition = (toggleRef, menuWidth, menuHeight) => {
+  if (!toggleRef.current) return { top: 0, left: 0 };
+  const rect = toggleRef.current.getBoundingClientRect();
+
+  let left = rect.left;
+  let top = rect.bottom + 4;
+
+  // Keep menu on screen horizontally
+  if (left + menuWidth > window.innerWidth) {
+    left = window.innerWidth - menuWidth - 10;
+  }
+  if (left < 10) {
+    left = 10;
+  }
+
+  // Keep menu on screen vertically
+  if (top + menuHeight > window.innerHeight) {
+    top = Math.max(10, rect.top - menuHeight - 4);
+  }
+  if (top < 10) {
+    top = 10;
+  }
+
+  return { top, left };
 };
 
-const PlayActionsMenu = ({ onPlayNow, onPlayNext, onAddToQueue }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const toggleRef = useRef(null);
+// Single compact action bar used on every screen size: a Play Now button,
+// a "▾" dropdown for the secondary play actions (Play Next / Add to Queue),
+// and an optional "⋯" dropdown for whatever page-specific actions the
+// caller passes in (Edit, Share, Add to Collection, Add to Favorites, ...).
+// Replaces the old desktop-only row of flat buttons — every play action
+// beyond "Play Now" now lives behind one of the two dropdowns, on desktop
+// and mobile alike, so the header stays a small, consistent set of controls
+// no matter how many actions a given page needs.
+const PlayActionsMenu = ({ onPlayNow, onPlayNext, onAddToQueue, overflowActions = [], disabled = false }) => {
+  const [showPlayMenu, setShowPlayMenu] = useState(false);
+  const [showOverflowMenu, setShowOverflowMenu] = useState(false);
+  const playToggleRef = useRef(null);
+  const overflowToggleRef = useRef(null);
+
+  const hasPlayMenu = !!(onPlayNext || onAddToQueue);
+  const hasOverflowMenu = overflowActions.length > 0;
 
   const handlePlayNext = () => {
     onPlayNext();
-    setShowMenu(false);
+    setShowPlayMenu(false);
   };
 
   const handleAddToQueue = () => {
     onAddToQueue();
-    setShowMenu(false);
+    setShowPlayMenu(false);
   };
 
-  const menuPosition = () => {
-    if (!toggleRef.current) return { top: 0, left: 0 };
-    const rect = toggleRef.current.getBoundingClientRect();
-
-    // Estimate menu dimensions for clamping
-    const menuWidth = 200;  // matches mobile min-width: 200px !important from CSS
-    const menuHeight = 110; // ~2 buttons @ 48px each + padding
-
-    let left = rect.left;
-    let top = rect.bottom + 4;
-
-    // Keep menu on screen horizontally
-    if (left + menuWidth > window.innerWidth) {
-      left = window.innerWidth - menuWidth - 10;
-    }
-    if (left < 10) {
-      left = 10;
-    }
-
-    // Keep menu on screen vertically
-    if (top + menuHeight > window.innerHeight) {
-      top = Math.max(10, rect.top - menuHeight - 4);
-    }
-    if (top < 10) {
-      top = 10;
-    }
-
-    return { top, left };
+  const handleOverflowAction = (action) => {
+    action.onClick();
+    setShowOverflowMenu(false);
   };
 
   return (
-    <>
-      <div className="play-actions-desktop" style={{ display: 'flex', gap: '0.5rem' }}>
-        <button onClick={onPlayNow} style={playNowStyle}>▶ Play Now</button>
-        <button onClick={onPlayNext} style={secondaryStyle}>Play Next</button>
-        <button onClick={onAddToQueue} style={secondaryStyle}>Add to Queue</button>
-      </div>
-
-      <div className="play-actions-mobile" style={{ display: 'flex', gap: '0.5rem' }}>
-        <button onClick={onPlayNow} style={playNowStyle}>▶ Play Now</button>
+    <div className="play-actions-bar" style={{ display: 'flex', gap: '0.5rem' }}>
+      {onPlayNow && (
         <button
-          ref={toggleRef}
+          onClick={onPlayNow}
+          disabled={disabled}
+          style={{ ...playNowStyle, ...(disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+        >
+          ▶ Play Now
+        </button>
+      )}
+
+      {hasPlayMenu && (
+        <button
+          ref={playToggleRef}
           className="play-menu-toggle"
-          onClick={() => setShowMenu(true)}
+          onClick={() => setShowPlayMenu(true)}
+          disabled={disabled}
           aria-label="More play options"
+          style={disabled ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
         >
           ▾
         </button>
-      </div>
+      )}
 
-      {showMenu && createPortal(
+      {hasOverflowMenu && (
+        <button
+          ref={overflowToggleRef}
+          className="play-menu-toggle"
+          onClick={() => setShowOverflowMenu(true)}
+          aria-label="More actions"
+        >
+          ⋯
+        </button>
+      )}
+
+      {showPlayMenu && createPortal(
         <>
           <div
             data-testid="play-menu-backdrop"
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50 }}
-            onClick={() => setShowMenu(false)}
+            onClick={() => setShowPlayMenu(false)}
           />
-          <div className="track-dropdown" style={menuPosition()}>
-            <button onClick={handlePlayNext}>⏭ Play Next</button>
-            <button onClick={handleAddToQueue}>➕ Add to Queue</button>
+          <div className="track-dropdown" style={getMenuPosition(playToggleRef, 200, 110)}>
+            {onPlayNext && <button onClick={handlePlayNext}>⏭ Play Next</button>}
+            {onAddToQueue && <button onClick={handleAddToQueue}>➕ Add to Queue</button>}
           </div>
         </>,
         document.body
       )}
-    </>
+
+      {showOverflowMenu && createPortal(
+        <>
+          <div
+            data-testid="overflow-menu-backdrop"
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50 }}
+            onClick={() => setShowOverflowMenu(false)}
+          />
+          <div
+            className="track-dropdown"
+            style={getMenuPosition(overflowToggleRef, 200, overflowActions.length * 40 + 8)}
+          >
+            {overflowActions.map((action) => (
+              <button key={action.key} onClick={() => handleOverflowAction(action)}>
+                {action.icon} {action.label}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
   );
 };
 

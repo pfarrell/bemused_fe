@@ -85,7 +85,8 @@ describe('Album page', () => {
     renderAlbum();
     await screen.findByText('Test Album');
 
-    fireEvent.click(screen.getByText('Add to Queue'));
+    fireEvent.click(screen.getByRole('button', { name: 'More play options' }));
+    fireEvent.click(screen.getByText('➕ Add to Queue'));
 
     expect(addTracks).toHaveBeenCalledWith(albumData.tracks, false, { flashActivity: true });
   });

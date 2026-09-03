@@ -5,19 +5,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { usePlayerStore } from '../stores/playerStore';
 import { useAuthStore } from '../stores/authStore';
-import Wikipedia from '../components/Wikipedia';
 import Track from '../components/Track';
 import TagsSection from '../components/TagsSection';
 import NotesSection from '../components/NotesSection';
 import CompilationArtistLinks from '../components/CompilationArtistLinks';
-import ShareButton from '../components/ShareButton';
+import AboutSection from '../components/AboutSection';
 import PlayActionsMenu from '../components/PlayActionsMenu';
 import AddToCollectionModal from '../components/AddToCollectionModal';
 import ContextMenu from '../components/ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
-import { overtoneUrl } from '../utils/overtoneUrl';
-import OvertoneModal from '../components/OvertoneModal';
+import { shareLink } from '../utils/shareLink';
 
 const Album = () => {
   const { id } = useParams();
@@ -33,7 +31,6 @@ const Album = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAlbumModal, setShowAlbumModal] = useState(false);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
-  const [showOvertone, setShowOvertone] = useState(false);
   const isFavorite = useFavoritesStore((s) => s.isFavorite('album', parseInt(id)));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const ctxMenu = useContextMenu({ shouldIgnore: (e) => !isAuthenticated || e.target.tagName === 'A' || !!e.target.closest('button') });
@@ -254,75 +251,33 @@ const Album = () => {
               ))}
             </p>
           )}
-          {summary && Object.keys(summary).length > 0 && (
-            <div className="album-header-wikipedia">
-              <Wikipedia summary={summary} />
-            </div>
-          )}
-
           {/* Action Buttons */}
           <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <PlayActionsMenu
               onPlayNow={handlePlayNow}
               onPlayNext={handlePlayNext}
               onAddToQueue={handleAddToQueue}
+              overflowActions={[
+                isAdmin && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/album/${id}`) },
+                isAuthenticated && { key: 'collection', icon: '▣', label: 'Add to Collection', onClick: () => setShowCollectionModal(true) },
+                isAuthenticated && {
+                  key: 'favorite',
+                  icon: isFavorite ? '★' : '☆',
+                  label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                  onClick: handleToggleFavorite,
+                },
+                { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: album.title, text: `${album.title} by ${artist.name}` }) },
+              ].filter(Boolean)}
             />
           </div>
-          <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            {isAdmin && (
-              <button
-                onClick={() => navigate(`/admin/album/${id}`)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
-                Edit
-              </button>
-            )}
-            <ShareButton title={album.title} text={`${album.title} by ${artist.name}`} />
-            {album.musicbrainz_id && (
-              <a
-                href={overtoneUrl(album.musicbrainz_id, 'release')}
-                onClick={(e) => {
-                  // A modified click (ctrl/cmd/shift, middle-click) is the
-                  // user asking for a real new tab — let the browser do that.
-                  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                  e.preventDefault();
-                  setShowOvertone(true);
-                }}
-                rel="noopener noreferrer"
-                title="Overtone Info"
-                aria-label="Overtone"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.375rem',
-                  alignSelf: 'center',
-                  padding: '0.5rem 1rem',
-                  backgroundColor: 'white',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  color: '#111827',
-                  textDecoration: 'none',
-                }}
-              >
-                <span aria-hidden="true">🔍</span>
-              </a>
-            )}
-            {showOvertone && (
-              <OvertoneModal
-                url={overtoneUrl(album.musicbrainz_id, 'release')}
-                onClose={() => setShowOvertone(false)}
-                onNavigate={navigate}
-              />
-            )}
+
+          <div className="album-header-about">
+            <AboutSection
+              heading="About this album"
+              summary={summary}
+              musicbrainzId={album.musicbrainz_id}
+              entityType="release"
+            />
           </div>
 
           {/* Album Description */}

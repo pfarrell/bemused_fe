@@ -658,8 +658,57 @@
   opacity: 1;
 }
 
-.play-actions-mobile {
-  display: none !important;
+.play-actions-bar {
+  align-items: center;
+}
+
+.play-menu-toggle {
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-menu-toggle:disabled {
+  cursor: not-allowed;
+}
+
+.about-section {
+  margin: 0.5rem 0 1rem 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.about-section-heading {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.5rem 0;
+}
+
+.about-section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.about-section-link:hover {
+  text-decoration: underline;
 }
 
 .wikipedia-toggle {
@@ -1803,33 +1852,8 @@
   .album-header-featuring { order: 3; }
   .album-header-collections { order: 3; }
   .album-header-actions { order: 4; }
-  .album-header-wikipedia { order: 5; }
+  .album-header-about { order: 5; }
   .album-header-description { order: 6; }
-
-  /* Play Now / Play Next / Add to Queue consolidation (issue #58) */
-  .play-actions-desktop {
-    display: none !important;
-  }
-
-  .play-actions-mobile {
-    display: flex !important;
-  }
-
-  .play-menu-toggle {
-    background: none;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 0.5rem 0.75rem;
-    color: #374151;
-    font-size: 1rem;
-    line-height: 1;
-    min-width: 44px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
   /* Artist page overrides */
   [style*="display: flex"][style*="gap: 2rem"] {
