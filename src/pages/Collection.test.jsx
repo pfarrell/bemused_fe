@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Collection from './Collection';
 import { apiService } from '../services/api';
@@ -77,7 +77,7 @@ describe('Collection page — stubs', () => {
 });
 
 describe('Collection page — Edit button access', () => {
-  test('shows the Edit button for a non-admin user who owns the collection', async () => {
+  test('shows Edit in the overflow menu for a non-admin user who owns the collection', async () => {
     useAuthStore.setState({ isAdmin: false, user: { id: 7 }, isAuthenticated: true });
     apiService.getCollection.mockResolvedValue({
       data: { collection: { ...baseCollection, user_id: 7 }, albums: [], notes: [], summary: null },
@@ -85,10 +85,12 @@ describe('Collection page — Edit button access', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    expect(screen.getByText('Edit')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+    expect(screen.getByText('✎ Edit')).toBeInTheDocument();
   });
 
-  test('hides the Edit button for a non-admin user who does not own the collection', async () => {
+  test('hides Edit from the overflow menu for a non-admin user who does not own the collection', async () => {
     useAuthStore.setState({ isAdmin: false, user: { id: 999 }, isAuthenticated: true });
     apiService.getCollection.mockResolvedValue({
       data: { collection: { ...baseCollection, user_id: 7 }, albums: [], notes: [], summary: null },
@@ -96,7 +98,9 @@ describe('Collection page — Edit button access', () => {
     renderCollection();
     await screen.findByText('Road Trip Mix');
 
-    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+    expect(screen.queryByText('✎ Edit')).not.toBeInTheDocument();
   });
 });
 

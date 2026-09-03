@@ -9,12 +9,14 @@ import AlbumStubCard from '../components/AlbumStubCard';
 import Loading from '../components/Loading';
 import Retry from '../components/Retry';
 import NotesSection from '../components/NotesSection';
-import Wikipedia from '../components/Wikipedia';
+import AboutSection from '../components/AboutSection';
+import PlayActionsMenu from '../components/PlayActionsMenu';
 import CoverCollage from '../components/CoverCollage';
 import ContextMenu from '../components/ContextMenu';
 import CardGrid from '../components/CardGrid';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useFavoritesStore } from '../stores/favoritesStore';
+import { shareLink } from '../utils/shareLink';
 
 export default function Collection() {
   const { id } = useParams();
@@ -92,31 +94,26 @@ export default function Collection() {
             <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>
               {collection.name}
             </h1>
-            {canEdit && (
-              <button
-                onClick={() => navigate(`/admin/collection/${id}`)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
-                Edit
-              </button>
-            )}
           </div>
 
           <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
             {albums?.length || 0} {albums?.length === 1 ? 'album' : 'albums'}
           </p>
 
-          {summary && Object.keys(summary).length > 0 && (
-            <Wikipedia summary={summary} />
-          )}
+          <PlayActionsMenu
+            overflowActions={[
+              canEdit && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/collection/${id}`) },
+              isAuthenticated && {
+                key: 'favorite',
+                icon: isFavorite ? '★' : '☆',
+                label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                onClick: handleToggleFavorite,
+              },
+              { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: collection.name, text: `${collection.name} collection` }) },
+            ].filter(Boolean)}
+          />
+
+          <AboutSection heading="About this collection" summary={summary} />
         </div>
       </div>
 
