@@ -1950,12 +1950,60 @@
   }
 
   .album-header-title { order: 1; }
-  .album-header-artist { order: 2; }
+  .album-header-artist-row { order: 2; }
   .album-header-featuring { order: 3; }
   .album-header-collections { order: 3; }
-  .album-header-actions { order: 4; }
   .album-header-about { order: 5; }
   .album-header-description { order: 6; }
+
+  /* Artist name + play button share a row, Spotify-mobile style, instead of
+     the button getting its own full-width row below. The button shrinks to
+     fit the row's height rather than keeping its full desktop size. */
+  .album-header-artist-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .media-page-header .album-header-title {
+    font-size: 1.5rem !important;
+  }
+
+  .media-page-header .album-header-artist-row h2 {
+    font-size: 1.1rem !important;
+    text-align: left !important;
+    margin-bottom: 0 !important;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .album-header-actions {
+    flex-shrink: 0;
+    margin-bottom: 0 !important;
+  }
+
+  .album-header-artist-row .play-split {
+    border-radius: 20px;
+  }
+
+  .album-header-artist-row .play-split-play {
+    width: 40px;
+    height: 40px;
+  }
+
+  .album-header-artist-row .play-split-toggle {
+    width: 24px;
+    height: 40px;
+  }
+
+  .album-header-artist-row .play-now-circle-triangle {
+    margin-left: 3px;
+    border-top-width: 7px;
+    border-bottom-width: 7px;
+    border-left-width: 11px;
+  }
 
   /* Artist page overrides */
   [style*="display: flex"][style*="gap: 2rem"] {

@@ -218,19 +218,43 @@ const Album = () => {
             {album.title}
           </h1>
 
-          <h2 className="album-header-artist" style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
-            <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${artist.id}`)}>
-              {artist.name}
-            </span>
-            {collaborators.map((c) => (
-              <span key={c.id}>
-                {', '}
-                <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${c.id}`)}>
-                  {c.name}
-                </span>
+          <div className="album-header-artist-row">
+            <h2 className="album-header-artist" style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
+              <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${artist.id}`)}>
+                {artist.name}
               </span>
-            ))}
-          </h2>
+              {collaborators.map((c) => (
+                <span key={c.id}>
+                  {', '}
+                  <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${c.id}`)}>
+                    {c.name}
+                  </span>
+                </span>
+              ))}
+            </h2>
+
+            {/* Action Buttons */}
+            <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <PlayActionsMenu
+                onPlayNow={handlePlayNow}
+                onPlayNext={handlePlayNext}
+                onAddToQueue={handleAddToQueue}
+                overflowActions={[
+                  isAdmin && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/album/${id}`) },
+                  isAuthenticated && { key: 'collection', icon: '▣', label: 'Add to Collection', onClick: () => setShowCollectionModal(true) },
+                  isAuthenticated && {
+                    key: 'favorite',
+                    icon: isFavorite ? '★' : '☆',
+                    label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                    onClick: handleToggleFavorite,
+                  },
+                  overtoneAction,
+                  { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: album.title, text: `${album.title} by ${artist.name}` }) },
+                ].filter(Boolean)}
+              />
+              {overtoneModal}
+            </div>
+          </div>
           {featuringArtists.length > 0 && (
             <p className="album-header-featuring" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
               {album.is_compilation ? 'Featuring:' : 'Also featuring:'}{' '}
@@ -253,27 +277,6 @@ const Album = () => {
               ))}
             </p>
           )}
-          {/* Action Buttons */}
-          <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <PlayActionsMenu
-              onPlayNow={handlePlayNow}
-              onPlayNext={handlePlayNext}
-              onAddToQueue={handleAddToQueue}
-              overflowActions={[
-                isAdmin && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/album/${id}`) },
-                isAuthenticated && { key: 'collection', icon: '▣', label: 'Add to Collection', onClick: () => setShowCollectionModal(true) },
-                isAuthenticated && {
-                  key: 'favorite',
-                  icon: isFavorite ? '★' : '☆',
-                  label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-                  onClick: handleToggleFavorite,
-                },
-                overtoneAction,
-                { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: album.title, text: `${album.title} by ${artist.name}` }) },
-              ].filter(Boolean)}
-            />
-            {overtoneModal}
-          </div>
 
           <div className="album-header-about">
             <AboutSection
