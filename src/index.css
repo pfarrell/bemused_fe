@@ -1416,6 +1416,23 @@
   .music-player-playlist-container:hover {
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
   }
+
+  /* Album header: park the play split-button in a gutter between the cover
+     and the title/artist text instead of giving it its own row. Reserved
+     via padding-left + absolute positioning (relative to .album-info's own
+     box) rather than an offset measured from the image, so it doesn't
+     depend on the cover's rendered width — album art isn't always square. */
+  .album-info {
+    position: relative;
+    padding-left: 6rem;
+  }
+
+  .album-header-actions {
+    position: absolute;
+    left: 0;
+    top: 0.25rem;
+    margin-bottom: 0 !important;
+  }
 }
 
 /* Tablet - Reduce now-playing width */
