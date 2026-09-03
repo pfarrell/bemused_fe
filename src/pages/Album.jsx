@@ -212,26 +212,28 @@ const Album = () => {
         
         {/* Album Info */}
         <div className="album-info" style={{ flex: 1 }}>
-          <h1 className="album-header-title" style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#7c3aed', cursor: 'pointer' }}
-            onClick = {reload}
-          >
-            {album.title}
-          </h1>
+          <div className="album-header-title-row">
+            <div className="album-header-textblock">
+              <h1 className="album-header-title" style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#7c3aed', cursor: 'pointer' }}
+                onClick = {reload}
+              >
+                {album.title}
+              </h1>
 
-          <div className="album-header-artist-row">
-            <h2 className="album-header-artist" style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
-              <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${artist.id}`)}>
-                {artist.name}
-              </span>
-              {collaborators.map((c) => (
-                <span key={c.id}>
-                  {', '}
-                  <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${c.id}`)}>
-                    {c.name}
-                  </span>
+              <h2 className="album-header-artist" style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
+                <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${artist.id}`)}>
+                  {artist.name}
                 </span>
-              ))}
-            </h2>
+                {collaborators.map((c) => (
+                  <span key={c.id}>
+                    {', '}
+                    <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${c.id}`)}>
+                      {c.name}
+                    </span>
+                  </span>
+                ))}
+              </h2>
+            </div>
 
             {/* Action Buttons */}
             <div className="album-header-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>

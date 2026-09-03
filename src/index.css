@@ -1949,34 +1949,42 @@
     flex-direction: column !important;
   }
 
-  .album-header-title { order: 1; }
-  .album-header-artist-row { order: 2; }
+  .album-header-title-row { order: 1; }
   .album-header-featuring { order: 3; }
   .album-header-collections { order: 3; }
   .album-header-about { order: 5; }
   .album-header-description { order: 6; }
 
-  /* Artist name + play button share a row, Spotify-mobile style, instead of
-     the button getting its own full-width row below. The button shrinks to
-     fit the row's height rather than keeping its full desktop size. */
-  .album-header-artist-row {
+  /* Title + artist + play button share one row, Spotify-mobile style,
+     instead of the button getting its own full-width row below. The text
+     block's natural height (title + artist, tightly stacked) sets the
+     row's height, and the button stretches to match it exactly — no fixed
+     px height, so it stays correct if font sizes change later. */
+  .album-header-title-row {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
     gap: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .album-header-textblock {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
   }
 
   .media-page-header .album-header-title {
-    font-size: 1.5rem !important;
+    font-size: 1.35rem !important;
+    text-align: left !important;
+    margin-bottom: 0.15rem !important;
   }
 
-  .media-page-header .album-header-artist-row h2 {
-    font-size: 1.1rem !important;
+  .media-page-header .album-header-textblock h2 {
+    font-size: 1rem !important;
     text-align: left !important;
     margin-bottom: 0 !important;
-    flex: 1;
-    min-width: 0;
   }
 
   .album-header-actions {
@@ -1984,25 +1992,31 @@
     margin-bottom: 0 !important;
   }
 
-  .album-header-artist-row .play-split {
-    border-radius: 20px;
+  .album-header-title-row .play-actions-bar {
+    align-items: stretch;
+    height: 100%;
   }
 
-  .album-header-artist-row .play-split-play {
-    width: 40px;
-    height: 40px;
+  .album-header-title-row .play-split {
+    height: 100%;
+    border-radius: 999px;
   }
 
-  .album-header-artist-row .play-split-toggle {
-    width: 24px;
-    height: 40px;
+  .album-header-title-row .play-split-play {
+    width: 52px;
+    height: 100%;
   }
 
-  .album-header-artist-row .play-now-circle-triangle {
-    margin-left: 3px;
-    border-top-width: 7px;
-    border-bottom-width: 7px;
-    border-left-width: 11px;
+  .album-header-title-row .play-split-toggle {
+    width: 26px;
+    height: 100%;
+  }
+
+  .album-header-title-row .play-now-circle-triangle {
+    margin-left: 4px;
+    border-top-width: 9px;
+    border-bottom-width: 9px;
+    border-left-width: 14px;
   }
 
   /* Artist page overrides */
