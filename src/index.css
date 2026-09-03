@@ -1419,18 +1419,27 @@
 
   /* Album header: park the play split-button in a gutter between the cover
      and the title/artist text instead of giving it its own row. Reserved
-     via padding-left + absolute positioning (relative to .album-info's own
-     box) rather than an offset measured from the image, so it doesn't
-     depend on the cover's rendered width — album art isn't always square. */
+     via padding-left on the identity lines (title/artist/featuring/
+     collections) + absolute positioning of the button (relative to
+     .album-info's own box, not an offset measured from the image, since
+     album art isn't always square). The About/Description text below is
+     deliberately NOT indented — it isn't beside the button, so it left-
+     aligns with the button's own left edge instead of with the title. */
   .album-info {
     position: relative;
+  }
+
+  .album-header-title,
+  .album-header-artist,
+  .album-header-featuring,
+  .album-header-collections {
     padding-left: 6rem;
   }
 
   .album-header-actions {
     position: absolute;
     left: 0;
-    top: 0.25rem;
+    top: 1rem;
     margin-bottom: 0 !important;
   }
 }
