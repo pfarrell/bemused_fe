@@ -235,10 +235,10 @@
   color: #9ca3af;
 }
 
-/* Shared circular gradient play button (src/components/PlayButton.jsx).
-   Sizing comes entirely from the `size` prop via inline width/height/
-   font-size — .play-button-triangle and .play-button-spinner are drawn in
-   em units so they scale with it automatically. Used by Track rows, the
+/* Shared circular play button (src/components/PlayButton.jsx). Sizing
+   comes entirely from the `size` prop via inline width/height/font-size —
+   .play-button-triangle and .play-button-spinner are drawn in em units so
+   they scale with it automatically. Used by Track rows, the
    ResultRow/AlbumCard/ArtistCard/PlaylistResultCard/CollectionResultCard
    row view, album cards, and the header's plain Play Now control. The
    fused Play Now + "▾" split button (.play-split below) is a separate,
@@ -247,7 +247,7 @@
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  background: #3b82f6;
   color: white;
   flex-shrink: 0;
   display: flex;
@@ -267,7 +267,7 @@
 }
 
 .play-button-active {
-  background: #3b82f6;
+  background: #2563eb;
 }
 
 .play-button-triangle {
@@ -691,15 +691,15 @@
 }
 
 /* Fused "split button": Play Now (circle) + "▾" (tab) rendered as one
-   continuous gradient shape with two independent click targets. The tab
-   keeps a hairline border for a subtle seam rather than a hard divider. */
+   continuous shape with two independent click targets. The tab keeps a
+   hairline border for a subtle seam rather than a hard divider. */
 .play-split {
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
   border-radius: 28px;
   overflow: hidden;
-  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  background: #3b82f6;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
 }
 
@@ -741,9 +741,10 @@
   cursor: not-allowed;
 }
 
-/* Standalone "▾" toggle for pages with no Play Now (Artist, Collection) —
-   same gradient/pill family as .play-now-circle/.play-split so every
-   page's primary header control reads as one visual language. */
+/* Standalone "▾" toggle for pages with no Play Now (Artist, Collection),
+   and the Artist page's Singles "Play All" button — same pill family as
+   .play-now-circle/.play-split so every page's primary header control
+   reads as one visual language. */
 .play-oval-toggle {
   min-width: 48px;
   height: 40px;
@@ -751,7 +752,7 @@
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  background: #3b82f6;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
   color: white;
   font-size: 1.1rem;
@@ -818,7 +819,7 @@
   margin-left: 0.4em;
   padding: 0.15em 0.75em;
   border-radius: 999px;
-  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  background: #3b82f6;
   color: white;
   font-size: 0.85em;
   font-weight: 600;

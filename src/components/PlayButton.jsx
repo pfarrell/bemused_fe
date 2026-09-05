@@ -1,7 +1,7 @@
 // src/components/PlayButton.jsx
 import { forwardRef } from 'react';
 
-// Shared circular gradient play button used anywhere a bare "play" affordance
+// Shared circular play button used anywhere a bare "play" affordance
 // is needed (track rows, result rows, album cards, the header's plain Play
 // Now control). Sizing is driven entirely by the `size` prop (px) — the
 // triangle and spinner are drawn in `em` units scaled off it, so there's no
