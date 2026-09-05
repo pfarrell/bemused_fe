@@ -44,6 +44,28 @@ test('applies the wikipedia-content class to the summary paragraph', () => {
   expect(container.querySelector('p.wikipedia-content')).toBeInTheDocument();
 });
 
+const longSummary = {
+  summary:
+    'Duit on Mon Dei is the eleventh album by American singer and songwriter Harry Nilsson, released by RCA Victor in March 1975. Its provisional title was God\'s Greatest Hits but management at RCA Records did not approve. The title is a punning spelling of "Do It On Monday".',
+  url: 'https://en.wikipedia.org/wiki/Duit_on_Mon_Dei',
+};
+
+test('truncates a long summary to a word boundary with an ellipsis on a mobile viewport', () => {
+  Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true });
+  render(<Wikipedia summary={longSummary} />);
+
+  const paragraph = screen.getByText(/Duit on Mon Dei/);
+  expect(paragraph.textContent).not.toContain('Do It On Monday');
+  expect(paragraph.textContent).toMatch(/…\s*more$/);
+});
+
+test('does not truncate a long summary on a desktop viewport', () => {
+  Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+  render(<Wikipedia summary={longSummary} />);
+
+  expect(screen.getByText(/Duit on Mon Dei/).textContent).toContain('Do It On Monday');
+});
+
 test('clicking the continue link opens the Wikipedia modal instead of navigating', async () => {
   const user = userEvent.setup();
   render(<Wikipedia summary={summary} />);

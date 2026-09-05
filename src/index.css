@@ -1936,26 +1936,6 @@
     display: none;
   }
 
-  /* No "Show more" toggle on mobile — the pill link (below) is the only
-     read-more affordance, so the last visible line reserves a corner gutter
-     (padding-right) for it via position: absolute, guaranteeing the pill
-     never wraps to a line of its own. */
-  .wikipedia-content-truncated {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-    overflow: hidden;
-    position: relative;
-    padding-right: 3.5rem;
-  }
-
-  .wikipedia-content-truncated a {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    margin-left: 0;
-  }
-
   .media-page-header div[style*="display: flex"][style*="gap: 0.5rem"] {
     justify-content: center !important;
     flex-wrap: wrap !important;

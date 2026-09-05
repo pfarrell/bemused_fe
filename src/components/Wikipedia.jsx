@@ -4,6 +4,18 @@ import WikipediaModal from './WikipediaModal';
 
 const toMobileUrl = (url) => url.replace('en.wikipedia.org', 'en.m.wikipedia.org');
 
+const MOBILE_SUMMARY_CHAR_LIMIT = 220;
+
+// Word-boundary truncation, not -webkit-line-clamp: line-clamp hides the
+// pill's true position, forcing the "more" link to be pinned to a corner
+// instead of trailing the text like it does on desktop.
+const truncateSummary = (text, limit) => {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+};
+
 const Wikipedia = ({ summary }) => {
   const [showModal, setShowModal] = useState(false);
 
@@ -17,15 +29,19 @@ const Wikipedia = ({ summary }) => {
     return null;
   }
 
-  const href = isMobileDevice() ? toMobileUrl(summary.url) : summary.url;
+  const mobile = isMobileDevice();
+  const href = mobile ? toMobileUrl(summary.url) : summary.url;
+  const displayedSummary = mobile
+    ? truncateSummary(summary.summary, MOBILE_SUMMARY_CHAR_LIMIT)
+    : summary.summary;
 
   return (
     <div>
       <p
-        className="wikipedia-content wikipedia-content-truncated"
+        className="wikipedia-content"
         style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}
       >
-        {summary.summary}
+        {displayedSummary}
         <a
           target="_blank"
           rel="noopener noreferrer"
