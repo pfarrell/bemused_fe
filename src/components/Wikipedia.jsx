@@ -5,7 +5,6 @@ import WikipediaModal from './WikipediaModal';
 const toMobileUrl = (url) => url.replace('en.wikipedia.org', 'en.m.wikipedia.org');
 
 const Wikipedia = ({ summary }) => {
-  const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   if(Object.keys(summary).length === 0){
@@ -23,7 +22,7 @@ const Wikipedia = ({ summary }) => {
   return (
     <div>
       <p
-        className={`wikipedia-content${expanded ? '' : ' wikipedia-content-truncated'}`}
+        className="wikipedia-content wikipedia-content-truncated"
         style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}
       >
         {summary.summary}
@@ -40,12 +39,6 @@ const Wikipedia = ({ summary }) => {
           }}
         > more</a>
       </p>
-      <button
-        className="wikipedia-toggle"
-        onClick={() => setExpanded(!expanded)}
-      >
-        {expanded ? 'Show less' : 'Show more'}
-      </button>
       {showModal && (
         <WikipediaModal url={href} onClose={() => setShowModal(false)} />
       )}

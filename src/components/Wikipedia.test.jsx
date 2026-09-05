@@ -44,19 +44,6 @@ test('applies the wikipedia-content class to the summary paragraph', () => {
   expect(container.querySelector('p.wikipedia-content')).toBeInTheDocument();
 });
 
-test('shows a "Show more" toggle that expands to "Show less"', async () => {
-  const user = userEvent.setup();
-  render(<Wikipedia summary={summary} />);
-
-  const toggle = screen.getByRole('button', { name: 'Show more' });
-  expect(toggle).toBeInTheDocument();
-
-  await user.click(toggle);
-
-  expect(screen.getByRole('button', { name: 'Show less' })).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
-});
-
 test('clicking the continue link opens the Wikipedia modal instead of navigating', async () => {
   const user = userEvent.setup();
   render(<Wikipedia summary={summary} />);
