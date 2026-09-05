@@ -12,6 +12,7 @@ import { useIsCurrentPage } from '../hooks/useIsCurrentPage';
 import ContextMenu from './ContextMenu';
 import AddToPlaylistModal from './AddToPlaylistModal';
 import TrackNotesModal from './TrackNotesModal';
+import PlayButton from './PlayButton';
 
 const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = false, showMakeSingle = false, showEdit = false, onMadeSingle }) => {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
@@ -198,11 +199,15 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
         }
       }}
     >
-      <div className="track-play-button" onClick={handleTrackClick}>
-        <span style={{ fontSize: '0.75rem' }}>
-          {isPlaying ? '♪' : '▶'}
-        </span>
-      </div>
+      <PlayButton
+        size={24}
+        className="track-play-button"
+        active={isPlaying}
+        onClick={handleTrackClick}
+        aria-label={isPlaying ? 'Now playing' : `Play ${track.title}`}
+      >
+        {isPlaying && <span className="play-button-note">♪</span>}
+      </PlayButton>
 
       <div className="track-info" onClick={handleTrackClick} style={{ flex: 1, minWidth: 0 }}>
         <h4 className="track-title" style={{

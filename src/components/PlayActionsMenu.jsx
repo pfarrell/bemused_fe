@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import PlayButton from './PlayButton';
 
 const getMenuPosition = (toggleRef, menuWidth, menuHeight) => {
   if (!toggleRef.current) return { top: 0, left: 0 };
@@ -98,15 +99,13 @@ const PlayActionsMenu = ({ onPlayNow, onPlayNext, onAddToQueue, overflowActions 
       )}
 
       {hasPlayNow && !hasMenu && (
-        <button
+        <PlayButton
+          size={56}
           onClick={onPlayNow}
           disabled={disabled}
-          className="play-now-circle"
           aria-label="Play Now"
           title="Play Now"
-        >
-          <span className="play-now-circle-triangle" aria-hidden="true" />
-        </button>
+        />
       )}
 
       {!hasPlayNow && hasMenu && (

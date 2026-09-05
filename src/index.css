@@ -235,39 +235,62 @@
   color: #9ca3af;
 }
 
-.album-card-play {
-  width: 22px;
-  height: 22px;
+/* Shared circular gradient play button (src/components/PlayButton.jsx).
+   Sizing comes entirely from the `size` prop via inline width/height/
+   font-size — .play-button-triangle and .play-button-spinner are drawn in
+   em units so they scale with it automatically. Used by Track rows, the
+   ResultRow/AlbumCard/ArtistCard/PlaylistResultCard/CollectionResultCard
+   row view, album cards, and the header's plain Play Now control. The
+   fused Play Now + "▾" split button (.play-split below) is a separate,
+   two-target control and deliberately does not use this class. */
+.play-button {
+  border: none;
   border-radius: 50%;
+  cursor: pointer;
   background: linear-gradient(135deg, #5eead4, #60a5fa);
   color: white;
-  border: none;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
-  cursor: pointer;
   padding: 0;
   transition: box-shadow 0.15s ease;
 }
 
-.album-card-play:hover {
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.45);
+.play-button:hover:not(:disabled) {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.45);
 }
 
-.album-card-play:disabled {
+.play-button:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
-.album-card-play-spinner {
-  width: 12px;
-  height: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+.play-button-active {
+  background: #3b82f6;
+}
+
+.play-button-triangle {
+  width: 0;
+  height: 0;
+  margin-left: 0.07em;
+  border-top: 0.18em solid transparent;
+  border-bottom: 0.18em solid transparent;
+  border-left: 0.29em solid white;
+}
+
+.play-button-spinner {
+  width: 0.4em;
+  height: 0.4em;
+  border: 0.08em solid rgba(255, 255, 255, 0.4);
   border-top-color: white;
   border-radius: 50%;
   animation: result-row-spin 0.6s linear infinite;
+}
+
+.play-button-note {
+  font-size: 0.5em;
+  animation: pulse 2s infinite;
 }
 
 /* Marks the boundary on the Artist page's Albums grid where dated albums
@@ -355,40 +378,6 @@
     text-overflow: ellipsis;
   }
 
-  .result-row-play {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #5eead4, #60a5fa);
-    color: white;
-    border: none;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 0;
-    transition: box-shadow 0.2s ease;
-  }
-
-  .result-row-play:hover {
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.45);
-  }
-
-  .result-row-play:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  .result-row-play-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: result-row-spin 0.6s linear infinite;
-  }
 }
 
 /* Top-level (unscoped) so it's registered regardless of viewport — both the
@@ -542,36 +531,16 @@
   font-weight: 600 !important;
 }
 
-.track-item.currently-playing .track-play-button {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.track-item.currently-playing .track-play-button span {
-  animation: pulse 2s infinite;
-}
-
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
 }
 
+/* Sizing/coloring for the play button itself now live on the shared
+   .play-button class (src/components/PlayButton.jsx) — this is just the
+   layout gap between it and the track text. */
 .track-play-button {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #5eead4, #60a5fa);
-  border-radius: 50%;
   margin-right: 1rem;
-  color: white;
-  flex-shrink: 0;
-  transition: box-shadow 0.2s ease;
-}
-
-.track-play-button:hover {
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.45);
 }
 
 .track-info {
@@ -710,36 +679,8 @@
   align-items: center;
 }
 
-.play-now-circle {
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  background: linear-gradient(135deg, #5eead4, #60a5fa);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-.play-now-circle:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
-}
-
-.play-now-circle:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.play-now-circle:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  box-shadow: none;
-}
-
+/* Used only by .play-split-play's fused triangle below now — the plain
+   Play Now button renders the shared .play-button-triangle instead. */
 .play-now-circle-triangle {
   width: 0;
   height: 0;
@@ -1731,36 +1672,6 @@
     text-overflow: ellipsis;
   }
 
-  .result-row-play {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #5eead4, #60a5fa);
-    color: white;
-    border: none;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  .result-row-play:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  .result-row-play-spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: result-row-spin 0.6s linear infinite;
-  }
-
   /* The search-result type badge duplicates the row subtitle's type label
      on mobile (e.g. "Album · Fleetwood Mac"), so hide it there. */
   .search-result-type-badge {
@@ -1829,8 +1740,6 @@
   }
 
   .track-play-button {
-    width: 24px;
-    height: 24px;
     margin-right: 0.5rem;
   }
 

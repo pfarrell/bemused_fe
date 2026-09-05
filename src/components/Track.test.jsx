@@ -68,10 +68,7 @@ describe('Track component', () => {
 
   test('renders play button when not playing', () => {
     renderTrack({ isPlaying: false });
-    // The ▶ symbol appears in the play button span; use getAllByText since it also
-    // appears in the "▶ Play Now" dropdown button (hidden until right-click)
-    const playButtons = screen.getAllByText('▶');
-    expect(playButtons.length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Play Test Track' })).toBeInTheDocument();
   });
 
   test('renders now-playing indicator when isPlaying is true', () => {

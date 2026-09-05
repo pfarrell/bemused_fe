@@ -2,6 +2,7 @@ import { useState } from 'react';
 import AddToCollectionModal from './AddToCollectionModal';
 import { useNavigate } from 'react-router-dom';
 import ResultRow from './ResultRow';
+import PlayButton from './PlayButton';
 import ContextMenu from './ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -132,16 +133,13 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
             )}
             <div className="album-card-meta-row">
               {metaText && <span className="album-card-meta">{metaText}</span>}
-              <button
-                type="button"
-                className="album-card-play"
+              <PlayButton
+                size={22}
                 data-result-row-play="true"
-                onClick={(e) => { e.stopPropagation(); if (!playLoading) handlePlayAll(); }}
-                disabled={playLoading}
+                onClick={(e) => { e.stopPropagation(); handlePlayAll(); }}
+                loading={playLoading}
                 aria-label={`Play ${album.title}`}
-              >
-                {playLoading ? <span className="album-card-play-spinner" /> : '▶'}
-              </button>
+              />
             </div>
           </div>
         </div>

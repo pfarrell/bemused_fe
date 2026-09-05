@@ -1,6 +1,8 @@
 // src/components/ResultRow.jsx
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import PlayButton from './PlayButton';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const ResultRow = ({
   imageUrl,
@@ -16,6 +18,7 @@ const ResultRow = ({
   onTouchEnd,
   play,
 }) => {
+  const isMobile = useIsMobile();
   const [showPlayMenu, setShowPlayMenu] = useState(false);
   const [playMenuPos, setPlayMenuPos] = useState({ x: 0, y: 0 });
   const playLongPressTimer = useRef(null);
@@ -121,20 +124,17 @@ const ResultRow = ({
         {subtitle && <p className="result-row-subtitle">{subtitle}</p>}
       </div>
       {play && (
-        <button
-          type="button"
-          className="result-row-play"
+        <PlayButton
+          size={isMobile ? 32 : 40}
           data-result-row-play="true"
           onClick={handlePlayClick}
           onContextMenu={handlePlayContextMenu}
           onTouchStart={handlePlayTouchStart}
           onTouchMove={handlePlayTouchMove}
           onTouchEnd={handlePlayTouchEnd}
-          disabled={play.loading}
+          loading={play.loading}
           aria-label={play.label}
-        >
-          {play.loading ? <span className="result-row-play-spinner" /> : '▶'}
-        </button>
+        />
       )}
 
       {showPlayMenu && hasPlayMenu && createPortal(
