@@ -814,7 +814,20 @@
 }
 
 .wikipedia-content a {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.15em 0.75em;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  color: white;
+  font-size: 0.85em;
+  font-weight: 600;
   text-decoration: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.wikipedia-content a:hover {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.45);
 }
 
 .track-item:hover .track-ellipsis {
