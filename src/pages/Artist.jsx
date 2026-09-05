@@ -170,7 +170,7 @@ const Artist = () => {
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
           <div className="artist-header-title-row" style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937', cursor: 'pointer' }}
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#7c3aed', cursor: 'pointer' }}
               onClick={ reload }
             >
               {artist.name}
