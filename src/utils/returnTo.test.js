@@ -17,4 +17,18 @@ describe('safeReturnTo', () => {
     expect(safeReturnTo(null)).toBeNull();
     expect(safeReturnTo('')).toBeNull();
   });
+
+  test('rejects a backslash-based host bypass (open-redirect guard)', () => {
+    // Browsers fold a leading "\" into "/" during URL parsing, so a naive
+    // string-prefix check lets this resolve to https://evil.example.com/
+    // once assigned to window.location.href.
+    expect(safeReturnTo('/\\evil.example.com')).toBeNull();
+  });
+
+  test('rejects a tab-obfuscated host bypass (open-redirect guard)', () => {
+    // Browsers strip tab/CR/LF characters before parsing, so a naive
+    // string-prefix check lets this resolve to https://evil.example.com/
+    // once assigned to window.location.href.
+    expect(safeReturnTo('/\t/evil.example.com')).toBeNull();
+  });
 });

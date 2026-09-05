@@ -18,10 +18,19 @@ const renderSignup = (initialEntries = ['/signup']) =>
   );
 
 describe('Signup', () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
     // Default mock so tests that don't care about signup/loading (pre-existing
     // test below) don't have to destructure an undefined return value.
     useAuthStore.mockReturnValue({ signup: vi.fn(), loading: false });
+  });
+
+  afterEach(() => {
+    // Some tests below replace window.location with a stub to observe
+    // navigation; restore the real one so later tests aren't left with a
+    // half-fake location object.
+    window.location = originalLocation;
   });
 
   test('shows a Continue with Google link pointing at the OAuth start endpoint', () => {
