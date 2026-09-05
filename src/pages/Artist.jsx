@@ -345,16 +345,9 @@ const Artist = () => {
               Singles
             </h2>
             <button
+              className="play-oval-toggle"
               onClick={handlePlaySingles}
-              style={{
-                padding: '0.375rem 0.75rem',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-              }}
+              style={{ fontSize: '0.875rem' }}
             >
               ▶ Play All
             </button>
