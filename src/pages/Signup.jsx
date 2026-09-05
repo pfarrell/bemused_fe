@@ -1,9 +1,10 @@
 // src/pages/Signup.jsx
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
 import { isLanAccess } from '../utils/device';
+import { safeReturnTo } from '../utils/returnTo';
 
 const Signup = () => {
   const [username, setUsername] = useState('');
@@ -13,6 +14,7 @@ const Signup = () => {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signup, loading } = useAuthStore();
 
   const handleSubmit = async (e) => {
@@ -37,7 +39,12 @@ const Signup = () => {
     try {
       const result = await signup(username, password, email || null);
       if (result.success) {
-        navigate('/');
+        const returnTo = safeReturnTo(searchParams.get('return_to'));
+        if (returnTo) {
+          window.location.href = returnTo;
+        } else {
+          navigate('/');
+        }
       } else {
         setError(result.error || 'Signup failed');
       }
