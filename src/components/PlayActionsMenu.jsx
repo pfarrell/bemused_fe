@@ -112,11 +112,11 @@ const PlayActionsMenu = ({ onPlayNow, onPlayNext, onAddToQueue, overflowActions 
       {!hasPlayNow && hasMenu && (
         <button
           ref={toggleRef}
-          className="play-menu-toggle"
+          className="play-oval-toggle"
           onClick={() => setShowMenu(true)}
           aria-label="More options"
         >
-          ⋯
+          ▾
         </button>
       )}
 

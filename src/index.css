@@ -752,24 +752,57 @@
   cursor: not-allowed;
 }
 
-.play-menu-toggle {
-  background: none;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+/* Standalone "▾" toggle for pages with no Play Now (Artist, Collection) —
+   same gradient/pill family as .play-now-circle/.play-split so every
+   page's primary header control reads as one visual language. */
+.play-oval-toggle {
+  min-width: 48px;
+  height: 40px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
-  color: #374151;
-  font-size: 1rem;
+  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+  color: white;
+  font-size: 1.1rem;
   line-height: 1;
-  min-width: 44px;
-  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.play-menu-toggle:disabled {
+.play-oval-toggle:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
+}
+
+.play-oval-toggle:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.play-oval-toggle:disabled {
   cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* Artist header: the "▾" toggle sits on the same row as the artist name
+   and stretches to match its height (via flexbox stretch, not a fixed px
+   value) so it scales naturally between the mobile and desktop title
+   sizes instead of needing a separate override per breakpoint. */
+.artist-header-actions {
+  flex-shrink: 0;
+}
+
+.artist-header-actions .play-actions-bar {
+  align-items: stretch;
+  height: 100%;
+}
+
+.artist-header-actions .play-oval-toggle {
+  height: 100%;
 }
 
 .about-section {

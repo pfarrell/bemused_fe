@@ -169,30 +169,29 @@ const Artist = () => {
         
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="artist-header-title-row" style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
             <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937', cursor: 'pointer' }}
               onClick={ reload }
             >
               {artist.name}
             </h1>
-          </div>
 
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-            <PlayActionsMenu
-              overflowActions={[
-                isAdmin && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/artist/${id}`) },
-                isAuthenticated && {
-                  key: 'favorite',
-                  icon: isFavorite ? '★' : '☆',
-                  label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-                  onClick: handleToggleFavorite,
-                },
-                overtoneAction,
-                { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: artist.name, text: artist.name }) },
-              ].filter(Boolean)}
-            />
-            {overtoneModal}
+            <div className="artist-header-actions" style={{ display: 'flex', gap: '0.5rem' }}>
+              <PlayActionsMenu
+                overflowActions={[
+                  isAdmin && { key: 'edit', icon: '✎', label: 'Edit', onClick: () => navigate(`/admin/artist/${id}`) },
+                  isAuthenticated && {
+                    key: 'favorite',
+                    icon: isFavorite ? '★' : '☆',
+                    label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                    onClick: handleToggleFavorite,
+                  },
+                  overtoneAction,
+                  { key: 'share', icon: '📤', label: 'Share', onClick: () => shareLink({ title: artist.name, text: artist.name }) },
+                ].filter(Boolean)}
+              />
+              {overtoneModal}
+            </div>
           </div>
 
           <AboutSection
