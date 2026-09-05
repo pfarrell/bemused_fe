@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eo pipefail
 
 REMOTE_HOST="patf.com"
 REMOTE_USER="pfarrell"
@@ -12,7 +12,7 @@ OUTFILE="snapshots/prod_${TIMESTAMP}.sql.gz"
 
 echo "📦 Dumping production database over SSH and compressing locally..."
 ssh -p ${REMOTE_PORT} ${REMOTE_USER}@${REMOTE_HOST} \
-  "export \$(cat ${SHARED_DIR}/.env | xargs) && pg_dump \"\$BEMUSED_DB\"" \
+  "export \$(cat ${SHARED_DIR}/.env | xargs) && /usr/lib/postgresql/17/bin/pg_dump \"\$BEMUSED_DB\"" \
   | gzip > "$OUTFILE"
 
 SIZE=$(du -h "$OUTFILE" | cut -f1)
