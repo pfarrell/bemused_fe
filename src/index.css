@@ -222,6 +222,54 @@
   color: #2563eb;
 }
 
+.album-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0 0;
+}
+
+.album-card-meta {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.album-card-play {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5eead4, #60a5fa);
+  color: white;
+  border: none;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 0;
+  transition: box-shadow 0.15s ease;
+}
+
+.album-card-play:hover {
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.45);
+}
+
+.album-card-play:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.album-card-play-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: result-row-spin 0.6s linear infinite;
+}
+
 /* Marks the boundary on the Artist page's Albums grid where dated albums
    (sorted newest-first) give way to undated ones. grid-column: 1 / -1
    spans it across every column in card-grid mode; in list mode (desktop
@@ -311,8 +359,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #f3f4f6;
-    color: #374151;
+    background: linear-gradient(135deg, #5eead4, #60a5fa);
+    color: white;
     border: none;
     flex-shrink: 0;
     display: flex;
@@ -321,10 +369,11 @@
     font-size: 1rem;
     cursor: pointer;
     padding: 0;
+    transition: box-shadow 0.2s ease;
   }
 
   .result-row-play:hover {
-    background: #e5e7eb;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.45);
   }
 
   .result-row-play:disabled {
@@ -335,8 +384,8 @@
   .result-row-play-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(55, 65, 81, 0.3);
-    border-top-color: #374151;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: white;
     border-radius: 50%;
     animation: result-row-spin 0.6s linear infinite;
   }
@@ -513,17 +562,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f3f4f6;
+  background: linear-gradient(135deg, #5eead4, #60a5fa);
   border-radius: 50%;
   margin-right: 1rem;
-  color: #6b7280;
+  color: white;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .track-play-button:hover {
-  background-color: #e5e7eb;
-  color: #374151;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.45);
 }
 
 .track-info {
@@ -1687,8 +1735,8 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: #f3f4f6;
-    color: #374151;
+    background: linear-gradient(135deg, #5eead4, #60a5fa);
+    color: white;
     border: none;
     flex-shrink: 0;
     display: flex;
@@ -1707,8 +1755,8 @@
   .result-row-play-spinner {
     width: 14px;
     height: 14px;
-    border: 2px solid rgba(55, 65, 81, 0.3);
-    border-top-color: #374151;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: white;
     border-radius: 50%;
     animation: result-row-spin 0.6s linear infinite;
   }

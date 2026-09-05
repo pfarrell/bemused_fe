@@ -130,11 +130,19 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
                 {artist?.name}{album.has_collaborators && ' +'}
               </p>
             )}
-            {metaText && (
-              <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
-                {metaText}
-              </p>
-            )}
+            <div className="album-card-meta-row">
+              {metaText && <span className="album-card-meta">{metaText}</span>}
+              <button
+                type="button"
+                className="album-card-play"
+                data-result-row-play="true"
+                onClick={(e) => { e.stopPropagation(); if (!playLoading) handlePlayAll(); }}
+                disabled={playLoading}
+                aria-label={`Play ${album.title}`}
+              >
+                {playLoading ? <span className="album-card-play-spinner" /> : '▶'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -147,6 +155,18 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
         onSwallowTouch={ctxMenu.swallowTouch}
         testId="album-card-menu-backdrop"
       >
+        <button
+          onClick={(e) => { e.stopPropagation(); ctxMenu.close(); handlePlayNext(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); handlePlayNext(); }}
+        >
+          ⏭ Play Next
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); ctxMenu.close(); handleAddToQueue(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); ctxMenu.close(); handleAddToQueue(); }}
+        >
+          ➕ Add to Queue
+        </button>
         {showGoToArtist && (
           <button
             onClick={(e) => { e.stopPropagation(); handleGoToArtist(); }}
