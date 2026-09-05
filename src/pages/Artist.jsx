@@ -170,7 +170,7 @@ const Artist = () => {
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
           <div className="artist-header-title-row" style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#7c3aed', cursor: 'pointer' }}
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937', cursor: 'pointer' }}
               onClick={ reload }
             >
               {artist.name}
@@ -206,7 +206,7 @@ const Artist = () => {
                 <span key={g.id}>
                   {i > 0 && ' · '}
                   <span
-                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    style={{ color: '#3b82f6', cursor: 'pointer' }}
                     onClick={() => navigate(`/artist/${g.id}`)}
                   >
                     {g.name}
@@ -223,7 +223,7 @@ const Artist = () => {
                 <span key={m.id}>
                   {i > 0 && ' · '}
                   <span
-                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    style={{ color: '#3b82f6', cursor: 'pointer' }}
                     onClick={() => navigate(`/artist/${m.id}`)}
                   >
                     {m.name}
@@ -240,7 +240,7 @@ const Artist = () => {
                 <span key={ra.id}>
                   {i > 0 && ' · '}
                   <span
-                    style={{ color: '#7c3aed', cursor: 'pointer' }}
+                    style={{ color: '#3b82f6', cursor: 'pointer' }}
                     onClick={() => navigate(`/artist/${ra.id}`)}
                   >
                     {ra.name}
@@ -265,7 +265,7 @@ const Artist = () => {
                     {i > 0 && ' · '}
                     {sa.has_tracks ? (
                       <span
-                        style={{ color: '#7c3aed', cursor: 'pointer' }}
+                        style={{ color: '#3b82f6', cursor: 'pointer' }}
                         onClick={() => navigate(`/artist/${sa.id}`)}
                       >
                         {sa.name}
@@ -277,7 +277,7 @@ const Artist = () => {
                 ))}
                 {hasMore && !showAllSimilar && (
                   <span
-                    style={{ color: '#7c3aed', cursor: 'pointer', marginLeft: '0.5rem' }}
+                    style={{ color: '#3b82f6', cursor: 'pointer', marginLeft: '0.5rem' }}
                     onClick={() => setShowAllSimilar(true)}
                   >
                     {' '}+{Math.min(similar_artists.length, expandedCap) - cap} more
@@ -285,7 +285,7 @@ const Artist = () => {
                 )}
                 {showAllSimilar && (
                   <span
-                    style={{ color: '#7c3aed', cursor: 'pointer', marginLeft: '0.5rem' }}
+                    style={{ color: '#3b82f6', cursor: 'pointer', marginLeft: '0.5rem' }}
                     onClick={() => setShowAllSimilar(false)}
                   >
                     {' '}show less

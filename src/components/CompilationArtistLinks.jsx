@@ -17,7 +17,7 @@ const CompilationArtistLinks = ({ artists = [], visibleCount = DEFAULT_VISIBLE_C
       {visible.map((a, i) => (
         <span key={a.id}>
           {i > 0 && ' · '}
-          <span style={{ color: '#7c3aed', cursor: 'pointer' }} onClick={() => navigate(`/artist/${a.id}`)}>
+          <span style={{ color: '#3b82f6', cursor: 'pointer' }} onClick={() => navigate(`/artist/${a.id}`)}>
             {a.name}
           </span>
         </span>

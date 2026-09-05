@@ -214,13 +214,13 @@ const Album = () => {
         <div className="album-info" style={{ flex: 1 }}>
           <div className="album-header-title-row">
             <div className="album-header-textblock">
-              <h1 className="album-header-title" style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#7c3aed', cursor: 'pointer' }}
+              <h1 className="album-header-title" style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#1f2937', cursor: 'pointer' }}
                 onClick = {reload}
               >
                 {album.title}
               </h1>
 
-              <h2 className="album-header-artist" style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#7c3aed' }}>
+              <h2 className="album-header-artist" style={{ fontSize: '1.5rem', fontWeight: 'normal', margin: '0 0 0.5rem 0', color: '#3b82f6' }}>
                 <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/artist/${artist.id}`)}>
                   {artist.name}
                 </span>
