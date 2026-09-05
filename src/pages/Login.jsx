@@ -4,6 +4,7 @@ import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-do
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
 import { isLanAccess } from '../utils/device';
+import { safeReturnTo } from '../utils/returnTo';
 
 // Error codes the backend's Google OAuth callback redirects here with. Anything
 // unrecognized renders nothing rather than echoing a query-string value.
@@ -49,8 +50,13 @@ const Login = () => {
     try {
       const result = await login(username, password);
       if (result.success) {
-        const from = location.state?.from || '/';
-        navigate(from, { replace: true });
+        const returnTo = safeReturnTo(searchParams.get('return_to'));
+        if (returnTo) {
+          window.location.href = returnTo;
+        } else {
+          const from = location.state?.from || '/';
+          navigate(from, { replace: true });
+        }
       } else {
         setError(result.error || 'Login failed');
       }
