@@ -190,7 +190,7 @@ const Account = () => {
           </div>
         ) : !isLanAccess() ? (
           <a
-            href={apiService.getGoogleStartUrl('/account', 'link')}
+            href={apiService.getGoogleStartUrl(null, 'link')}
             style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}
           >
             Connect Google Account

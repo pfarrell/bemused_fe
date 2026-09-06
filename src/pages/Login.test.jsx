@@ -39,6 +39,18 @@ describe('Login', () => {
     expect(link).toHaveAttribute('href', '/api/auth/google/start');
   });
 
+  test('forwards a safe return_to onto the Google link', () => {
+    renderLogin(['/login?return_to=%2Fovertone%2Fentity%2F123']);
+    const link = screen.getByText('Continue with Google');
+    expect(link).toHaveAttribute('href', '/api/auth/google/start?return_to=%2Fovertone%2Fentity%2F123');
+  });
+
+  test('does not forward an unsafe return_to onto the Google link', () => {
+    renderLogin(['/login?return_to=%2F%2Fevil.example.com']);
+    const link = screen.getByText('Continue with Google');
+    expect(link).toHaveAttribute('href', '/api/auth/google/start');
+  });
+
   test('shows an error message when redirected back with ?error=google_failed', () => {
     renderLogin(['/login?error=google_failed']);
     expect(screen.getByText('Something went wrong connecting to Google. Please try again.')).toBeInTheDocument();

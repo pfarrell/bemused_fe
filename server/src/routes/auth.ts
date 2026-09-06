@@ -8,6 +8,7 @@ import { authService } from '../services/authService.js'
 import { isLanHost } from '../db/streamUrl.js'
 import { recallAuthUrl, signRecallState, verifyRecallState, encryptRecallToken } from '../services/recallService.js'
 import { notesService } from '../services/notesService.js'
+import { safeReturnTo } from '../utils/returnTo.js'
 import {
   createAuthorization,
   exchangeCode,
@@ -91,8 +92,7 @@ async function buildUserPayload(user: AuthUser) {
 auth.get('/google/start', async (c) => {
   const { url, state, codeVerifier } = createAuthorization()
 
-  const returnToRaw = c.req.query('return_to')
-  const returnTo = returnToRaw && returnToRaw.startsWith('/') && !returnToRaw.startsWith('//') ? returnToRaw : null
+  const returnTo = safeReturnTo(c.req.query('return_to'))
 
   const cookieOpts = {
     httpOnly: true,
@@ -134,7 +134,10 @@ auth.get('/google/callback', async (c) => {
   const state = c.req.query('state')
   const storedState = getCookie(c, 'google_oauth_state')
   const codeVerifier = getCookie(c, 'google_oauth_verifier')
-  const returnTo = getCookie(c, 'google_oauth_from') || null
+  // Re-validated here (not just trusted from /google/start) since it's about
+  // to be resolved against the bare origin below — defense in depth against
+  // a hand-crafted cookie value bypassing browser JS but not a raw request.
+  const returnTo = safeReturnTo(getCookie(c, 'google_oauth_from'))
   const intent = getCookie(c, 'google_oauth_intent')
 
   if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
@@ -221,7 +224,19 @@ auth.get('/google/callback', async (c) => {
   }
 
   clearGoogleOAuthCookies(c, domain)
-  return c.redirect(`${spaBase}${redirectPath}`)
+
+  // redirectPath is either an internal SPA-relative destination the switch
+  // above chose ('/', '/account', '/account?linked=google') or, when nothing
+  // overrode it, the caller-supplied return_to as-is. The two need different
+  // bases: internal destinations resolve under spaBase (which already
+  // includes the SPA's own path prefix, e.g. /pshare/app), but return_to is
+  // origin-relative (matching src/utils/returnTo.js's contract, since it can
+  // point at an external caller's own path, e.g. /overtone/entity/123) and
+  // must resolve against the bare origin instead — concatenating it onto
+  // spaBase's path prefix would 404 for an external target.
+  const finalUrl =
+    returnTo && redirectPath === returnTo ? `${new URL(spaBase).origin}${returnTo}` : `${spaBase}${redirectPath}`
+  return c.redirect(finalUrl)
 })
 
 // POST /auth/signup - Create new user account

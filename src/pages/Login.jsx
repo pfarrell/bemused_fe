@@ -43,6 +43,11 @@ const Login = () => {
       ? OAUTH_ERROR_MESSAGES[oauthErrorCode]
       : null;
 
+  // Hoisted to component scope (not just handleSubmit) so the "Continue with
+  // Google" link can forward the same validated value — see auth.ts's
+  // google/callback for how the server resolves it once Google redirects back.
+  const returnTo = safeReturnTo(searchParams.get('return_to'));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -50,7 +55,6 @@ const Login = () => {
     try {
       const result = await login(username, password);
       if (result.success) {
-        const returnTo = safeReturnTo(searchParams.get('return_to'));
         if (returnTo) {
           window.location.href = returnTo;
         } else {
@@ -136,7 +140,7 @@ const Login = () => {
               <div style={{ flex: 1, height: '1px', backgroundColor: '#d1d5db' }} />
             </div>
             <a
-              href={apiService.getGoogleStartUrl()}
+              href={apiService.getGoogleStartUrl(returnTo)}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '1rem', fontWeight: '500', textDecoration: 'none' }}
             >
               Continue with Google

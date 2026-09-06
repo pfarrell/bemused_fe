@@ -39,6 +39,18 @@ describe('Signup', () => {
     expect(link).toHaveAttribute('href', '/api/auth/google/start');
   });
 
+  test('forwards a safe return_to onto the Google link', () => {
+    renderSignup(['/signup?return_to=%2Fovertone%2Fentity%2F123']);
+    const link = screen.getByText('Continue with Google');
+    expect(link).toHaveAttribute('href', '/api/auth/google/start?return_to=%2Fovertone%2Fentity%2F123');
+  });
+
+  test('does not forward an unsafe return_to onto the Google link', () => {
+    renderSignup(['/signup?return_to=%2F%2Fevil.example.com']);
+    const link = screen.getByText('Continue with Google');
+    expect(link).toHaveAttribute('href', '/api/auth/google/start');
+  });
+
   test('navigates to return_to on successful signup when it is a safe relative path', async () => {
     const signup = vi.fn().mockResolvedValue({ success: true });
     useAuthStore.mockReturnValue({ signup, loading: false });

@@ -45,7 +45,11 @@ describe('Account', () => {
     useAuthStore.setState({ user: { id: 1, username: 'pat', admin: false, google_connected: false, has_password: true } });
     renderAccount();
     const link = screen.getByText('Connect Google Account');
-    expect(link).toHaveAttribute('href', '/api/auth/google/start?return_to=%2Faccount&intent=link');
+    // No return_to: the 'link' decision on the server always lands back on
+    // /account regardless of return_to (see server/src/routes/auth.ts), so
+    // passing one here was dead weight — removed rather than kept as an
+    // inert argument.
+    expect(link).toHaveAttribute('href', '/api/auth/google/start?intent=link');
   });
 
   test('shows a Disconnect button when connected and a password is set', async () => {
