@@ -169,6 +169,13 @@ auth.get('/google/callback', async (c) => {
   const decision = decideOAuthAction(sessionUserId, identity?.user_id ?? null)
 
   let redirectPath = returnTo || '/'
+  // Tracks whether redirectPath is still the caller-supplied return_to (as
+  // opposed to a fixed internal destination the switch below chose), so the
+  // final redirect knows which base to resolve it against. Deliberately not
+  // inferred by comparing redirectPath === returnTo — a return_to of exactly
+  // '/account' or '/' would coincidentally equal a hardcoded internal
+  // destination below and get misattributed as external.
+  let redirectIsReturnTo = Boolean(returnTo)
   let loggedInUser: { id: number; username: string; admin: boolean } | undefined
 
   switch (decision.kind) {
@@ -202,10 +209,12 @@ auth.get('/google/callback', async (c) => {
     case 'link': {
       await createIdentity({ provider: 'google', providerUserId: profile.sub, userId: decision.userId, email: profile.email })
       redirectPath = '/account?linked=google'
+      redirectIsReturnTo = false
       break
     }
     case 'link-noop':
       redirectPath = '/account'
+      redirectIsReturnTo = false
       break
     case 'link-conflict':
       clearGoogleOAuthCookies(c, domain)
@@ -225,18 +234,27 @@ auth.get('/google/callback', async (c) => {
 
   clearGoogleOAuthCookies(c, domain)
 
-  // redirectPath is either an internal SPA-relative destination the switch
-  // above chose ('/', '/account', '/account?linked=google') or, when nothing
-  // overrode it, the caller-supplied return_to as-is. The two need different
-  // bases: internal destinations resolve under spaBase (which already
-  // includes the SPA's own path prefix, e.g. /pshare/app), but return_to is
-  // origin-relative (matching src/utils/returnTo.js's contract, since it can
-  // point at an external caller's own path, e.g. /overtone/entity/123) and
-  // must resolve against the bare origin instead — concatenating it onto
-  // spaBase's path prefix would 404 for an external target.
-  const finalUrl =
-    returnTo && redirectPath === returnTo ? `${new URL(spaBase).origin}${returnTo}` : `${spaBase}${redirectPath}`
-  return c.redirect(finalUrl)
+  // redirectIsReturnTo distinguishes the caller-supplied return_to from a
+  // fixed internal destination the switch above chose ('/', '/account',
+  // '/account?linked=google'). The two need different bases: internal
+  // destinations resolve under spaBase (which already includes the SPA's own
+  // path prefix, e.g. /pshare/app), but return_to is origin-relative
+  // (matching src/utils/returnTo.js's contract, since it can point at an
+  // external caller's own path, e.g. /overtone/entity/123) and must resolve
+  // against the bare origin instead — concatenating it onto spaBase's path
+  // prefix would 404 for an external target.
+  let redirectOrigin = spaBase
+  if (redirectIsReturnTo) {
+    try {
+      redirectOrigin = new URL(spaBase).origin
+    } catch {
+      // BEMUSED_PUBLIC_URL is operator-set, not attacker-controlled, but a
+      // misconfigured value (missing scheme, etc.) shouldn't 500 the login
+      // flow — fall back to the SPA-relative behavior instead.
+      redirectOrigin = spaBase
+    }
+  }
+  return c.redirect(`${redirectOrigin}${redirectPath}`)
 })
 
 // POST /auth/signup - Create new user account
