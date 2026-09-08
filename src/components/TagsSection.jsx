@@ -104,14 +104,14 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
     <div style={{
       marginTop: '2rem',
       padding: '1rem',
-      backgroundColor: '#f9fafb',
+      backgroundColor: 'var(--color-bg-surface)',
       borderRadius: '8px',
-      border: '1px solid #e5e7eb'
+      border: '1px solid var(--color-border)'
     }}>
       <div style={{
         fontSize: '0.75rem',
         fontWeight: '600',
-        color: '#6b7280',
+        color: 'var(--color-text-muted)',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
         marginBottom: '0.75rem'
@@ -124,14 +124,14 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '2px',
-            backgroundColor: '#e5e7eb',
+            backgroundColor: 'var(--color-border)',
             borderRadius: '12px',
             padding: '3px 10px',
             fontSize: '0.8rem'
           }}>
             <Link
               to={`/tags/${tag.name}`}
-              style={{ color: '#374151', textDecoration: 'none' }}
+              style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}
             >
               #{tag.name}
             </Link>
@@ -142,7 +142,7 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#9ca3af',
+                  color: 'var(--color-text-faint)',
                   cursor: 'pointer',
                   padding: '0 0 0 3px',
                   fontSize: '0.75rem',
@@ -167,10 +167,10 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
               disabled={loading}
               style={{
                 border: 'none',
-                borderBottom: '1px solid #d1d5db',
+                borderBottom: '1px solid var(--color-border-strong)',
                 background: 'transparent',
                 fontSize: '0.8rem',
-                color: '#374151',
+                color: 'var(--color-text-secondary)',
                 padding: '3px 4px',
                 outline: 'none',
                 width: '90px'
@@ -182,7 +182,7 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
                 top: '100%',
                 left: 0,
                 backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
+                border: '1px solid var(--color-border)',
                 borderRadius: '4px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 zIndex: 10,
@@ -196,9 +196,9 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
                       padding: '6px 10px',
                       cursor: 'pointer',
                       fontSize: '0.8rem',
-                      color: '#374151'
+                      color: 'var(--color-text-secondary)'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
                   >
                     #{s.name}

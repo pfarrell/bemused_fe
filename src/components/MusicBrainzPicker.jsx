@@ -114,10 +114,10 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
           )}
         </>
       ) : (
-        <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>{statusLabel}</span>
+        <span style={{ color: 'var(--color-text-faint)', fontSize: '0.875rem' }}>{statusLabel}</span>
       )}
       {mbidStatus && (
-        <small style={{ display: 'block', color: '#9ca3af', marginTop: '0.25rem' }}>
+        <small style={{ display: 'block', color: 'var(--color-text-faint)', marginTop: '0.25rem' }}>
           Status: {statusText}
         </small>
       )}
@@ -135,7 +135,7 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
             onChange={(e) => setPasteText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUse(); } }}
             placeholder="Paste MusicBrainz ID or URL"
-            style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+            style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem', fontSize: '0.8rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }}
           />
         </div>
         <button
@@ -169,7 +169,7 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
                 onChange={(e) => { setQuery(e.target.value); setResults([]); setHasSearched(false); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(e); } }}
                 placeholder={entityType === 'artist' ? 'Search artist name...' : entityType === 'recording' ? 'Search recording title...' : 'Search release title...'}
-                style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem', fontSize: '0.8rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }}
               />
             </div>
             <button
@@ -185,21 +185,21 @@ const MusicBrainzPicker = ({ entityType, value, mbidStatus, searchDefault, artis
             <small style={{ display: 'block', color: '#dc2626', marginTop: '0.25rem' }}>{searchError}</small>
           )}
           {hasSearched && !searching && !searchError && results.length === 0 && (
-            <small style={{ display: 'block', color: '#9ca3af', marginTop: '0.25rem' }}>No matches found.</small>
+            <small style={{ display: 'block', color: 'var(--color-text-faint)', marginTop: '0.25rem' }}>No matches found.</small>
           )}
           {results.length > 0 && (
-            <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '4px', marginTop: '0.25rem' }}>
+            <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '4px', marginTop: '0.25rem' }}>
               {results.map((candidate) => (
                 <div
                   key={candidate.id}
                   onClick={() => handlePick(candidate)}
-                  style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid #e5e7eb', cursor: 'pointer', fontSize: '0.8rem' }}
+                  style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', fontSize: '0.8rem' }}
                 >
                   <div>{entityType === 'artist' ? candidate.name : candidate.title}</div>
                   {candidate.disambiguation && (
-                    <div style={{ color: '#6b7280', fontSize: '0.7rem' }}>{candidate.disambiguation}</div>
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>{candidate.disambiguation}</div>
                   )}
-                  <div style={{ color: '#9ca3af', fontSize: '0.7rem' }}>
+                  <div style={{ color: 'var(--color-text-faint)', fontSize: '0.7rem' }}>
                     {entityType === 'artist'
                       ? [candidate.type, candidate.country, candidate.life_span].filter(Boolean).join(' · ')
                       : entityType === 'recording'
