@@ -9,6 +9,7 @@ import UnsavedChangesModal from './UnsavedChangesModal';
 import SearchBar from './SearchBar';
 import HomeViewToggle from './HomeViewToggle';
 import TagFilterControl from './TagFilterControl';
+import ThemeToggle from './ThemeToggle';
 import ViewModeToggle from './ViewModeToggle';
 
 const Layout = ({ children }) => {
@@ -352,6 +353,12 @@ const Layout = ({ children }) => {
                         Tag Filter
                       </div>
                       <TagFilterControl onSelect={() => setShowDropdown(false)} />
+                    </div>
+                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #3a4853' }}>
+                      <div style={{ color: '#9ca3af', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                        Theme
+                      </div>
+                      <ThemeToggle />
                     </div>
 
                     <div style={{ padding: '0.5rem 0' }}>
