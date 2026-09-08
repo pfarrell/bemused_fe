@@ -973,7 +973,7 @@ const AdminArtist = () => {
                       type="button"
                       onClick={() => handleToggleForceShow(ra.id, ra.force_show)}
                       title={ra.force_show ? 'Unpin (remove force-show)' : 'Pin (always include in similar artists)'}
-                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.force_show ? '#7c3aed' : 'var(--color-text-secondary)', color: 'var(--color-bg-surface)', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.force_show ? '#7c3aed' : 'var(--color-text-secondary)', color: ra.force_show ? 'white' : 'var(--color-bg-surface)', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
                     >
                       {ra.force_show ? 'Pinned' : 'Pin'}
                     </button>
