@@ -6,10 +6,11 @@ import { isLanAccess } from '../utils/device';
 import toast from 'react-hot-toast';
 import HomeViewToggle from '../components/HomeViewToggle';
 import TagFilterControl from '../components/TagFilterControl';
+import ThemeToggle from '../components/ThemeToggle';
 
 const cardStyle = {
-  backgroundColor: 'white',
-  border: '1px solid #d1d5db',
+  backgroundColor: 'var(--color-bg-surface)',
+  border: '1px solid var(--color-border-strong)',
   borderRadius: '6px',
   padding: '1.25rem',
   marginBottom: '1.5rem',
@@ -18,10 +19,10 @@ const cardStyle = {
 const inputStyle = {
   width: '100%',
   padding: '0.625rem 0.75rem',
-  backgroundColor: '#f9fafb',
-  border: '1px solid #d1d5db',
+  backgroundColor: 'var(--color-bg-surface)',
+  border: '1px solid var(--color-border-strong)',
   borderRadius: '6px',
-  color: '#111827',
+  color: 'var(--color-text-primary)',
   fontSize: '1rem',
   boxSizing: 'border-box',
 };
@@ -152,40 +153,47 @@ const Account = () => {
       )}
 
       <div style={cardStyle}>
-        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.5rem' }}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-faint)', marginBottom: '0.5rem' }}>
           Profile
         </div>
-        <div style={{ color: '#111827' }}>{user?.username}</div>
-        {user?.email && <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>{user.email}</div>}
+        <div style={{ color: 'var(--color-text-primary)' }}>{user?.username}</div>
+        {user?.email && <div style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>{user.email}</div>}
       </div>
 
       <div style={cardStyle}>
-        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-faint)', marginBottom: '0.75rem' }}>
           Home View
         </div>
         <HomeViewToggle variant="light" />
       </div>
 
       <div style={cardStyle}>
-        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-faint)', marginBottom: '0.75rem' }}>
           Tag Filter
         </div>
         <TagFilterControl allowSetDefault variant="light" />
       </div>
 
       <div style={cardStyle}>
-        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-faint)', marginBottom: '0.75rem' }}>
+          Theme
+        </div>
+        <ThemeToggle variant="light" />
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-faint)', marginBottom: '0.75rem' }}>
           Connected accounts
         </div>
         {user?.google_connected ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ color: '#111827', fontSize: '0.875rem' }}>Google — connected</span>
+            <span style={{ color: 'var(--color-text-primary)', fontSize: '0.875rem' }}>Google — connected</span>
             {user?.has_password ? (
               <button onClick={handleDisconnectGoogle} disabled={disconnecting} style={{ ...buttonStyle, backgroundColor: '#ef4444' }}>
                 {disconnecting ? 'Disconnecting...' : 'Disconnect'}
               </button>
             ) : (
-              <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>Set a password to disconnect</span>
+              <span style={{ color: 'var(--color-text-faint)', fontSize: '0.75rem' }}>Set a password to disconnect</span>
             )}
           </div>
         ) : !isLanAccess() ? (
@@ -200,7 +208,7 @@ const Account = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: user?.google_connected || !isLanAccess() ? '0.75rem' : 0 }}>
           {user?.recall_connected ? (
             <>
-              <span style={{ color: '#111827', fontSize: '0.875rem' }}>Recall — connected</span>
+              <span style={{ color: 'var(--color-text-primary)', fontSize: '0.875rem' }}>Recall — connected</span>
               <button onClick={handleDisconnectRecall} disabled={disconnectingRecall} style={{ ...buttonStyle, backgroundColor: '#ef4444' }}>
                 {disconnectingRecall ? 'Disconnecting...' : 'Disconnect'}
               </button>
@@ -218,10 +226,10 @@ const Account = () => {
 
       {!user?.has_password && (
         <div style={cardStyle}>
-          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-faint)', marginBottom: '0.75rem' }}>
             Set a password
           </div>
-          <p style={{ color: '#6b7280', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>
             You signed up with Google and don't have a password yet. Set one to also sign in with your username, and to be able to disconnect Google later.
           </p>
           <form onSubmit={handleSetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -250,7 +258,7 @@ const Account = () => {
 
       {user?.has_password && (
         <div style={cardStyle}>
-          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '0.75rem' }}>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-faint)', marginBottom: '0.75rem' }}>
             Change Password
           </div>
           <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
