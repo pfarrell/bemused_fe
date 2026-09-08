@@ -15,7 +15,7 @@ const SOURCE_COLORS = {
   listenbrainz: { bg: '#d1fae5', color: '#065f46' },
 };
 
-const getSourceColors = (source) => SOURCE_COLORS[source] || { bg: '#e5e7eb', color: '#374151' };
+const getSourceColors = (source) => SOURCE_COLORS[source] || { bg: 'var(--color-border)', color: 'var(--color-text-secondary)' };
 
 export default function AdminErrors() {
   const [errors, setErrors] = useState([]);
@@ -68,11 +68,11 @@ export default function AdminErrors() {
   if (error) return <Retry error={error} />;
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
+    <div style={{ padding: '2rem', backgroundColor: 'var(--color-bg-surface-muted)', minHeight: '100%' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937' }}>Errors</h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>Errors</h1>
         {pagination && (
-          <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
             Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total.toLocaleString()} entries
           </p>
         )}
@@ -82,36 +82,36 @@ export default function AdminErrors() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Source</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Message</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Context</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Date/Time</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}></th>
+              <tr style={{ backgroundColor: 'var(--color-bg-surface)', borderBottom: '1px solid var(--color-border)' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Source</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Message</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Context</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Date/Time</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}></th>
               </tr>
             </thead>
             <tbody>
               {errors.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>No errors logged</td>
+                  <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>No errors logged</td>
                 </tr>
               ) : (
                 errors.map((entry) => {
                   const colors = getSourceColors(entry.source);
                   return (
-                    <tr key={entry.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                    <tr key={entry.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem' }}>
                         <span style={{ padding: '0.25rem 0.5rem', borderRadius: '0.25rem', backgroundColor: colors.bg, color: colors.color, fontSize: '0.75rem', fontWeight: '500' }}>
                           {entry.source}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>{entry.message}</td>
-                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#6b7280' }}>{entry.context || '-'}</td>
-                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937', whiteSpace: 'nowrap' }}>{formatDate(entry.created_at)}</td>
+                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>{entry.message}</td>
+                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{entry.context || '-'}</td>
+                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>{formatDate(entry.created_at)}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <button
                           onClick={() => handleDismiss(entry.id)}
-                          style={{ padding: '0.35rem 0.75rem', backgroundColor: '#6b7280', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          style={{ padding: '0.35rem 0.75rem', backgroundColor: 'var(--color-text-muted)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
                         >
                           Dismiss
                         </button>
@@ -130,7 +130,7 @@ export default function AdminErrors() {
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            style={{ padding: '0.5rem 1rem', backgroundColor: currentPage === 1 ? '#e5e7eb' : '#3b82f6', color: currentPage === 1 ? '#9ca3af' : 'white', border: 'none', borderRadius: '4px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: '500' }}
+            style={{ padding: '0.5rem 1rem', backgroundColor: currentPage === 1 ? 'var(--color-border)' : '#3b82f6', color: currentPage === 1 ? 'var(--color-text-faint)' : 'white', border: 'none', borderRadius: '4px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: '500' }}
           >
             Previous
           </button>
@@ -145,7 +145,7 @@ export default function AdminErrors() {
                 <button
                   key={pageNum}
                   onClick={() => handlePageChange(pageNum)}
-                  style={{ padding: '0.5rem 0.75rem', backgroundColor: currentPage === pageNum ? '#3b82f6' : 'white', color: currentPage === pageNum ? 'white' : '#374151', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: currentPage === pageNum ? '600' : '400' }}
+                  style={{ padding: '0.5rem 0.75rem', backgroundColor: currentPage === pageNum ? '#3b82f6' : 'white', color: currentPage === pageNum ? 'white' : 'var(--color-text-secondary)', border: '1px solid var(--color-border-strong)', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: currentPage === pageNum ? '600' : '400' }}
                 >
                   {pageNum}
                 </button>
@@ -155,7 +155,7 @@ export default function AdminErrors() {
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === pagination.totalPages}
-            style={{ padding: '0.5rem 1rem', backgroundColor: currentPage === pagination.totalPages ? '#e5e7eb' : '#3b82f6', color: currentPage === pagination.totalPages ? '#9ca3af' : 'white', border: 'none', borderRadius: '4px', cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: '500' }}
+            style={{ padding: '0.5rem 1rem', backgroundColor: currentPage === pagination.totalPages ? 'var(--color-border)' : '#3b82f6', color: currentPage === pagination.totalPages ? 'var(--color-text-faint)' : 'white', border: 'none', borderRadius: '4px', cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: '500' }}
           >
             Next
           </button>
