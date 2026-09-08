@@ -68,7 +68,7 @@ const CollectionAlbumRow = ({ item, index, isDragged, onDragStart, onDragOver, o
         padding: '1rem', borderBottom: '1px solid var(--color-border)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         cursor: 'move',
-        backgroundColor: isDragged ? 'var(--color-bg-surface-muted)' : 'white',
+        backgroundColor: isDragged ? 'var(--color-bg-surface-muted)' : 'var(--color-bg-surface)',
       }}
       {...ctxMenu.triggerProps}
     >
@@ -802,7 +802,7 @@ export default function AdminCollection() {
                     justifyContent: 'space-between', alignItems: 'center',
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)'}
                 >
                   <div>
                     <div style={{ fontWeight: '500' }}>{album.title}</div>

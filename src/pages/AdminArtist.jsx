@@ -1312,7 +1312,7 @@ const AdminArtist = () => {
                   alignItems: 'center',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fefce8')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)')}
               >
                 <span style={{ fontWeight: '500' }}>{artist.name}</span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{artist.album_count} album{artist.album_count !== 1 ? 's' : ''} · ID {artist.id}</span>

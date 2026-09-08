@@ -199,7 +199,7 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
                       color: 'var(--color-text-secondary)'
                     }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)'}
                   >
                     #{s.name}
                   </div>

@@ -593,7 +593,7 @@ const AdminAlbum = () => {
               fontSize: '1rem',
               border: '1px solid var(--color-border)',
               borderRadius: '4px',
-              backgroundColor: isCompilation ? 'var(--color-bg-surface-muted)' : 'white',
+              backgroundColor: isCompilation ? 'var(--color-bg-surface-muted)' : 'var(--color-bg-surface)',
             }}
           />
           <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>

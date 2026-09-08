@@ -219,7 +219,7 @@ export default function AdminLogs() {
                   onClick={() => handlePageChange(pageNum)}
                   style={{
                     padding: '0.5rem 0.75rem',
-                    backgroundColor: currentPage === pageNum ? '#3b82f6' : 'white',
+                    backgroundColor: currentPage === pageNum ? '#3b82f6' : 'var(--color-bg-surface)',
                     color: currentPage === pageNum ? 'white' : 'var(--color-text-secondary)',
                     border: '1px solid var(--color-border-strong)',
                     borderRadius: '4px',

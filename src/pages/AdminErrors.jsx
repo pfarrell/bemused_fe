@@ -145,7 +145,7 @@ export default function AdminErrors() {
                 <button
                   key={pageNum}
                   onClick={() => handlePageChange(pageNum)}
-                  style={{ padding: '0.5rem 0.75rem', backgroundColor: currentPage === pageNum ? '#3b82f6' : 'white', color: currentPage === pageNum ? 'white' : 'var(--color-text-secondary)', border: '1px solid var(--color-border-strong)', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: currentPage === pageNum ? '600' : '400' }}
+                  style={{ padding: '0.5rem 0.75rem', backgroundColor: currentPage === pageNum ? '#3b82f6' : 'var(--color-bg-surface)', color: currentPage === pageNum ? 'white' : 'var(--color-text-secondary)', border: '1px solid var(--color-border-strong)', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: currentPage === pageNum ? '600' : '400' }}
                 >
                   {pageNum}
                 </button>

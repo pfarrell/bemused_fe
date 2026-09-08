@@ -32,7 +32,7 @@ const PlaylistTrackRow = ({ track, index, isDragged, onDragStart, onDragOver, on
         justifyContent: 'space-between',
         alignItems: 'center',
         cursor: 'move',
-        backgroundColor: isDragged ? 'var(--color-bg-surface-muted)' : 'white'
+        backgroundColor: isDragged ? 'var(--color-bg-surface-muted)' : 'var(--color-bg-surface)'
       }}
       {...ctxMenu.triggerProps}
     >
@@ -561,7 +561,7 @@ export default function AdminPlaylist() {
                     alignItems: 'center'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)'}
                 >
                   <div>
                     <div style={{ fontWeight: '500' }}>{track.title}</div>

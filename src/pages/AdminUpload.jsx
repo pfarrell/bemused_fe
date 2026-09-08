@@ -665,7 +665,7 @@ const AdminUpload = () => {
                         onClick={() => handleArtistSelect(artist)}
                         style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)')}
                       >
                         <span style={{ fontWeight: '500' }}>{artist.name}</span>
                         <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
@@ -790,7 +790,7 @@ const AdminUpload = () => {
                         onClick={() => handleAlbumSelect(album)}
                         style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }}
                         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)')}
                       >
                         <div style={{ fontWeight: '500' }}>{album.title}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
