@@ -7,7 +7,7 @@ const fieldStyle = {
   width: '100%',
   padding: '0.625rem 0.75rem',
   backgroundColor: '#2c3e50',
-  border: '1px solid #374151',
+  border: '1px solid var(--color-text-secondary)',
   borderRadius: '6px',
   color: 'white',
   fontSize: '1rem',
@@ -16,7 +16,7 @@ const fieldStyle = {
 
 const labelStyle = {
   display: 'block',
-  color: '#d1d5db',
+  color: 'var(--color-border-strong)',
   fontSize: '0.875rem',
   marginBottom: '0.375rem',
 };
@@ -135,7 +135,7 @@ export default function AdminNew() {
               {savingArtist ? 'Creating...' : 'Create Artist'}
             </button>
             {lastArtist && (
-              <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-faint)', fontSize: '0.875rem' }}>
                 Last created:{' '}
                 <span
                   onClick={() => navigate(`/admin/artist/${lastArtist.id}`)}
@@ -173,7 +173,7 @@ export default function AdminNew() {
                 <button
                   type="button"
                   onClick={() => { setSelectedArtist(null); setArtistQuery(''); }}
-                  style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '1rem' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-text-faint)', cursor: 'pointer', fontSize: '1rem' }}
                 >
                   ✕
                 </button>
@@ -194,18 +194,18 @@ export default function AdminNew() {
                     left: 0,
                     right: 0,
                     backgroundColor: '#2c3e50',
-                    border: '1px solid #374151',
+                    border: '1px solid var(--color-text-secondary)',
                     borderRadius: '6px',
                     zIndex: 10,
                     maxHeight: '200px',
                     overflowY: 'auto',
                   }}>
-                    {searching && <div style={{ padding: '0.5rem 1rem', color: '#9ca3af' }}>Searching...</div>}
+                    {searching && <div style={{ padding: '0.5rem 1rem', color: 'var(--color-text-faint)' }}>Searching...</div>}
                     {artistResults.map(a => (
                       <div
                         key={a.id}
                         onClick={() => { setSelectedArtist(a); setArtistQuery(a.name); setArtistResults([]); }}
-                        style={{ padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: '1px solid #374151' }}
+                        style={{ padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--color-text-secondary)' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3a4853'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
@@ -227,7 +227,7 @@ export default function AdminNew() {
               {savingAlbum ? 'Creating...' : 'Create Album'}
             </button>
             {lastAlbum && (
-              <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-faint)', fontSize: '0.875rem' }}>
                 Last created:{' '}
                 <span
                   onClick={() => navigate(`/admin/album/${lastAlbum.id}`)}
