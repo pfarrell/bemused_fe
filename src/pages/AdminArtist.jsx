@@ -886,7 +886,7 @@ const AdminArtist = () => {
               <button
                 type="button"
                 onClick={() => { setShowAddRelationSection(false); setAddRelationResults([]); setAddRelationQuery(''); }}
-                style={{ padding: '0.5rem', backgroundColor: 'var(--color-text-muted)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.875rem', cursor: 'pointer' }}
+                style={{ padding: '0.5rem', backgroundColor: 'var(--color-text-muted)', color: 'var(--color-bg-surface)', border: 'none', borderRadius: '4px', fontSize: '0.875rem', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -973,14 +973,14 @@ const AdminArtist = () => {
                       type="button"
                       onClick={() => handleToggleForceShow(ra.id, ra.force_show)}
                       title={ra.force_show ? 'Unpin (remove force-show)' : 'Pin (always include in similar artists)'}
-                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.force_show ? '#7c3aed' : 'var(--color-text-secondary)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.force_show ? '#7c3aed' : 'var(--color-text-secondary)', color: 'var(--color-bg-surface)', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
                     >
                       {ra.force_show ? 'Pinned' : 'Pin'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleToggleHideRelation(ra.id, ra.is_hidden)}
-                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.is_hidden ? 'var(--color-text-secondary)' : 'var(--color-text-muted)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.is_hidden ? 'var(--color-text-secondary)' : 'var(--color-text-muted)', color: 'var(--color-bg-surface)', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
                     >
                       {ra.is_hidden ? 'Unhide' : 'Hide'}
                     </button>

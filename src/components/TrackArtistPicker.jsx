@@ -59,7 +59,7 @@ const TrackArtistPicker = ({ artistName, onSelect, startEditing = false }) => {
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(e); } }}
           placeholder="Search artist name..."
           autoFocus
-          style={{ width: '140px', padding: '0.25rem', fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+          style={{ width: '140px', padding: '0.25rem', fontSize: '0.8rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }}
         />
         <button
           type="button"
@@ -78,12 +78,12 @@ const TrackArtistPicker = ({ artistName, onSelect, startEditing = false }) => {
         </button>
       </div>
       {results.length > 0 && (
-        <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', marginTop: '0.25rem' }}>
+        <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', marginTop: '0.25rem' }}>
           {results.map((artist) => (
             <div
               key={artist.id}
               onClick={() => handlePick(artist)}
-              style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid #e5e7eb', cursor: 'pointer', fontSize: '0.8rem' }}
+              style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', fontSize: '0.8rem' }}
             >
               {artist.name}
             </div>

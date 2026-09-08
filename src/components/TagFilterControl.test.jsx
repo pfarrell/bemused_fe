@@ -102,7 +102,7 @@ describe('TagFilterControl', () => {
 
   test('light variant uses a light input background matching Account.jsx inputs', () => {
     render(<TagFilterControl variant="light" />);
-    expect(screen.getByPlaceholderText('filter by tag…')).toHaveStyle({ background: '#f9fafb' });
+    expect(screen.getByPlaceholderText('filter by tag…')).toHaveStyle({ background: 'var(--color-bg-surface)' });
   });
 
   test('light variant uses lighter "set default" text color', () => {
