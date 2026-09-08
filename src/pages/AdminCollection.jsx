@@ -65,18 +65,18 @@ const CollectionAlbumRow = ({ item, index, isDragged, onDragStart, onDragOver, o
       onDragEnd={onDragEnd}
       onDrop={(e) => onDrop(e, item)}
       style={{
-        padding: '1rem', borderBottom: '1px solid #e5e7eb',
+        padding: '1rem', borderBottom: '1px solid var(--color-border)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         cursor: 'move',
-        backgroundColor: isDragged ? '#f3f4f6' : 'white',
+        backgroundColor: isDragged ? 'var(--color-bg-surface-muted)' : 'white',
       }}
       {...ctxMenu.triggerProps}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-        <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', width: '2rem' }}>
           {index + 1}
         </span>
-        <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
+        <span style={{ fontSize: '1.5rem', color: 'var(--color-text-faint)', cursor: 'move' }}>☰</span>
         {item.data.image_path && (
           <img
             src={apiService.getImageUrl(item.data.image_path, 'album_small')}
@@ -92,7 +92,7 @@ const CollectionAlbumRow = ({ item, index, isDragged, onDragStart, onDragOver, o
         )}
         <div>
           <div style={{ fontWeight: '500' }}>{item.data.title}</div>
-          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
             {item.data.artist?.name}
           </div>
         </div>
@@ -121,25 +121,25 @@ const CollectionStubRow = ({ item, index, isDragged, onDragStart, onDragOver, on
       onDragEnd={onDragEnd}
       onDrop={(e) => onDrop(e, item)}
       style={{
-        padding: '1rem', borderBottom: '1px solid #e5e7eb',
+        padding: '1rem', borderBottom: '1px solid var(--color-border)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         cursor: 'move',
-        backgroundColor: isDragged ? '#f3f4f6' : '#f9fafb',
+        backgroundColor: isDragged ? 'var(--color-bg-surface-muted)' : 'var(--color-bg-surface)',
       }}
       {...ctxMenu.triggerProps}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-        <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', width: '2rem' }}>
           {index + 1}
         </span>
-        <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>☰</span>
+        <span style={{ fontSize: '1.5rem', color: 'var(--color-text-faint)', cursor: 'move' }}>☰</span>
         <div style={{
-          width: '40px', height: '40px', borderRadius: '4px', border: '2px dashed #9ca3af',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af',
+          width: '40px', height: '40px', borderRadius: '4px', border: '2px dashed var(--color-text-faint)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-faint)',
         }}>▢</div>
         <div>
           <div style={{ fontWeight: '500' }}>{item.data.title}</div>
-          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
             {item.data.artist_name}
           </div>
         </div>
@@ -585,15 +585,15 @@ export default function AdminCollection() {
   if (!canEdit) return null;
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
+    <div style={{ padding: '2rem', backgroundColor: 'var(--color-bg-surface-muted)', minHeight: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937' }}>Edit Collection</h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>Edit Collection</h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button
             onClick={() => navigate(`/collection/${id}`)}
             style={{
-              padding: '0.5rem 1rem', backgroundColor: '#6b7280', color: 'white',
+              padding: '0.5rem 1rem', backgroundColor: 'var(--color-text-muted)', color: 'white',
               border: 'none', borderRadius: '4px', cursor: 'pointer',
             }}
           >
@@ -638,7 +638,7 @@ export default function AdminCollection() {
             value={collectionData?.name || ''}
             onChange={(e) => setCollectionData({ ...collectionData, name: e.target.value })}
             style={{
-              width: '100%', padding: '0.5rem', border: '1px solid #d1d5db',
+              width: '100%', padding: '0.5rem', border: '1px solid var(--color-border-strong)',
               borderRadius: '4px', fontSize: '1rem',
             }}
           />
@@ -663,11 +663,11 @@ export default function AdminCollection() {
             }}
             placeholder="e.g., Kind_of_Blue or a full wikipedia.org URL"
             style={{
-              width: '100%', padding: '0.5rem', border: '1px solid #d1d5db',
+              width: '100%', padding: '0.5rem', border: '1px solid var(--color-border-strong)',
               borderRadius: '4px', fontSize: '1rem',
             }}
           />
-          <small style={{ color: '#666', fontSize: '0.875rem' }}>
+          <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             The part after wikipedia.org/wiki/. Leave blank to skip Wikipedia lookup for this collection.
           </small>
         </div>
@@ -681,15 +681,15 @@ export default function AdminCollection() {
             <img
               src={apiService.getImageUrl(collectionData.image_path, 'album_small')}
               alt="Collection cover"
-              style={{ maxWidth: '200px', borderRadius: '4px', border: '1px solid #d1d5db' }}
+              style={{ maxWidth: '200px', borderRadius: '4px', border: '1px solid var(--color-border-strong)' }}
             />
           </div>
         )}
 
         {/* Image download */}
         <div style={{
-          padding: '1rem', backgroundColor: '#f9fafb',
-          borderRadius: '4px', border: '1px solid #e5e7eb'
+          padding: '1rem', backgroundColor: 'var(--color-bg-surface)',
+          borderRadius: '4px', border: '1px solid var(--color-border)'
         }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>
             Download Image from URL
@@ -703,7 +703,7 @@ export default function AdminCollection() {
               placeholder="https://example.com/image.jpg"
               style={{
                 width: '100%', padding: '0.5rem', fontSize: '1rem',
-                border: '1px solid #d1d5db', borderRadius: '4px',
+                border: '1px solid var(--color-border-strong)', borderRadius: '4px',
               }}
             />
           </div>
@@ -716,7 +716,7 @@ export default function AdminCollection() {
               placeholder="collection_cover.jpg"
               style={{
                 width: '100%', padding: '0.5rem', fontSize: '1rem',
-                border: '1px solid #d1d5db', borderRadius: '4px',
+                border: '1px solid var(--color-border-strong)', borderRadius: '4px',
               }}
             />
           </div>
@@ -774,7 +774,7 @@ export default function AdminCollection() {
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search for albums..."
                 style={{
-                  width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid #d1d5db',
+                  width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid var(--color-border-strong)',
                   borderRadius: '4px', fontSize: '1rem',
                 }}
               />
@@ -797,16 +797,16 @@ export default function AdminCollection() {
                   key={album.id}
                   onClick={() => handleAddAlbum(album)}
                   style={{
-                    padding: '0.75rem', borderBottom: '1px solid #e5e7eb',
+                    padding: '0.75rem', borderBottom: '1px solid var(--color-border)',
                     cursor: 'pointer', display: 'flex',
                     justifyContent: 'space-between', alignItems: 'center',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
                 >
                   <div>
                     <div style={{ fontWeight: '500' }}>{album.title}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                       {album.artist?.name}
                     </div>
                   </div>
@@ -833,7 +833,7 @@ export default function AdminCollection() {
               Can't find it? Add a placeholder instead
             </button>
           ) : (
-            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e5e7eb' }}>
+            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
               <div style={{ marginBottom: '0.5rem' }}>
                 <label htmlFor="stub-title" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Title</label>
                 <input
@@ -841,7 +841,7 @@ export default function AdminCollection() {
                   type="text"
                   value={stubTitle}
                   onChange={(e) => setStubTitle(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }}
                 />
               </div>
               <div style={{ marginBottom: '0.5rem' }}>
@@ -851,7 +851,7 @@ export default function AdminCollection() {
                   type="text"
                   value={stubArtistName}
                   onChange={(e) => setStubArtistName(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }}
                 />
               </div>
               <button
@@ -859,7 +859,7 @@ export default function AdminCollection() {
                 onClick={handleAddStub}
                 disabled={!stubTitle.trim()}
                 style={{
-                  padding: '0.5rem 1rem', backgroundColor: stubTitle.trim() ? '#10b981' : '#d1d5db', color: 'white',
+                  padding: '0.5rem 1rem', backgroundColor: stubTitle.trim() ? '#10b981' : 'var(--color-border-strong)', color: 'white',
                   border: 'none', borderRadius: '4px', cursor: stubTitle.trim() ? 'pointer' : 'not-allowed',
                 }}
               >
@@ -875,12 +875,12 @@ export default function AdminCollection() {
         backgroundColor: 'white', borderRadius: '0.5rem',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', overflow: 'hidden'
       }}>
-        <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', fontWeight: '600' }}>
+        <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: '600' }}>
           Albums ({albums.length}){stubs.length > 0 && `, ${stubs.length} placeholder${stubs.length === 1 ? '' : 's'}`}
         </div>
 
         {albums.length === 0 && stubs.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
             No albums in this collection. Use the search above to add albums.
           </div>
         ) : (
