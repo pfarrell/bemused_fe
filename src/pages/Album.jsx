@@ -204,7 +204,7 @@ const Album = () => {
             />
             <div style={{ marginTop: '0.75rem', textAlign: 'center', color: 'white' }}>
               <div style={{ fontWeight: '600', fontSize: '1rem' }}>{album.title}</div>
-              <div style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.25rem' }}>{artist.name}</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-faint)', marginTop: '0.25rem' }}>{artist.name}</div>
             </div>
           </div>,
           document.body
@@ -214,7 +214,7 @@ const Album = () => {
         <div className="album-info" style={{ flex: 1 }}>
           <div className="album-header-title-row">
             <div className="album-header-textblock">
-              <h1 className="album-header-title" style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: '#1f2937', cursor: 'pointer' }}
+              <h1 className="album-header-title" style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: 'var(--color-text-primary)', cursor: 'pointer' }}
                 onClick = {reload}
               >
                 {album.title}
@@ -258,7 +258,7 @@ const Album = () => {
             </div>
           </div>
           {featuringArtists.length > 0 && (
-            <p className="album-header-featuring" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
+            <p className="album-header-featuring" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: 'var(--color-text-muted)' }}>
               {album.is_compilation ? 'Featuring:' : 'Also featuring:'}{' '}
               <CompilationArtistLinks
                 artists={featuringArtists}
@@ -267,7 +267,7 @@ const Album = () => {
             </p>
           )}
           {collections?.length > 0 && (
-            <p className="album-header-collections" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: '#6b7280' }}>
+            <p className="album-header-collections" style={{ fontSize: '0.95rem', margin: '0 0 1rem 0', color: 'var(--color-text-muted)' }}>
               In collections:{' '}
               {collections.map((c, i) => (
                 <span key={c.id}>
@@ -290,7 +290,7 @@ const Album = () => {
           {/* Album Description */}
           {album.description && (
             <div className="album-header-description">
-              <p style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}>
+              <p style={{ lineHeight: '1.6', color: 'var(--color-text-secondary)', margin: '0 0 1rem 0' }}>
                 {album.description}
               </p>
             </div>
