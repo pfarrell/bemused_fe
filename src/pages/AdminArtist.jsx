@@ -565,7 +565,7 @@ const AdminArtist = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
             }}
           />
@@ -584,7 +584,7 @@ const AdminArtist = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
             }}
           />
@@ -598,14 +598,14 @@ const AdminArtist = () => {
         </div>
 
         {/* Image Gallery */}
-        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-surface)', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>Images</h3>
 
           {images.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '12px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
               {images.map(img => (
                 <div key={img.id} style={{
-                  border: img.is_primary ? '2px solid #4ade80' : '2px solid #444',
+                  border: img.is_primary ? '2px solid #4ade80' : '2px solid var(--color-text-secondary)',
                   borderRadius: '8px',
                   padding: '8px',
                   width: '120px',
@@ -615,7 +615,7 @@ const AdminArtist = () => {
                     alt=""
                     style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
                   />
-                  <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{img.source}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginTop: '4px' }}>{img.source}</div>
                   {img.status === 'proposed' && (
                     <div style={{ fontSize: '11px', color: '#facc15' }}>proposed</div>
                   )}
@@ -662,7 +662,7 @@ const AdminArtist = () => {
                 value={newImageUrl}
                 onChange={e => setNewImageUrl(e.target.value)}
                 placeholder="https://..."
-                style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid var(--color-border)', borderRadius: '4px' }}
               />
             </div>
             <div>
@@ -672,7 +672,7 @@ const AdminArtist = () => {
                 value={newImageName}
                 onChange={e => setNewImageName(e.target.value)}
                 placeholder="artist_123.jpg"
-                style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid var(--color-border)', borderRadius: '4px' }}
               />
             </div>
             <button
@@ -714,7 +714,7 @@ const AdminArtist = () => {
         </div>
 
         {/* Tags */}
-        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-surface)', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', marginTop: 0 }}>Tags</h3>
           <TagsSection entityType="artist" entityId={parseInt(id)} isLoggedIn={true} />
         </div>
@@ -743,11 +743,11 @@ const AdminArtist = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
             }}
           />
-          <small style={{ color: '#666', fontSize: '0.875rem' }}>
+          <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             The part after wikipedia.org/wiki/
           </small>
         </div>
@@ -790,7 +790,7 @@ const AdminArtist = () => {
             disabled={saving}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: '#6b7280',
+              backgroundColor: 'var(--color-text-muted)',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -886,7 +886,7 @@ const AdminArtist = () => {
               <button
                 type="button"
                 onClick={() => { setShowAddRelationSection(false); setAddRelationResults([]); setAddRelationQuery(''); }}
-                style={{ padding: '0.5rem', backgroundColor: '#6b7280', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.875rem', cursor: 'pointer' }}
+                style={{ padding: '0.5rem', backgroundColor: 'var(--color-text-muted)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.875rem', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -913,15 +913,15 @@ const AdminArtist = () => {
             {addRelationResults.length > 0 && (
               <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white', marginBottom: '0.75rem' }}>
                 {addRelationResults.map(item => (
-                  <div key={item.id} style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={item.id} style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <span style={{ fontWeight: '500' }}>{item.name || item.title}</span>
                       {String(item.id) === String(id) && (
-                        <span style={{ fontSize: '0.8rem', color: '#6b7280', fontStyle: 'italic', marginLeft: '0.5rem' }}>(this artist)</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic', marginLeft: '0.5rem' }}>(this artist)</span>
                       )}
-                      {item.artist && <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>by {item.artist.name}</span>}
+                      {item.artist && <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}>by {item.artist.name}</span>}
                       {(relationTypeToAdd === 'related_artist' || relationTypeToAdd === 'member' || relationTypeToAdd === 'member_of') && (
-                        <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '0.5rem' }}>{item.album_count} album{item.album_count !== 1 ? 's' : ''} · ID {item.id}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}>{item.album_count} album{item.album_count !== 1 ? 's' : ''} · ID {item.id}</span>
                       )}
                     </div>
                     <button
@@ -955,7 +955,7 @@ const AdminArtist = () => {
                   <button
                     type="button"
                     onClick={() => setShowHiddenRelations(v => !v)}
-                    style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', backgroundColor: '#374151', borderRadius: '9999px', color: '#9ca3af', border: 'none', cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }}
+                    style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', backgroundColor: 'var(--color-text-secondary)', borderRadius: '9999px', color: 'var(--color-text-faint)', border: 'none', cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }}
                   >
                     {showHiddenRelations ? `hide ${hiddenCount} hidden` : `show ${hiddenCount} hidden`}
                   </button>
@@ -963,24 +963,24 @@ const AdminArtist = () => {
               </div>
               {visibleSimilar.map(ra => (
                 <div key={ra.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #bbf7d0', opacity: ra.is_hidden ? 0.45 : 1 }}>
-                  <span style={{ fontWeight: '500', color: ra.is_hidden ? '#9ca3af' : '#7c3aed', cursor: 'pointer', textDecoration: ra.is_hidden ? 'line-through' : 'none' }} onClick={() => navigate(`/artist/${ra.id}`)}>
+                  <span style={{ fontWeight: '500', color: ra.is_hidden ? 'var(--color-text-faint)' : '#7c3aed', cursor: 'pointer', textDecoration: ra.is_hidden ? 'line-through' : 'none' }} onClick={() => navigate(`/artist/${ra.id}`)}>
                     {ra.name}
-                    {ra.similarity != null && <span style={{ fontSize: '0.65rem', color: '#6b7280', marginLeft: '0.4rem' }}>{(ra.similarity * 100).toFixed(0)}%</span>}
-                    {ra.source !== 'manual' && <span style={{ fontSize: '0.65rem', color: '#4b5563', marginLeft: '0.3rem' }}>({ra.source})</span>}
+                    {ra.similarity != null && <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', marginLeft: '0.4rem' }}>{(ra.similarity * 100).toFixed(0)}%</span>}
+                    {ra.source !== 'manual' && <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginLeft: '0.3rem' }}>({ra.source})</span>}
                   </span>
                   <div style={{ display: 'flex', gap: '0.4rem' }}>
                     <button
                       type="button"
                       onClick={() => handleToggleForceShow(ra.id, ra.force_show)}
                       title={ra.force_show ? 'Unpin (remove force-show)' : 'Pin (always include in similar artists)'}
-                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.force_show ? '#7c3aed' : '#374151', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.force_show ? '#7c3aed' : 'var(--color-text-secondary)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
                     >
                       {ra.force_show ? 'Pinned' : 'Pin'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleToggleHideRelation(ra.id, ra.is_hidden)}
-                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.is_hidden ? '#4b5563' : '#6b7280', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      style={{ padding: '0.25rem 0.5rem', backgroundColor: ra.is_hidden ? 'var(--color-text-secondary)' : 'var(--color-text-muted)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
                     >
                       {ra.is_hidden ? 'Unhide' : 'Hide'}
                     </button>
@@ -1139,7 +1139,7 @@ const AdminArtist = () => {
                     style={{ color: '#7c3aed', cursor: 'pointer' }}
                     onClick={() => navigate(`/album/${a.album_id}`)}
                   >{a.title}</span>
-                  {a.release_year && <span style={{ fontWeight: 'normal', color: '#6b7280', marginLeft: '0.5rem' }}>({a.release_year})</span>}
+                  {a.release_year && <span style={{ fontWeight: 'normal', color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}>({a.release_year})</span>}
                 </span>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                   <span style={{
@@ -1195,7 +1195,7 @@ const AdminArtist = () => {
           disabled={loadingSuggestions}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#6b7280',
+            backgroundColor: 'var(--color-text-muted)',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1210,10 +1210,10 @@ const AdminArtist = () => {
         {suggestedDuplicates !== null && (
           <div style={{ backgroundColor: 'white', border: '1px solid #ffc107', borderRadius: '6px', padding: '0.75rem', marginBottom: '1rem' }}>
             {suggestedDuplicates.length === 0 ? (
-              <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>No matching duplicates found.</p>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: 0 }}>No matching duplicates found.</p>
             ) : (
               <>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
                   Select artists to merge into "{artistData.name}":
                 </div>
                 {suggestedDuplicates.map(stub => (
@@ -1228,8 +1228,8 @@ const AdminArtist = () => {
                       }}
                     />
                     <span style={{ flex: 1, minWidth: 0 }}>{stub.name}</span>
-                    <span style={{ color: '#6b7280', fontSize: '0.7rem' }}>{stub.album_count} {stub.album_count === 1 ? 'album' : 'albums'}</span>
-                    <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>{(stub.similarity * 100).toFixed(0)}%</span>
+                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>{stub.album_count} {stub.album_count === 1 ? 'album' : 'albums'}</span>
+                    <span style={{ color: 'var(--color-text-faint)', fontSize: '0.75rem' }}>{(stub.similarity * 100).toFixed(0)}%</span>
                   </label>
                 ))}
                 <button
@@ -1240,7 +1240,7 @@ const AdminArtist = () => {
                     marginTop: '0.5rem',
                     width: '100%',
                     padding: '0.5rem',
-                    backgroundColor: selectedSuggestionIds.size === 0 ? '#e5e7eb' : '#3b82f6',
+                    backgroundColor: selectedSuggestionIds.size === 0 ? 'var(--color-border)' : '#3b82f6',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -1283,7 +1283,7 @@ const AdminArtist = () => {
               disabled={mergeSearching || mergeQuery.length < 2}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#6b7280',
+                backgroundColor: 'var(--color-text-muted)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -1305,7 +1305,7 @@ const AdminArtist = () => {
                 onClick={() => handleSelectMergeTarget(artist)}
                 style={{
                   padding: '0.6rem 0.75rem',
-                  borderBottom: '1px solid #e5e7eb',
+                  borderBottom: '1px solid var(--color-border)',
                   cursor: 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -1315,7 +1315,7 @@ const AdminArtist = () => {
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
               >
                 <span style={{ fontWeight: '500' }}>{artist.name}</span>
-                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{artist.album_count} album{artist.album_count !== 1 ? 's' : ''} · ID {artist.id}</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{artist.album_count} album{artist.album_count !== 1 ? 's' : ''} · ID {artist.id}</span>
               </div>
             ))}
           </div>
@@ -1348,7 +1348,7 @@ const AdminArtist = () => {
               <button
                 type="button"
                 onClick={() => { setSelectedMergeTarget(null); setMergeQuery(''); }}
-                style={{ marginLeft: '0.5rem', background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '0.875rem' }}
+                style={{ marginLeft: '0.5rem', background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '0.875rem' }}
               >
                 ✕
               </button>
