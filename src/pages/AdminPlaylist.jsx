@@ -27,25 +27,25 @@ const PlaylistTrackRow = ({ track, index, isDragged, onDragStart, onDragOver, on
       onDrop={(e) => onDrop(e, index)}
       style={{
         padding: '1rem',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid var(--color-border)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         cursor: 'move',
-        backgroundColor: isDragged ? '#f3f4f6' : 'white'
+        backgroundColor: isDragged ? 'var(--color-bg-surface-muted)' : 'white'
       }}
       {...ctxMenu.triggerProps}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-        <span style={{ color: '#6b7280', fontSize: '0.875rem', width: '2rem' }}>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', width: '2rem' }}>
           {index + 1}
         </span>
-        <span style={{ fontSize: '1.5rem', color: '#9ca3af', cursor: 'move' }}>
+        <span style={{ fontSize: '1.5rem', color: 'var(--color-text-faint)', cursor: 'move' }}>
           ☰
         </span>
         <div>
           <div style={{ fontWeight: '500' }}>{track.title}</div>
-          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
             {track.artist?.name} • {track.album?.title}
           </div>
         </div>
@@ -340,9 +340,9 @@ export default function AdminPlaylist() {
   if (!canEdit) return null;
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
+    <div style={{ padding: '2rem', backgroundColor: 'var(--color-bg-surface-muted)', minHeight: '100%' }}>
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
           Edit Playlist
         </h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -350,7 +350,7 @@ export default function AdminPlaylist() {
             onClick={() => navigate(`/playlist/${id}`)}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#6b7280',
+              backgroundColor: 'var(--color-text-muted)',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -396,7 +396,7 @@ export default function AdminPlaylist() {
             style={{
               width: '100%',
               padding: '0.5rem',
-              border: '1px solid #d1d5db',
+              border: '1px solid var(--color-border-strong)',
               borderRadius: '4px',
               fontSize: '1rem'
             }}
@@ -415,7 +415,7 @@ export default function AdminPlaylist() {
               style={{
                 maxWidth: '200px',
                 borderRadius: '4px',
-                border: '1px solid #d1d5db'
+                border: '1px solid var(--color-border-strong)'
               }}
             />
           </div>
@@ -425,9 +425,9 @@ export default function AdminPlaylist() {
         <div style={{
           marginBottom: '1.5rem',
           padding: '1rem',
-          backgroundColor: '#f9fafb',
+          backgroundColor: 'var(--color-bg-surface)',
           borderRadius: '4px',
-          border: '1px solid #e5e7eb'
+          border: '1px solid var(--color-border)'
         }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>
             Download Image from URL
@@ -445,7 +445,7 @@ export default function AdminPlaylist() {
                 width: '100%',
                 padding: '0.5rem',
                 fontSize: '1rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--color-border-strong)',
                 borderRadius: '4px',
               }}
             />
@@ -463,7 +463,7 @@ export default function AdminPlaylist() {
                 width: '100%',
                 padding: '0.5rem',
                 fontSize: '1rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--color-border-strong)',
                 borderRadius: '4px',
               }}
             />
@@ -525,7 +525,7 @@ export default function AdminPlaylist() {
                   width: '100%',
                   boxSizing: 'border-box',
                   padding: '0.5rem',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--color-border-strong)',
                   borderRadius: '4px',
                   fontSize: '1rem'
                 }}
@@ -554,18 +554,18 @@ export default function AdminPlaylist() {
                   onClick={() => handleAddTrack(track)}
                   style={{
                     padding: '0.75rem',
-                    borderBottom: '1px solid #e5e7eb',
+                    borderBottom: '1px solid var(--color-border)',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
                 >
                   <div>
                     <div style={{ fontWeight: '500' }}>{track.title}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                       {track.artist?.name} • {track.album?.title}
                     </div>
                   </div>
@@ -596,12 +596,12 @@ export default function AdminPlaylist() {
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         overflow: 'hidden'
       }}>
-        <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', fontWeight: '600' }}>
+        <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: '600' }}>
           Tracks ({tracks.length})
         </div>
 
         {tracks.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
             No tracks in this playlist. Use the search above to add tracks.
           </div>
         ) : (
