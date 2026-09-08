@@ -107,13 +107,13 @@ const AddToCollectionModal = ({ album, onClose }) => {
           backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem',
           maxWidth: '400px', width: '100%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem', color: '#1f2937' }}>Confirm</h3>
-          <p style={{ margin: '0 0 1.5rem 0', color: '#4b5563', lineHeight: '1.5' }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem', color: 'var(--color-text-primary)' }}>Confirm</h3>
+          <p style={{ margin: '0 0 1.5rem 0', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
             {showConfirmation.message}
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
             <button onClick={() => setShowConfirmation(null)} style={{
-              padding: '0.5rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
+              padding: '0.5rem 1rem', backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)',
               border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem'
             }}>Cancel</button>
             <button onClick={async () => {
@@ -143,10 +143,10 @@ const AddToCollectionModal = ({ album, onClose }) => {
         boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
       }}>
         <div style={{ marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1f2937' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-text-primary)' }}>
             {isCreatingNew ? 'Create New Collection' : 'Add to Collection'}
           </h2>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#6b7280' }}>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
             {album.title}
           </p>
         </div>
@@ -154,7 +154,7 @@ const AddToCollectionModal = ({ album, onClose }) => {
         {isCreatingNew ? (
           <>
             <div style={{ flex: 1, marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#374151', fontWeight: '500' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                 Collection Name
               </label>
               <input
@@ -166,14 +166,14 @@ const AddToCollectionModal = ({ album, onClose }) => {
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
                 style={{
                   width: '100%', padding: '0.5rem',
-                  border: '1px solid #d1d5db', borderRadius: '4px',
+                  border: '1px solid var(--color-border-strong)', borderRadius: '4px',
                   fontSize: '1rem', outline: 'none', boxSizing: 'border-box'
                 }}
               />
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button onClick={() => { setIsCreatingNew(false); setNewName(''); setSelected(null); }} style={{
-                padding: '0.625rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
+                padding: '0.625rem 1rem', backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)',
                 border: 'none', borderRadius: '4px', cursor: 'pointer',
                 fontSize: '0.875rem', minHeight: '44px'
               }}>Back</button>
@@ -194,7 +194,7 @@ const AddToCollectionModal = ({ album, onClose }) => {
                 placeholder="Filter collections..."
                 style={{
                   width: '100%', padding: '0.5rem',
-                  border: '1px solid #d1d5db', borderRadius: '4px',
+                  border: '1px solid var(--color-border-strong)', borderRadius: '4px',
                   fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box'
                 }}
               />
@@ -202,16 +202,16 @@ const AddToCollectionModal = ({ album, onClose }) => {
 
             <div style={{
               flex: 1, overflowY: 'auto', marginBottom: '1rem',
-              border: '1px solid #e5e7eb', borderRadius: '4px',
+              border: '1px solid var(--color-border)', borderRadius: '4px',
               minHeight: '200px', maxHeight: '400px'
             }}>
               {loading ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading collections...</div>
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading collections...</div>
               ) : (
                 <>
                   <div onClick={() => { setIsCreatingNew(true); setNewName(''); }} style={{
                     padding: '0.75rem 1rem', cursor: 'pointer',
-                    borderBottom: '1px solid #e5e7eb', backgroundColor: '#f9fafb',
+                    borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-surface)',
                     fontWeight: '500', color: '#3b82f6', minHeight: '44px',
                     display: 'flex', alignItems: 'center'
                   }}>
@@ -219,7 +219,7 @@ const AddToCollectionModal = ({ album, onClose }) => {
                   </div>
 
                   {filtered.length === 0 ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>No collections found</div>
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>No collections found</div>
                   ) : (
                     filtered.map((c) => (
                       <div
@@ -227,11 +227,11 @@ const AddToCollectionModal = ({ album, onClose }) => {
                         onClick={() => setSelected(c)}
                         style={{
                           padding: '0.75rem 1rem', cursor: 'pointer',
-                          borderBottom: '1px solid #e5e7eb',
+                          borderBottom: '1px solid var(--color-border)',
                           backgroundColor: selected?.id === c.id ? '#dbeafe' : 'transparent',
                           minHeight: '44px', display: 'flex', alignItems: 'center'
                         }}
-                        onMouseEnter={(e) => { if (selected?.id !== c.id) e.currentTarget.style.backgroundColor = '#f9fafb'; }}
+                        onMouseEnter={(e) => { if (selected?.id !== c.id) e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)'; }}
                         onMouseLeave={(e) => { if (selected?.id !== c.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
                       >
                         {c.name || '(Unnamed Collection)'}
@@ -244,13 +244,13 @@ const AddToCollectionModal = ({ album, onClose }) => {
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button onClick={onClose} style={{
-                padding: '0.625rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
+                padding: '0.625rem 1rem', backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)',
                 border: 'none', borderRadius: '4px', cursor: 'pointer',
                 fontSize: '0.875rem', minHeight: '44px'
               }}>Cancel</button>
               <button onClick={handleAdd} disabled={!selected} style={{
                 flex: 1, padding: '0.625rem 1rem',
-                backgroundColor: selected ? '#3b82f6' : '#d1d5db',
+                backgroundColor: selected ? '#3b82f6' : 'var(--color-border-strong)',
                 color: 'white', border: 'none', borderRadius: '4px',
                 cursor: selected ? 'pointer' : 'not-allowed',
                 fontSize: '0.875rem', minHeight: '44px', opacity: selected ? 1 : 0.6
