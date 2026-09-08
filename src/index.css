@@ -420,7 +420,7 @@
 
 .album-stub-card {
   cursor: default;
-  border: 2px dashed #9ca3af;
+  border: 2px dashed var(--color-text-faint);
   border-radius: 8px;
   box-shadow: none;
 }
@@ -469,7 +469,7 @@
   padding: 0.35rem 0.9rem;
   border-radius: 999px;
   background: white;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border-strong);
   color: var(--color-text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
@@ -479,8 +479,8 @@
 }
 
 .search-type-pill.active {
-  background: #1f2937;
-  border-color: #1f2937;
+  background: var(--color-text-primary);
+  border-color: var(--color-text-primary);
   color: white;
   font-weight: 600;
 }
@@ -658,7 +658,7 @@
 
 .track-dropdown button:focus {
   outline: none;
-  background-color: #e5e7eb;
+  background-color: var(--color-border);
 }
 
 .track-dropdown button:active {
@@ -825,7 +825,7 @@
 .about-section {
   margin: 0.5rem 0 1rem 0;
   padding-top: 0.75rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
 }
 
 .about-section-heading {
