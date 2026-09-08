@@ -16,10 +16,10 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        backgroundColor: '#f3f4f6'
+        backgroundColor: 'var(--color-bg-surface-muted)'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.5rem', color: '#6b7280' }}>Loading...</div>
+          <div style={{ fontSize: '1.5rem', color: 'var(--color-text-muted)' }}>Loading...</div>
         </div>
       </div>
     );
@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        backgroundColor: '#f3f4f6'
+        backgroundColor: 'var(--color-bg-surface-muted)'
       }}>
         <div style={{
           maxWidth: '28rem',
@@ -47,7 +47,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc2626', marginBottom: '1rem' }}>
             Access Denied
           </h1>
-          <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
             You need admin privileges to access this page.
           </p>
           <button

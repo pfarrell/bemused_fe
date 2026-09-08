@@ -44,8 +44,8 @@ const TagPage = () => {
 
   if (albums.length === 0 && artists.length === 0) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: '#9ca3af' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#e2e8f0' }}>
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-faint)' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--color-border)' }}>
           #{name}
         </h1>
         <p>Nothing tagged with <strong>#{name}</strong> yet.</p>
@@ -55,13 +55,13 @@ const TagPage = () => {
 
   return (
     <div style={{ padding: '1rem' }}>
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#e2e8f0' }}>
+      <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'var(--color-border)' }}>
         #{name}
       </h1>
 
       {albums.length > 0 && (
         <>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.75rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.75rem', color: 'var(--color-text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Albums ({albums.length})
           </h2>
           <AlbumGrid albums={albums} />
@@ -70,7 +70,7 @@ const TagPage = () => {
 
       {artists.length > 0 && (
         <>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: '1.5rem 0 0.75rem 0', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: '1.5rem 0 0.75rem 0', color: 'var(--color-text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Artists ({artists.length})
           </h2>
           <ArtistGrid artists={artists} imageContext="artist_search" />

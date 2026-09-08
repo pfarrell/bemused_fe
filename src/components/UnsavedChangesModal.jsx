@@ -39,8 +39,8 @@ const UnsavedChangesModal = ({ onSave, onDiscard, onCancel }) => {
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
         }}
       >
-        <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>Unsaved changes</h2>
-        <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#6b7280' }}>
+        <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>Unsaved changes</h2>
+        <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
           You have unsaved changes on this page. Refreshing will lose them unless you save first.
         </p>
 
@@ -73,8 +73,8 @@ const UnsavedChangesModal = ({ onSave, onDiscard, onCancel }) => {
             onClick={onCancel}
             disabled={saving}
             style={{
-              padding: '0.6rem', backgroundColor: 'white', color: '#374151',
-              border: '1px solid #d1d5db', borderRadius: '4px',
+              padding: '0.6rem', backgroundColor: 'white', color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border-strong)', borderRadius: '4px',
               cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >

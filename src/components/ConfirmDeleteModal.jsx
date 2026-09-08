@@ -48,9 +48,9 @@ const ConfirmDeleteModal = ({ title, message, onConfirm, onCancel }) => {
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
         }}
       >
-        <h2 id="confirm-delete-modal-title" style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>{title}</h2>
-        <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#6b7280' }}>{message}</p>
-        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: '#374151' }}>
+        <h2 id="confirm-delete-modal-title" style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>{title}</h2>
+        <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>{message}</p>
+        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
           Type <strong>delete me</strong> to confirm:
         </p>
 
@@ -63,7 +63,7 @@ const ConfirmDeleteModal = ({ title, message, onConfirm, onCancel }) => {
           autoFocus
           style={{
             width: '100%', boxSizing: 'border-box', padding: '0.5rem',
-            border: '1px solid #d1d5db', borderRadius: '4px',
+            border: '1px solid var(--color-border-strong)', borderRadius: '4px',
             fontSize: '0.9rem', marginBottom: '1rem',
           }}
         />
@@ -87,8 +87,8 @@ const ConfirmDeleteModal = ({ title, message, onConfirm, onCancel }) => {
             onClick={onCancel}
             disabled={deleting}
             style={{
-              padding: '0.6rem', backgroundColor: 'white', color: '#374151',
-              border: '1px solid #d1d5db', borderRadius: '4px',
+              padding: '0.6rem', backgroundColor: 'white', color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border-strong)', borderRadius: '4px',
               cursor: deleting ? 'not-allowed' : 'pointer',
             }}
           >
