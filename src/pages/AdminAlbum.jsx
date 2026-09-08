@@ -570,7 +570,7 @@ const AdminAlbum = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
             }}
           />
@@ -591,12 +591,12 @@ const AdminAlbum = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
-              backgroundColor: isCompilation ? '#f3f4f6' : 'white',
+              backgroundColor: isCompilation ? 'var(--color-bg-surface-muted)' : 'white',
             }}
           />
-          <small style={{ color: '#666', fontSize: '0.875rem' }}>
+          <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             Current artist: {albumData?.artist?.name}
           </small>
         </div>
@@ -610,7 +610,7 @@ const AdminAlbum = () => {
             />
             Is compilation
           </label>
-          <small style={{ color: '#666', fontSize: '0.875rem' }}>
+          <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             Various-artists album — track artists are shown individually and the "Also featuring" list is hidden.
           </small>
         </div>
@@ -628,7 +628,7 @@ const AdminAlbum = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
             }}
           />
@@ -647,7 +647,7 @@ const AdminAlbum = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
             }}
           />
@@ -661,14 +661,14 @@ const AdminAlbum = () => {
         </div>
 
         {/* Image Gallery */}
-        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-surface)', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>Images</h3>
 
           {images.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '12px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
               {images.map(img => (
                 <div key={img.id} style={{
-                  border: img.is_primary ? '2px solid #4ade80' : '2px solid #444',
+                  border: img.is_primary ? '2px solid #4ade80' : '2px solid var(--color-text-secondary)',
                   borderRadius: '8px',
                   padding: '8px',
                   width: '120px',
@@ -678,7 +678,7 @@ const AdminAlbum = () => {
                     alt=""
                     style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
                   />
-                  <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{img.source}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginTop: '4px' }}>{img.source}</div>
                   {img.status === 'proposed' && (
                     <div style={{ fontSize: '11px', color: '#facc15' }}>proposed</div>
                   )}
@@ -725,7 +725,7 @@ const AdminAlbum = () => {
                 value={newImageUrl}
                 onChange={e => setNewImageUrl(e.target.value)}
                 placeholder="https://..."
-                style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid var(--color-border)', borderRadius: '4px' }}
               />
             </div>
             <div>
@@ -735,7 +735,7 @@ const AdminAlbum = () => {
                 value={newImageName}
                 onChange={e => setNewImageName(e.target.value)}
                 placeholder="album_123.jpg"
-                style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid var(--color-border)', borderRadius: '4px' }}
               />
             </div>
             <button
@@ -773,7 +773,7 @@ const AdminAlbum = () => {
         </div>
 
         {/* Tags */}
-        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-surface)', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', marginTop: 0 }}>Tags</h3>
           <TagsSection entityType="album" entityId={parseInt(id)} isLoggedIn={true} />
         </div>
@@ -802,11 +802,11 @@ const AdminAlbum = () => {
               width: '100%',
               padding: '0.5rem',
               fontSize: '1rem',
-              border: '1px solid #ccc',
+              border: '1px solid var(--color-border)',
               borderRadius: '4px',
             }}
           />
-          <small style={{ color: '#666', fontSize: '0.875rem' }}>
+          <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             The part after wikipedia.org/wiki/
           </small>
         </div>
@@ -849,7 +849,7 @@ const AdminAlbum = () => {
             disabled={saving}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: '#6b7280',
+              backgroundColor: 'var(--color-text-muted)',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -883,7 +883,7 @@ const AdminAlbum = () => {
       <button
         type="button"
         onClick={() => setShowReprocessModal(true)}
-        style={{ marginTop: '2rem', padding: '0.75rem 1.5rem', backgroundColor: '#6b7280', color: 'white', border: 'none', borderRadius: '4px', fontSize: '1rem', cursor: 'pointer' }}
+        style={{ marginTop: '2rem', padding: '0.75rem 1.5rem', backgroundColor: 'var(--color-text-muted)', color: 'white', border: 'none', borderRadius: '4px', fontSize: '1rem', cursor: 'pointer' }}
       >
         Reprocess from Files
       </button>
@@ -942,7 +942,7 @@ const AdminAlbum = () => {
             <button
               type="submit"
               disabled={transferSearching}
-              style={{ padding: '0.5rem 1rem', backgroundColor: '#6b7280', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--color-text-muted)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
             >
               {transferSearching ? 'Searching...' : 'Search'}
             </button>
@@ -1116,7 +1116,7 @@ const AdminAlbum = () => {
                 onClick={() => { setShowAddArtistSection(false); setAddArtistResults([]); setAddArtistQuery(''); }}
                 style={{
                   padding: '0.5rem',
-                  backgroundColor: '#6b7280',
+                  backgroundColor: 'var(--color-text-muted)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1168,7 +1168,7 @@ const AdminAlbum = () => {
                     key={artist.id}
                     style={{
                       padding: '0.6rem 0.75rem',
-                      borderBottom: '1px solid #e5e7eb',
+                      borderBottom: '1px solid var(--color-border)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
@@ -1177,7 +1177,7 @@ const AdminAlbum = () => {
                     <span style={{ fontWeight: '500' }}>
                       {artist.name}
                       {artist.id === albumData?.album?.artist_id && (
-                        <span style={{ color: '#6b7280', fontWeight: 'normal', fontStyle: 'italic' }}> (current primary artist)</span>
+                        <span style={{ color: 'var(--color-text-muted)', fontWeight: 'normal', fontStyle: 'italic' }}> (current primary artist)</span>
                       )}
                     </span>
                     <button
@@ -1218,7 +1218,7 @@ const AdminAlbum = () => {
               fontSize: '0.875rem'
             }}>
               <thead>
-                <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+                <tr style={{ backgroundColor: 'var(--color-bg-surface-muted)', borderBottom: '2px solid var(--color-border)' }}>
                   <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 'bold' }}>Track #</th>
                   <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 'bold' }}>Title</th>
                   <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 'bold' }}>Album ID</th>
@@ -1230,7 +1230,7 @@ const AdminAlbum = () => {
               <tbody>
                 {tracks.sort((a, b) => (parseInt(a.track_number) || 0) - (parseInt(b.track_number) || 0)).map((track) => {
                   return (
-                    <tr key={track.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                    <tr key={track.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <td style={{ padding: '0.75rem' }}>
                         <input
                           type="text"
@@ -1245,7 +1245,7 @@ const AdminAlbum = () => {
                           style={{
                             width: '60px',
                             padding: '0.25rem 0.5rem',
-                            border: '1px solid #d1d5db',
+                            border: '1px solid var(--color-border-strong)',
                             borderRadius: '4px',
                           }}
                         />
@@ -1265,7 +1265,7 @@ const AdminAlbum = () => {
                             width: '100%',
                             minWidth: '200px',
                             padding: '0.25rem 0.5rem',
-                            border: '1px solid #d1d5db',
+                            border: '1px solid var(--color-border-strong)',
                             borderRadius: '4px',
                           }}
                         />
@@ -1284,7 +1284,7 @@ const AdminAlbum = () => {
                           style={{
                             width: '80px',
                             padding: '0.25rem 0.5rem',
-                            border: '1px solid #d1d5db',
+                            border: '1px solid var(--color-border-strong)',
                             borderRadius: '4px',
                           }}
                         />
@@ -1295,7 +1295,7 @@ const AdminAlbum = () => {
                           onSelect={(newArtistId, newArtistName) => handleTrackArtistSelect(track.id, newArtistId, newArtistName)}
                         />
                       </td>
-                      <td style={{ padding: '0.75rem', color: '#6b7280' }}>
+                      <td style={{ padding: '0.75rem', color: 'var(--color-text-muted)' }}>
                         {track.duration ? `${Math.floor(track.duration / 60)}:${String(track.duration % 60).padStart(2, '0')}` : '-'}
                       </td>
                       <td style={{ padding: '0.75rem', textAlign: 'center' }}>
@@ -1305,7 +1305,7 @@ const AdminAlbum = () => {
                             style={{
                               padding: '0.25rem 0.75rem',
                               marginRight: '0.5rem',
-                              backgroundColor: '#6b7280',
+                              backgroundColor: 'var(--color-text-muted)',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
