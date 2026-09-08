@@ -165,7 +165,7 @@ const Search = () => {
   if (!query) {
     return (
       <div style={{ textAlign: 'center', padding: '3rem' }}>
-        <p style={{ color: '#6b7280' }}>Enter a search term to find music</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>Enter a search term to find music</p>
       </div>
     );
   }
@@ -229,7 +229,7 @@ const Search = () => {
       {/* No results */}
       {results.results?.length === 0 && results.tracks?.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ color: '#6b7280' }}>No results found for "{query}"</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>No results found for "{query}"</p>
         </div>
       )}
     </div>

@@ -64,7 +64,7 @@ export default function Playlists() {
         </div>
       )}
       {playlists.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
           <p style={{ fontSize: '1.125rem' }}>No playlists found</p>
         </div>
       ) : (isMobile || viewMode === 'list') ? (
@@ -107,7 +107,7 @@ export default function Playlists() {
                 width: '100%',
                 paddingBottom: '100%',
                 position: 'relative',
-                backgroundColor: '#e5e7eb'
+                backgroundColor: 'var(--color-border)'
               }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
                   <CoverCollage
@@ -126,7 +126,7 @@ export default function Playlists() {
                 <h3 style={{
                   fontSize: '1rem',
                   fontWeight: '600',
-                  color: '#1f2937',
+                  color: 'var(--color-text-primary)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
@@ -134,7 +134,7 @@ export default function Playlists() {
                   {playlist.name}
                 </h3>
                 {formatCount(playlist.track_count || null, 'track') && (
-                  <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0 0 0' }}>
                     {formatCount(playlist.track_count || null, 'track')}
                   </p>
                 )}

@@ -106,7 +106,7 @@ export default function Playlist() {
   }
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
+    <div style={{ padding: '2rem', backgroundColor: 'var(--color-bg-surface-muted)', minHeight: '100%' }}>
       {/* Playlist Header */}
       <div
         style={{
@@ -135,12 +135,12 @@ export default function Playlist() {
         {/* Playlist Info */}
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: 'var(--color-text-primary)' }}>
               {playlist.name}
             </h1>
           </div>
 
-          <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
             {tracks?.length || 0} {tracks?.length === 1 ? 'track' : 'tracks'}
           </p>
 
@@ -227,7 +227,7 @@ export default function Playlist() {
             />
           ))
         ) : (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
             This playlist is empty
           </div>
         )}

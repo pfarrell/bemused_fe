@@ -62,7 +62,7 @@ export default function Collection() {
   const canEdit = isAdmin || (user && collection.user_id === user.id);
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
+    <div style={{ padding: '2rem', backgroundColor: 'var(--color-bg-surface-muted)', minHeight: '100%' }}>
       {/* Collection Header */}
       <div
         style={{
@@ -91,12 +91,12 @@ export default function Collection() {
         {/* Collection Info */}
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: 'var(--color-text-primary)' }}>
               {collection.name}
             </h1>
           </div>
 
-          <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
             {albums?.length || 0} {albums?.length === 1 ? 'album' : 'albums'}
           </p>
 
@@ -188,7 +188,7 @@ export default function Collection() {
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
           padding: '2rem',
           textAlign: 'center',
-          color: '#6b7280'
+          color: 'var(--color-text-muted)'
         }}>
           This collection is empty
         </div>

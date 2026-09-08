@@ -215,22 +215,22 @@ const AdminTrack = () => {
       <form onSubmit={handleSave}>
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Title</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }} />
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }} />
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Track Number</label>
-          <input type="text" value={trackNumber} onChange={(e) => setTrackNumber(e.target.value)} style={{ width: '100px', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }} />
+          <input type="text" value={trackNumber} onChange={(e) => setTrackNumber(e.target.value)} style={{ width: '100px', padding: '0.5rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }} />
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Release Year</label>
-          <input type="text" value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} style={{ width: '100px', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }} />
+          <input type="text" value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} style={{ width: '100px', padding: '0.5rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }} />
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Album ID</label>
-          <input type="number" value={albumId} onChange={(e) => setAlbumId(e.target.value)} style={{ width: '100px', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }} />
+          <input type="number" value={albumId} onChange={(e) => setAlbumId(e.target.value)} style={{ width: '100px', padding: '0.5rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }} />
           {detail.album?.musicbrainz_id && (
             <a
               href={`https://musicbrainz.org/release/${detail.album.musicbrainz_id}`}
@@ -294,7 +294,7 @@ const AdminTrack = () => {
 
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>Wikipedia</label>
-          <textarea value={wikipedia} onChange={(e) => setWikipedia(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }} />
+          <textarea value={wikipedia} onChange={(e) => setWikipedia(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border-strong)', borderRadius: '4px' }} />
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
@@ -315,7 +315,7 @@ const AdminTrack = () => {
         </button>
       </form>
 
-      <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '4px', fontSize: '0.875rem' }}>
+      <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: 'var(--color-bg-surface)', borderRadius: '4px', fontSize: '0.875rem' }}>
         <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>File Info (read-only)</h2>
         <div><strong>Track ID:</strong> {detail.track.id}</div>
         <div><strong>Media File ID:</strong> {detail.track.media_file_id ?? '—'}</div>
