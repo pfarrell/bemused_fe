@@ -79,19 +79,19 @@ const TrackNotesModal = ({ track, onClose }) => {
         }}
       >
         <div style={{ marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1f2937' }}>Notes</h2>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#6b7280' }}>{track.title}</p>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-text-primary)' }}>Notes</h2>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{track.title}</p>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem' }}>
           {loading ? (
-            <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280' }}>Loading…</div>
+            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading…</div>
           ) : notes.length === 0 ? (
-            <div style={{ padding: '1rem', textAlign: 'center', color: '#9ca3af' }}>No notes yet</div>
+            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-faint)' }}>No notes yet</div>
           ) : (
             notes.map((note) => (
-              <div key={note.id} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.35rem' }}>
+              <div key={note.id} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--color-border)' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.35rem' }}>
                   {note.author?.username || 'Unknown'} · {new Date(note.created_at).toLocaleDateString()}
                   {!note.error && (
                     <>
@@ -104,7 +104,7 @@ const TrackNotesModal = ({ track, onClose }) => {
                       {' · '}
                       <button
                         onClick={() => handleDelete(note.id)}
-                        style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
+                        style={{ background: 'none', border: 'none', color: 'var(--color-text-faint)', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
                       >
                         remove
                       </button>
@@ -112,9 +112,9 @@ const TrackNotesModal = ({ track, onClose }) => {
                   )}
                 </div>
                 {note.error ? (
-                  <div style={{ color: '#9ca3af', fontStyle: 'italic' }}>Note unavailable</div>
+                  <div style={{ color: 'var(--color-text-faint)', fontStyle: 'italic' }}>Note unavailable</div>
                 ) : (
-                  <div className="note-markdown" style={{ lineHeight: '1.6', color: '#374151' }}>
+                  <div className="note-markdown" style={{ lineHeight: '1.6', color: 'var(--color-text-secondary)' }}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
                   </div>
                 )}
@@ -133,7 +133,7 @@ const TrackNotesModal = ({ track, onClose }) => {
                 rows={4}
                 style={{
                   width: '100%', boxSizing: 'border-box',
-                  border: '1px solid #d1d5db', borderRadius: '4px',
+                  border: '1px solid var(--color-border-strong)', borderRadius: '4px',
                   padding: '0.5rem', fontSize: '0.9rem', fontFamily: 'inherit',
                 }}
               />
@@ -156,7 +156,7 @@ const TrackNotesModal = ({ track, onClose }) => {
             <a
               href={`${apiService.getRecallConnectUrl()}?return_to=${encodeURIComponent(location.pathname)}`}
               style={{
-                display: 'inline-block', padding: '0.5rem 1rem', backgroundColor: '#6b7280',
+                display: 'inline-block', padding: '0.5rem 1rem', backgroundColor: 'var(--color-text-muted)',
                 color: 'white', borderRadius: '4px', textDecoration: 'none', fontSize: '0.875rem',
                 marginBottom: '0.75rem',
               }}
@@ -170,7 +170,7 @@ const TrackNotesModal = ({ track, onClose }) => {
           <button
             onClick={onClose}
             style={{
-              padding: '0.5rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
+              padding: '0.5rem 1rem', backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)',
               border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '500',
               minHeight: '44px',
             }}
