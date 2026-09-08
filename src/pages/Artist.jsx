@@ -170,7 +170,7 @@ const Artist = () => {
         {/* Artist Info */}
         <div style={{ flex: 1 }}>
           <div className="artist-header-title-row" style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937', cursor: 'pointer' }}
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: 'var(--color-text-primary)', cursor: 'pointer' }}
               onClick={ reload }
             >
               {artist.name}
@@ -200,7 +200,7 @@ const Artist = () => {
           />
 
           {member_of && member_of.length > 0 && (
-            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: 'var(--color-text-muted)' }}>
               Member of:{' '}
               {member_of.map((g, i) => (
                 <span key={g.id}>
@@ -217,7 +217,7 @@ const Artist = () => {
           )}
 
           {members && members.length > 0 && (
-            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: 'var(--color-text-muted)' }}>
               Members:{' '}
               {members.map((m, i) => (
                 <span key={m.id}>
@@ -234,7 +234,7 @@ const Artist = () => {
           )}
 
           {related_artists && related_artists.length > 0 && (
-            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+            <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: 'var(--color-text-muted)' }}>
               Related artists:{' '}
               {related_artists.map((ra, i) => (
                 <span key={ra.id}>
@@ -258,7 +258,7 @@ const Artist = () => {
               : similar_artists.slice(0, cap);
             const hasMore = !showAllSimilar && similar_artists.length > cap;
             return (
-              <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: '#6b7280' }}>
+              <p style={{ fontSize: '0.95rem', margin: '0.5rem 0 0 0', color: 'var(--color-text-muted)' }}>
                 Similar artists:{' '}
                 {displayed.map((sa, i) => (
                   <span key={sa.id}>
@@ -341,7 +341,7 @@ const Artist = () => {
       {singles && singles.length > 0 && (
         <div style={{ marginTop: '2rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: 'var(--color-text-primary)' }}>
               Singles
             </h2>
             <button
@@ -375,7 +375,7 @@ const Artist = () => {
       {/* Appears On */}
       {appears_on && appears_on.length > 0 && (
         <div className="artist-grid">
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1.5rem 0 0.75rem 0', color: '#1f2937' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1.5rem 0 0.75rem 0', color: 'var(--color-text-primary)' }}>
             Appears On
           </h2>
           <CardGrid>
