@@ -49,9 +49,9 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
     <div style={{
       marginTop: '1.5rem',
       padding: '1rem',
-      backgroundColor: '#f9fafb',
+      backgroundColor: 'var(--color-bg-surface)',
       borderRadius: '8px',
-      border: '1px solid #e5e7eb'
+      border: '1px solid var(--color-border)'
     }}>
       <div
         onClick={() => setCollapsed((c) => !c)}
@@ -61,7 +61,7 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
           alignItems: 'center',
           fontSize: '0.75rem',
           fontWeight: '600',
-          color: '#6b7280',
+          color: 'var(--color-text-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           marginBottom: collapsed ? 0 : '0.75rem',
@@ -75,8 +75,8 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
 
       {collapsed ? null : <>
       {notes.map((note) => (
-        <div key={note.id} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.35rem' }}>
+        <div key={note.id} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--color-border)' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.35rem' }}>
             {note.author?.username || 'Unknown'} · {new Date(note.created_at).toLocaleDateString()}
             {!note.error && (
               <>
@@ -91,7 +91,7 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
                 {' · '}
                 <button
                   onClick={() => handleDelete(note.id)}
-                  style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-text-faint)', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
                 >
                   remove
                 </button>
@@ -99,9 +99,9 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
             )}
           </div>
           {note.error ? (
-            <div style={{ color: '#9ca3af', fontStyle: 'italic' }}>Note unavailable</div>
+            <div style={{ color: 'var(--color-text-faint)', fontStyle: 'italic' }}>Note unavailable</div>
           ) : (
-            <div className="note-markdown" style={{ lineHeight: '1.6', color: '#374151' }}>
+            <div className="note-markdown" style={{ lineHeight: '1.6', color: 'var(--color-text-secondary)' }}>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
             </div>
           )}
@@ -119,7 +119,7 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--color-border-strong)',
                 borderRadius: '4px',
                 padding: '0.5rem',
                 fontSize: '0.9rem',
@@ -150,7 +150,7 @@ const NotesSection = ({ entityType, entityId, notes, isLoggedIn, onChange }) => 
             style={{
               display: 'inline-block',
               padding: '0.4rem 0.9rem',
-              backgroundColor: '#6b7280',
+              backgroundColor: 'var(--color-text-muted)',
               color: 'white',
               borderRadius: '4px',
               textDecoration: 'none',
