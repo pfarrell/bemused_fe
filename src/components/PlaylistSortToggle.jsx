@@ -9,7 +9,7 @@ const PlaylistSortToggle = () => {
 
   const buttonStyle = (active) => ({
     background: active ? '#3b82f6' : 'none',
-    color: active ? 'white' : '#6b7280',
+    color: active ? 'white' : 'var(--color-text-muted)',
     padding: '0.375rem 0.75rem',
     borderRadius: '18px',
     fontSize: '0.8125rem',
@@ -19,7 +19,7 @@ const PlaylistSortToggle = () => {
   });
 
   return (
-    <div style={{ display: 'inline-flex', background: '#f3f4f6', borderRadius: '20px', padding: '3px', gap: '2px' }}>
+    <div style={{ display: 'inline-flex', background: 'var(--color-bg-surface-muted)', borderRadius: '20px', padding: '3px', gap: '2px' }}>
       <button
         type="button"
         aria-label="Sort by recently updated"

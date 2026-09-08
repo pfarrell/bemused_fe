@@ -79,7 +79,7 @@ const ArtistCard = ({ artist, onClick, imageUrl }) => {
         <div className="artist-card-title">
           <h3>{artist.name}</h3>
           {formatCount(artist.album_count || null, 'album') && (
-            <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-text-faint)', margin: '0.125rem 0 0 0' }}>
               {formatCount(artist.album_count || null, 'album')}
             </p>
           )}

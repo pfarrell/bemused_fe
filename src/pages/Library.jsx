@@ -51,8 +51,8 @@ const Library = () => {
               cursor: 'pointer',
               fontSize: '0.875rem',
               fontWeight: '500',
-              backgroundColor: activeKind === tab.kind ? '#7c3aed' : '#e5e7eb',
-              color: activeKind === tab.kind ? 'white' : '#374151',
+              backgroundColor: activeKind === tab.kind ? '#7c3aed' : 'var(--color-border)',
+              color: activeKind === tab.kind ? 'white' : 'var(--color-text-secondary)',
             }}
           >
             {tab.label}
@@ -61,7 +61,7 @@ const Library = () => {
       </div>
 
       {itemsForKind.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
           <p style={{ fontSize: '1.125rem' }}>No favorite {activeTab.label.toLowerCase()} yet.</p>
         </div>
       ) : activeKind === 'track' ? (

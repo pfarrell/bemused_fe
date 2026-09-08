@@ -12,7 +12,7 @@ const ViewModeToggle = () => {
 
   const buttonStyle = (active) => ({
     background: active ? '#3b82f6' : 'none',
-    color: active ? 'white' : '#9ca3af',
+    color: active ? 'white' : 'var(--color-text-faint)',
     width: '28px',
     height: '28px',
     borderRadius: '18px',

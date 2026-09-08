@@ -135,7 +135,7 @@ const PlaylistResultCard = ({ playlist, onClick, imageUrl, previewAlbums }) => {
         <div className="artist-card-title">
           <h3>{playlist.name}</h3>
           {formatCount(playlist.track_count || null, 'track') && (
-            <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-text-faint)', margin: '0.125rem 0 0 0' }}>
               {formatCount(playlist.track_count || null, 'track')}
             </p>
           )}

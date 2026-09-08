@@ -82,7 +82,7 @@ const CollectionResultCard = ({ collection, onClick, imageUrl, previewAlbums }) 
         <div className="artist-card-title">
           <h3>{collection.name}</h3>
           {formatCount(collection.album_count || null, 'album') && (
-            <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: '0.125rem 0 0 0' }}>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-text-faint)', margin: '0.125rem 0 0 0' }}>
               {formatCount(collection.album_count || null, 'album')}
             </p>
           )}

@@ -178,7 +178,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       className={`track-item ${isPlaying ? 'currently-playing' : ''}`}
       style={{
         padding: '1rem',
-        borderBottom: index < trackCount - 1 ? '1px solid #e5e7eb' : 'none',
+        borderBottom: index < trackCount - 1 ? '1px solid var(--color-border)' : 'none',
         cursor: 'pointer',
         transition: 'background-color 0.2s ease',
         backgroundColor: isPlaying ? '#dbeafe' : 'transparent',
@@ -190,7 +190,7 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       {...ctxMenu.triggerProps}
       onMouseEnter={(e) => {
         if (!isPlaying) {
-          e.currentTarget.style.backgroundColor = '#f9fafb';
+          e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)';
         }
       }}
       onMouseLeave={(e) => {
@@ -212,14 +212,14 @@ const Track = ({ track, index, trackCount, includeMeta = false, isPlaying = fals
       <div className="track-info" onClick={handleTrackClick} style={{ flex: 1, minWidth: 0 }}>
         <h4 className="track-title" style={{
           fontWeight: isPlaying ? '600' : '500',
-          color: isPlaying ? '#1d4ed8' : '#1f2937'
+          color: isPlaying ? '#1d4ed8' : 'var(--color-text-primary)'
         }}>
           {String(index + 1).padStart(2, '0')}. {track.title}
           {track.artist.id !== track.album?.artist?.id && (' - ' + track.artist.name)}
 
           {track.duration && (
             <span style={{
-              color: '#6b7280',
+              color: 'var(--color-text-muted)',
               fontWeight: 'normal',
               marginLeft: '0.5rem'
             }}>

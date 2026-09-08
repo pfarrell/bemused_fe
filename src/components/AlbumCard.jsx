@@ -127,7 +127,7 @@ const AlbumCard = ({ album, artist, onClick, imageUrl, hideArtist = false }) => 
           <div className="artist-card-title">
             <h3>{album.title}</h3>
             {!hideArtist && (
-              <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0', cursor: 'pointer' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0 0 0', cursor: 'pointer' }}>
                 {artist?.name}{album.has_collaborators && ' +'}
               </p>
             )}

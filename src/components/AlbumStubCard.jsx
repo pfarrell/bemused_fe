@@ -28,7 +28,7 @@ const AlbumStubCard = ({ stub }) => {
       <div className="artist-card-title">
         <h3>{stub.title}</h3>
         {stub.artist_name && (
-          <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0 0 0' }}>
             {stub.artist_name}
           </p>
         )}

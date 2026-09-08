@@ -39,7 +39,7 @@ const Wikipedia = ({ summary }) => {
     <div>
       <p
         className="wikipedia-content"
-        style={{ lineHeight: '1.6', color: '#374151', margin: '0 0 1rem 0' }}
+        style={{ lineHeight: '1.6', color: 'var(--color-text-secondary)', margin: '0 0 1rem 0' }}
       >
         {displayedSummary}
         <a
