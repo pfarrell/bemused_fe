@@ -44,12 +44,12 @@ const SavePlaylistModal = ({ trackIds, onClose }) => {
           boxSizing: 'border-box',
         }}
       >
-        <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#1f2937' }}>
+        <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: 'var(--color-text-primary)' }}>
           Save Queue as Playlist
         </h2>
 
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#374151', fontWeight: '500' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
             Playlist Name
           </label>
           <input
@@ -60,7 +60,7 @@ const SavePlaylistModal = ({ trackIds, onClose }) => {
             autoFocus
             disabled={submitting}
             style={{
-              width: '100%', padding: '0.5rem', border: '1px solid #d1d5db',
+              width: '100%', padding: '0.5rem', border: '1px solid var(--color-border-strong)',
               borderRadius: '4px', fontSize: '1rem', outline: 'none', boxSizing: 'border-box',
             }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
@@ -71,7 +71,7 @@ const SavePlaylistModal = ({ trackIds, onClose }) => {
           <button
             onClick={onClose}
             style={{
-              padding: '0.625rem 1rem', backgroundColor: '#e5e7eb', color: '#374151',
+              padding: '0.625rem 1rem', backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)',
               border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem',
               fontWeight: '500', minHeight: '44px',
             }}

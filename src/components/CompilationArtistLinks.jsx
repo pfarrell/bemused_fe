@@ -24,7 +24,7 @@ const CompilationArtistLinks = ({ artists = [], visibleCount = DEFAULT_VISIBLE_C
       ))}
       {!expanded && hiddenCount > 0 && (
         <span
-          style={{ cursor: 'pointer', color: '#6b7280', marginLeft: '0.5rem' }}
+          style={{ cursor: 'pointer', color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}
           onClick={() => setExpanded(true)}
         >
           + {hiddenCount} more

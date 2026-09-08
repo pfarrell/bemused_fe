@@ -75,12 +75,12 @@ export default function CoverCollage({
       style={{
         width: '100%',
         height: '100%',
-        backgroundColor: '#e5e7eb',
+        backgroundColor: 'var(--color-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '4rem',
-        color: '#9ca3af',
+        color: 'var(--color-text-faint)',
       }}
     >
       {placeholderGlyph}
