@@ -212,10 +212,10 @@ const AddToPlaylistModal = ({ track, onClose }) => {
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
           }}
         >
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem', color: '#1f2937' }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem', color: 'var(--color-text-primary)' }}>
             Confirm
           </h3>
-          <p style={{ margin: '0 0 1.5rem 0', color: '#4b5563', lineHeight: '1.5' }}>
+          <p style={{ margin: '0 0 1.5rem 0', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
             {showConfirmation.message}
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
@@ -223,8 +223,8 @@ const AddToPlaylistModal = ({ track, onClose }) => {
               onClick={() => setShowConfirmation(null)}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#e5e7eb',
-                color: '#374151',
+                backgroundColor: 'var(--color-border)',
+                color: 'var(--color-text-secondary)',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -293,10 +293,10 @@ const AddToPlaylistModal = ({ track, onClose }) => {
       >
         {/* Header */}
         <div style={{ marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1f2937' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-text-primary)' }}>
             {isCreatingNew ? 'Create New Playlist' : 'Add to Playlist'}
           </h2>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#6b7280' }}>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
             {track.title}
           </p>
         </div>
@@ -305,7 +305,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
           // Create new playlist mode
           <>
             <div style={{ flex: 1, marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#374151', fontWeight: '500' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                 Playlist Name
               </label>
               <input
@@ -317,7 +317,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--color-border-strong)',
                   borderRadius: '4px',
                   fontSize: '1rem',
                   outline: 'none',
@@ -336,8 +336,8 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                 onClick={handleBackToList}
                 style={{
                   padding: '0.625rem 1rem',
-                  backgroundColor: '#e5e7eb',
-                  color: '#374151',
+                  backgroundColor: 'var(--color-border)',
+                  color: 'var(--color-text-secondary)',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -380,7 +380,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--color-border-strong)',
                   borderRadius: '4px',
                   fontSize: '0.875rem',
                   outline: 'none',
@@ -395,14 +395,14 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                 flex: 1,
                 overflowY: 'auto',
                 marginBottom: '1rem',
-                border: '1px solid #e5e7eb',
+                border: '1px solid var(--color-border)',
                 borderRadius: '4px',
                 minHeight: '200px',
                 maxHeight: '400px'
               }}
             >
               {loading ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                   Loading playlists...
                 </div>
               ) : (
@@ -413,8 +413,8 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                     style={{
                       padding: '0.75rem 1rem',
                       cursor: 'pointer',
-                      borderBottom: '1px solid #e5e7eb',
-                      backgroundColor: '#f9fafb',
+                      borderBottom: '1px solid var(--color-border)',
+                      backgroundColor: 'var(--color-bg-surface)',
                       fontWeight: '500',
                       color: '#3b82f6',
                       minHeight: '44px',
@@ -427,7 +427,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
 
                   {/* Existing playlists */}
                   {filteredPlaylists.length === 0 ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                       No playlists found
                     </div>
                   ) : (
@@ -438,7 +438,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                         style={{
                           padding: '0.75rem 1rem',
                           cursor: 'pointer',
-                          borderBottom: '1px solid #e5e7eb',
+                          borderBottom: '1px solid var(--color-border)',
                           backgroundColor: selectedPlaylist?.id === playlist.id ? '#dbeafe' : 'transparent',
                           transition: 'background-color 0.15s ease',
                           minHeight: '44px',
@@ -447,7 +447,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                         }}
                         onMouseEnter={(e) => {
                           if (selectedPlaylist?.id !== playlist.id) {
-                            e.currentTarget.style.backgroundColor = '#f9fafb';
+                            e.currentTarget.style.backgroundColor = 'var(--color-bg-surface)';
                           }
                         }}
                         onMouseLeave={(e) => {
@@ -470,8 +470,8 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                 onClick={onClose}
                 style={{
                   padding: '0.625rem 1rem',
-                  backgroundColor: '#e5e7eb',
-                  color: '#374151',
+                  backgroundColor: 'var(--color-border)',
+                  color: 'var(--color-text-secondary)',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -488,7 +488,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
                 style={{
                   flex: 1,
                   padding: '0.625rem 1rem',
-                  backgroundColor: selectedPlaylist ? '#3b82f6' : '#d1d5db',
+                  backgroundColor: selectedPlaylist ? '#3b82f6' : 'var(--color-border-strong)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
