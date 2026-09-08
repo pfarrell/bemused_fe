@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import Loading from '../components/Loading';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import TagsSection from '../components/TagsSection';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
 import TrackArtistPicker from '../components/TrackArtistPicker';
@@ -74,6 +75,7 @@ const AdminAlbum = () => {
 
   // Reprocess-from-files modal
   const [showReprocessModal, setShowReprocessModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const fetchAlbumData = async () => {
     try {
@@ -231,22 +233,13 @@ const AdminAlbum = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete "${albumData?.album?.title}"? This cannot be undone.`)) {
-      return;
-    }
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
 
-    setSaving(true);
-    setError(null);
-
-    try {
-      await apiService.deleteAlbum(id);
-      navigate('/');
-    } catch (error) {
-      console.error('Error deleting album:', error);
-      setError(error.response?.data?.error || 'Failed to delete album');
-      setSaving(false);
-    }
+  const confirmDelete = async () => {
+    await apiService.deleteAlbum(id);
+    navigate('/');
   };
 
   const handleNavigateAway = async (destination) => {
@@ -882,7 +875,7 @@ const AdminAlbum = () => {
               marginLeft: 'auto',
             }}
           >
-            Delete
+            Delete Album
           </button>
         </div>
       </form>
@@ -900,6 +893,15 @@ const AdminAlbum = () => {
           albumId={id}
           onClose={() => setShowReprocessModal(false)}
           onApplied={() => fetchAlbumData()}
+        />
+      )}
+
+      {showDeleteModal && (
+        <ConfirmDeleteModal
+          title="Delete album"
+          message={`Delete "${albumData?.album?.title}" and ${tracks.length} track${tracks.length === 1 ? '' : 's'}? This cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setShowDeleteModal(false)}
         />
       )}
 

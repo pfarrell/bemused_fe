@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useParams } from 'react-router-dom';
 import AdminArtist from './AdminArtist';
@@ -17,6 +17,7 @@ vi.mock('../services/api', () => ({
     mergeArtists: vi.fn(),
     createArtist: vi.fn(),
     updateArtist: vi.fn(),
+    deleteArtist: vi.fn(),
   },
 }));
 
@@ -39,7 +40,7 @@ beforeEach(() => {
   apiService.getArtist.mockResolvedValue({
     data: {
       artist: { id: 5, name: 'EWF', image_path: null, wikipedia: '', musicbrainz_id: null, mbid_status: null },
-      albums: [{ id: 1 }, { id: 2 }],
+      albums: [{ id: 1, track_count: 10 }, { id: 2, track_count: 4 }],
     },
   });
   apiService.getArtistImages.mockResolvedValue({ data: [] });
@@ -189,5 +190,36 @@ describe('AdminArtist — unsavedChangesStore registration', () => {
       '5',
       expect.objectContaining({ name: 'EWF Extra' })
     );
+  });
+});
+
+describe('AdminArtist — delete confirmation', () => {
+  test('clicking Delete opens a type-to-confirm modal showing the album/track blast radius, and does not call the API until confirmed', async () => {
+    const user = userEvent.setup();
+    renderAdminArtist();
+    await screen.findByDisplayValue('EWF');
+
+    await user.click(screen.getByRole('button', { name: 'Delete Artist' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Delete "EWF" and 2 albums, 14 tracks? This cannot be undone.')).toBeInTheDocument();
+    expect(apiService.deleteArtist).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+    expect(apiService.deleteArtist).not.toHaveBeenCalled();
+  });
+
+  test('typing "delete me" and confirming deletes the artist and navigates home', async () => {
+    apiService.deleteArtist.mockResolvedValue({});
+    const user = userEvent.setup();
+    renderAdminArtist();
+    await screen.findByDisplayValue('EWF');
+
+    await user.click(screen.getByRole('button', { name: 'Delete Artist' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByRole('textbox'), 'delete me');
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(apiService.deleteArtist).toHaveBeenCalledWith('5'));
   });
 });

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
 import Loading from '../components/Loading';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import TagsSection from '../components/TagsSection';
 import MusicBrainzPicker from '../components/MusicBrainzPicker';
 import { parseWikipediaSlug } from '../utils/wikipediaSlug';
@@ -37,6 +38,8 @@ const AdminArtist = () => {
 
   // Merge with another artist state
   const [ownAlbumCount, setOwnAlbumCount] = useState(0);
+  const [ownTrackCount, setOwnTrackCount] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [suggestedDuplicates, setSuggestedDuplicates] = useState(null); // null = not fetched, [] = none found
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [selectedSuggestionIds, setSelectedSuggestionIds] = useState(new Set());
@@ -72,6 +75,7 @@ const AdminArtist = () => {
         const { artist } = response.data;
         setArtistData(artist);
         setOwnAlbumCount(response.data.albums?.length ?? 0);
+        setOwnTrackCount((response.data.albums || []).reduce((sum, a) => sum + (a.track_count ?? 0), 0));
         setName(artist.name || '');
         setImagePath(artist.image_path || '');
         setNewImageName(toFilename(artist.name || '') + '.jpg');
@@ -337,22 +341,13 @@ const AdminArtist = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete "${artistData.name}"? This cannot be undone.`)) {
-      return;
-    }
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
 
-    setSaving(true);
-    setError(null);
-
-    try {
-      await apiService.deleteArtist(id);
-      navigate('/');
-    } catch (error) {
-      console.error('Error deleting artist:', error);
-      setError(error.response?.data?.error || 'Failed to delete artist');
-      setSaving(false);
-    }
+  const confirmDelete = async () => {
+    await apiService.deleteArtist(id);
+    navigate('/');
   };
 
   const handleNavigateAway = async (destination) => {
@@ -821,7 +816,7 @@ const AdminArtist = () => {
               cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >
-            Delete
+            Delete Artist
           </button>
         </div>
       </form>
@@ -1389,6 +1384,14 @@ const AdminArtist = () => {
         )}
       </div>
 
+      {showDeleteModal && (
+        <ConfirmDeleteModal
+          title="Delete artist"
+          message={`Delete "${artistData.name}" and ${ownAlbumCount} album${ownAlbumCount === 1 ? '' : 's'}, ${ownTrackCount} track${ownTrackCount === 1 ? '' : 's'}? This cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setShowDeleteModal(false)}
+        />
+      )}
     </div>
   );
 };

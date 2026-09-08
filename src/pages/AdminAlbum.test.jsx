@@ -16,6 +16,7 @@ vi.mock('../services/api', () => ({
     searchAdminArtists: vi.fn(),
     getReprocessPreview: vi.fn(),
     makeTrackSingle: vi.fn(),
+    deleteAlbum: vi.fn(),
   },
 }));
 
@@ -261,5 +262,36 @@ describe('AdminAlbum — unsavedChangesStore registration', () => {
       '10',
       expect.objectContaining({ title: 'Easy Rider Extra' })
     );
+  });
+});
+
+describe('AdminAlbum — delete confirmation', () => {
+  test('clicking Delete opens a type-to-confirm modal showing the track blast radius, and does not call the API until confirmed', async () => {
+    const user = userEvent.setup();
+    renderAdminAlbum();
+    await screen.findByDisplayValue('Easy Rider');
+
+    await user.click(screen.getByRole('button', { name: 'Delete Album' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Delete "Easy Rider" and 1 track? This cannot be undone.')).toBeInTheDocument();
+    expect(apiService.deleteAlbum).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+    expect(apiService.deleteAlbum).not.toHaveBeenCalled();
+  });
+
+  test('typing "delete me" and confirming deletes the album and navigates home', async () => {
+    apiService.deleteAlbum.mockResolvedValue({});
+    const user = userEvent.setup();
+    renderAdminAlbum();
+    await screen.findByDisplayValue('Easy Rider');
+
+    await user.click(screen.getByRole('button', { name: 'Delete Album' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByRole('textbox'), 'delete me');
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(apiService.deleteAlbum).toHaveBeenCalledWith('10'));
   });
 });
