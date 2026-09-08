@@ -326,7 +326,7 @@ const AdminUpload = () => {
       case 'completed': return '#10b981';
       case 'processing': return '#3b82f6';
       case 'failed': return '#ef4444';
-      default: return '#6b7280';
+      default: return 'var(--color-text-muted)';
     }
   };
 
@@ -406,8 +406,8 @@ const AdminUpload = () => {
           gap: '1rem',
           marginBottom: '2rem'
         }}>
-          <div style={{ padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Pending</div>
+          <div style={{ padding: '1rem', backgroundColor: 'var(--color-bg-surface-muted)', borderRadius: '4px' }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Pending</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.pending}</div>
           </div>
           <div style={{ padding: '1rem', backgroundColor: '#dbeafe', borderRadius: '4px' }}>
@@ -455,10 +455,10 @@ const AdminUpload = () => {
           {inFlightBatches.map((batch) => {
             const failedCount = batch.files.filter((f) => f.status === 'failed').length;
             return (
-              <div key={batch.id} style={{ border: '1px solid #e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+              <div key={batch.id} style={{ border: '1px solid var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{
                   padding: '0.5rem 0.75rem',
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: 'var(--color-bg-surface-muted)',
                   fontSize: '0.8rem',
                   fontWeight: '600',
                   display: 'flex',
@@ -481,7 +481,7 @@ const AdminUpload = () => {
                     key={f.id}
                     style={{
                       padding: '0.5rem 0.75rem',
-                      borderTop: '1px solid #e5e7eb',
+                      borderTop: '1px solid var(--color-border)',
                       backgroundColor: f.status === 'failed' ? '#fee2e2' : '#eff6ff',
                       color: f.status === 'failed' ? '#991b1b' : '#1e40af',
                       display: 'flex',
@@ -528,7 +528,7 @@ const AdminUpload = () => {
       {/* Upload Form */}
       <form onSubmit={handleSubmit} style={{
         padding: '2rem',
-        backgroundColor: '#f9fafb',
+        backgroundColor: 'var(--color-bg-surface)',
         borderRadius: '8px',
         marginBottom: '2rem'
       }}>
@@ -552,12 +552,12 @@ const AdminUpload = () => {
                 width: '100%',
                 padding: '0.5rem',
                 fontSize: '1rem',
-                border: '1px solid #ccc',
+                border: '1px solid var(--color-border)',
                 borderRadius: '4px',
               }}
             />
             {selectedFiles.length > 0 && (
-              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                 {selectedFiles.length} file(s) selected
               </div>
             )}
@@ -566,7 +566,7 @@ const AdminUpload = () => {
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
-                      <tr style={{ backgroundColor: '#f3f4f6' }}>
+                      <tr style={{ backgroundColor: 'var(--color-bg-surface-muted)' }}>
                         <th style={{ padding: '0.4rem 0.6rem', textAlign: 'left', fontWeight: '600' }}>Filename</th>
                         <th style={{ padding: '0.4rem 0.6rem', textAlign: 'left', fontWeight: '600' }}>Title</th>
                         <th style={{ padding: '0.4rem 0.6rem', textAlign: 'left', fontWeight: '600' }}>Artist</th>
@@ -579,19 +579,19 @@ const AdminUpload = () => {
                         const displayTitle = p.title || p.filename.replace(/\.[^.]+$/, '');
                         const isFallback = !p.title;
                         return (
-                          <tr key={i} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                            <td style={{ padding: '0.4rem 0.6rem', color: '#6b7280', fontFamily: 'monospace' }}>{p.filename}</td>
-                            <td style={{ padding: '0.4rem 0.6rem', fontStyle: isFallback ? 'italic' : 'normal', color: isFallback ? '#9ca3af' : 'inherit' }}>{displayTitle}</td>
-                            <td style={{ padding: '0.4rem 0.6rem', color: p.artist ? 'inherit' : '#9ca3af' }}>{p.artist || '—'}</td>
-                            <td style={{ padding: '0.4rem 0.6rem', color: p.album ? 'inherit' : '#9ca3af' }}>{p.album || '—'}</td>
-                            <td style={{ padding: '0.4rem 0.6rem', color: p.track ? 'inherit' : '#9ca3af' }}>{p.track || '—'}</td>
+                          <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                            <td style={{ padding: '0.4rem 0.6rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{p.filename}</td>
+                            <td style={{ padding: '0.4rem 0.6rem', fontStyle: isFallback ? 'italic' : 'normal', color: isFallback ? 'var(--color-text-faint)' : 'inherit' }}>{displayTitle}</td>
+                            <td style={{ padding: '0.4rem 0.6rem', color: p.artist ? 'inherit' : 'var(--color-text-faint)' }}>{p.artist || '—'}</td>
+                            <td style={{ padding: '0.4rem 0.6rem', color: p.album ? 'inherit' : 'var(--color-text-faint)' }}>{p.album || '—'}</td>
+                            <td style={{ padding: '0.4rem 0.6rem', color: p.track ? 'inherit' : 'var(--color-text-faint)' }}>{p.track || '—'}</td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
-                <small style={{ color: '#6b7280', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>
+                <small style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>
                   Artist and album overrides below take precedence over these tags.
                 </small>
               </div>
@@ -619,7 +619,7 @@ const AdminUpload = () => {
                     type="button"
                     onClick={handleArtistClear}
                     aria-label="Clear artist"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '1rem' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '1rem' }}
                   >
                     ✕
                   </button>
@@ -635,7 +635,7 @@ const AdminUpload = () => {
                       onChange={(e) => { setArtistQuery(e.target.value); setArtistResults([]); }}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleArtistSearch(e); } }}
                       placeholder="Search by name or leave blank to use ID3 tag"
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid var(--color-border)', borderRadius: '4px' }}
                     />
                   </div>
                   <button
@@ -645,7 +645,7 @@ const AdminUpload = () => {
                     disabled={artistSearching || artistQuery.length < 2}
                     style={{
                       padding: '0.5rem 1rem',
-                      backgroundColor: '#6b7280',
+                      backgroundColor: 'var(--color-text-muted)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -658,24 +658,24 @@ const AdminUpload = () => {
                   </button>
                 </div>
                 {artistResults.length > 0 && (
-                  <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
+                  <div style={{ border: '1px solid var(--color-border)', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
                     {artistResults.map((artist) => (
                       <div
                         key={artist.id}
                         onClick={() => handleArtistSelect(artist)}
-                        style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid #e5e7eb', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+                        style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
                       >
                         <span style={{ fontWeight: '500' }}>{artist.name}</span>
-                        <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                           {Number(artist.album_count)} album{Number(artist.album_count) !== 1 ? 's' : ''}
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
-                <small style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                   Optional. Leave blank to use ID3 tags, or type to search existing artists.
                 </small>
               </div>
@@ -695,7 +695,7 @@ const AdminUpload = () => {
               />
               Various artists compilation
             </label>
-            <small style={{ color: '#6b7280', fontSize: '0.875rem', display: 'block', marginTop: '0.25rem' }}>
+            <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', display: 'block', marginTop: '0.25rem' }}>
               Each track gets its own artist from its file's ID3 tag. The Artist field above applies to the album only.
             </small>
           </div>
@@ -716,7 +716,7 @@ const AdminUpload = () => {
               />
               Singles
             </label>
-            <small style={{ color: '#6b7280', fontSize: '0.875rem', display: 'block', marginTop: '0.25rem' }}>
+            <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', display: 'block', marginTop: '0.25rem' }}>
               Each track is filed under its artist's _Singles album instead of a regular album.
             </small>
           </div>
@@ -737,7 +737,7 @@ const AdminUpload = () => {
                   fontWeight: '500',
                 }}>
                   {selectedAlbum.title}
-                  <span style={{ fontWeight: 'normal', color: '#6b7280', marginLeft: '0.4rem' }}>
+                  <span style={{ fontWeight: 'normal', color: 'var(--color-text-muted)', marginLeft: '0.4rem' }}>
                     · {selectedAlbum.artist_name}
                   </span>
                 </span>
@@ -745,7 +745,7 @@ const AdminUpload = () => {
                   type="button"
                   onClick={handleAlbumClear}
                   aria-label="Clear album"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '1rem' }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '1rem' }}
                 >
                   ✕
                 </button>
@@ -760,7 +760,7 @@ const AdminUpload = () => {
                       onChange={(e) => { setAlbumQuery(e.target.value); setAlbumResults([]); }}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAlbumSearch(e); } }}
                       placeholder="Search by title or leave blank to use ID3 tag"
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', fontSize: '1rem', border: '1px solid var(--color-border)', borderRadius: '4px' }}
                     />
                   </div>
                   <button
@@ -770,7 +770,7 @@ const AdminUpload = () => {
                     disabled={albumSearching || albumQuery.length < 2}
                     style={{
                       padding: '0.5rem 1rem',
-                      backgroundColor: '#6b7280',
+                      backgroundColor: 'var(--color-text-muted)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -783,24 +783,24 @@ const AdminUpload = () => {
                   </button>
                 </div>
                 {albumResults.length > 0 && (
-                  <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
+                  <div style={{ border: '1px solid var(--color-border)', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
                     {albumResults.map((album) => (
                       <div
                         key={album.id}
                         onClick={() => handleAlbumSelect(album)}
-                        style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid #e5e7eb', cursor: 'pointer' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+                        style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-surface-muted)')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
                       >
                         <div style={{ fontWeight: '500' }}>{album.title}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                           {album.artist_name}{album.release_year ? ` · ${album.release_year}` : ''} · {Number(album.track_count)} track{Number(album.track_count) !== 1 ? 's' : ''}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                <small style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                   Optional. Leave blank to use ID3 tags, search to reuse an existing album, or type a
                   title without picking a result to override the tags and create a new album with that title.
                 </small>
@@ -824,7 +824,7 @@ const AdminUpload = () => {
                   width: '100%',
                   padding: '0.5rem',
                   fontSize: '1rem',
-                  border: '1px solid #ccc',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '4px',
                 }}
               />
@@ -843,11 +843,11 @@ const AdminUpload = () => {
                   width: '100%',
                   padding: '0.5rem',
                   fontSize: '1rem',
-                  border: '1px solid #ccc',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '4px',
                 }}
               />
-              <small style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+              <small style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                 Offset for multi-disc
               </small>
             </div>
@@ -857,9 +857,9 @@ const AdminUpload = () => {
           {!isSingle && (
           <div style={{
             padding: '1rem',
-            backgroundColor: '#fff',
+            backgroundColor: 'var(--color-bg-surface)',
             borderRadius: '4px',
-            border: '1px solid #e5e7eb'
+            border: '1px solid var(--color-border)'
           }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
               Album Art (Optional)
@@ -877,7 +877,7 @@ const AdminUpload = () => {
                   width: '100%',
                   padding: '0.5rem',
                   fontSize: '1rem',
-                  border: '1px solid #ccc',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '4px',
                 }}
               />
@@ -895,7 +895,7 @@ const AdminUpload = () => {
                   width: '100%',
                   padding: '0.5rem',
                   fontSize: '1rem',
-                  border: '1px solid #ccc',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '4px',
                 }}
               />
@@ -909,7 +909,7 @@ const AdminUpload = () => {
             disabled={selectedFiles.length === 0}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: selectedFiles.length === 0 ? '#9ca3af' : '#3b82f6',
+              backgroundColor: selectedFiles.length === 0 ? 'var(--color-text-faint)' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -933,7 +933,7 @@ const AdminUpload = () => {
               disabled={loadingRecent}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#6b7280',
+                backgroundColor: 'var(--color-text-muted)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -948,7 +948,7 @@ const AdminUpload = () => {
               disabled={noFailedUploads}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: noFailedUploads ? '#d1d5db' : '#ef4444',
+                backgroundColor: noFailedUploads ? 'var(--color-border-strong)' : '#ef4444',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -972,7 +972,7 @@ const AdminUpload = () => {
               overflow: 'hidden',
             }}>
               <thead>
-                <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+                <tr style={{ backgroundColor: 'var(--color-bg-surface-muted)', borderBottom: '2px solid var(--color-border)' }}>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>Status</th>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>Filename</th>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>Artist</th>
@@ -984,7 +984,7 @@ const AdminUpload = () => {
               </thead>
               <tbody>
                 {recentUploads.map((upload) => (
-                  <tr key={upload.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <tr key={upload.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                     <td style={{ padding: '0.75rem' }}>
                       <span style={{
                         padding: '0.25rem 0.5rem',
@@ -1039,7 +1039,7 @@ const AdminUpload = () => {
                             onClick={() => handleDismiss(upload.id)}
                             style={{
                               padding: '0.35rem 0.75rem',
-                              backgroundColor: '#6b7280',
+                              backgroundColor: 'var(--color-text-muted)',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -1062,8 +1062,8 @@ const AdminUpload = () => {
           <div style={{
             padding: '2rem',
             textAlign: 'center',
-            color: '#6b7280',
-            backgroundColor: '#f9fafb',
+            color: 'var(--color-text-muted)',
+            backgroundColor: 'var(--color-bg-surface)',
             borderRadius: '4px'
           }}>
             No recent uploads
