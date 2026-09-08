@@ -104,7 +104,7 @@ const AddToCollectionModal = ({ album, onClose }) => {
         zIndex: 1000, padding: '1rem'
       }} onClick={(e) => { if (e.target === e.currentTarget) setShowConfirmation(null); }}>
         <div style={{
-          backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem',
+          backgroundColor: 'var(--color-bg-surface)', borderRadius: '8px', padding: '1.5rem',
           maxWidth: '400px', width: '100%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
         }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem', color: 'var(--color-text-primary)' }}>Confirm</h3>
@@ -137,7 +137,7 @@ const AddToCollectionModal = ({ album, onClose }) => {
       zIndex: 1000, padding: '1rem'
     }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{
-        backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem',
+        backgroundColor: 'var(--color-bg-surface)', borderRadius: '8px', padding: '1.5rem',
         maxWidth: '500px', width: '100%', maxHeight: '80vh',
         display: 'flex', flexDirection: 'column',
         boxShadow: '0 10px 25px rgba(0,0,0,0.2)'

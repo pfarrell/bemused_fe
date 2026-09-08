@@ -181,7 +181,7 @@ const TagsSection = ({ entityType, entityId, isLoggedIn }) => {
                 position: 'absolute',
                 top: '100%',
                 left: 0,
-                backgroundColor: 'white',
+                backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border)',
                 borderRadius: '4px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',

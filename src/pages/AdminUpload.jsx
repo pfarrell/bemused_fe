@@ -658,7 +658,7 @@ const AdminUpload = () => {
                   </button>
                 </div>
                 {artistResults.length > 0 && (
-                  <div style={{ border: '1px solid var(--color-border)', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
+                  <div style={{ border: '1px solid var(--color-border)', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
                     {artistResults.map((artist) => (
                       <div
                         key={artist.id}
@@ -783,7 +783,7 @@ const AdminUpload = () => {
                   </button>
                 </div>
                 {albumResults.length > 0 && (
-                  <div style={{ border: '1px solid var(--color-border)', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
+                  <div style={{ border: '1px solid var(--color-border)', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.25rem' }}>
                     {albumResults.map((album) => (
                       <div
                         key={album.id}
@@ -967,7 +967,7 @@ const AdminUpload = () => {
               width: '100%',
               borderCollapse: 'collapse',
               fontSize: '0.875rem',
-              backgroundColor: 'white',
+              backgroundColor: 'var(--color-bg-surface)',
               borderRadius: '4px',
               overflow: 'hidden',
             }}>

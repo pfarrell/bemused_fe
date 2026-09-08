@@ -167,7 +167,7 @@ const Signup = () => {
             </div>
             <a
               href={apiService.getGoogleStartUrl(returnTo)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: 'white', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-strong)', borderRadius: '6px', fontSize: '1rem', fontWeight: '500', textDecoration: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border-strong)', borderRadius: '6px', fontSize: '1rem', fontWeight: '500', textDecoration: 'none' }}
             >
               Continue with Google
             </a>

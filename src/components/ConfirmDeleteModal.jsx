@@ -43,7 +43,7 @@ const ConfirmDeleteModal = ({ title, message, onConfirm, onCancel }) => {
         aria-modal="true"
         aria-labelledby="confirm-delete-modal-title"
         style={{
-          backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem',
+          backgroundColor: 'var(--color-bg-surface)', borderRadius: '8px', padding: '1.5rem',
           maxWidth: '400px', width: '100%',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
         }}
@@ -87,7 +87,7 @@ const ConfirmDeleteModal = ({ title, message, onConfirm, onCancel }) => {
             onClick={onCancel}
             disabled={deleting}
             style={{
-              padding: '0.6rem', backgroundColor: 'white', color: 'var(--color-text-secondary)',
+              padding: '0.6rem', backgroundColor: 'var(--color-bg-surface)', color: 'var(--color-text-secondary)',
               border: '1px solid var(--color-border-strong)', borderRadius: '4px',
               cursor: deleting ? 'not-allowed' : 'pointer',
             }}

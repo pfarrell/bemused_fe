@@ -626,7 +626,7 @@ export default function AdminCollection() {
 
       {/* Metadata */}
       <div style={{
-        backgroundColor: 'white', padding: '1.5rem', borderRadius: '0.5rem',
+        backgroundColor: 'var(--color-bg-surface)', padding: '1.5rem', borderRadius: '0.5rem',
         marginBottom: '2rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
       }}>
         <div style={{ marginBottom: '1rem' }}>
@@ -753,7 +753,7 @@ export default function AdminCollection() {
           ref={searchPanelRef}
           className="scroll-below-fixed-header"
           style={{
-            backgroundColor: 'white', padding: '1.5rem', borderRadius: '0.5rem',
+            backgroundColor: 'var(--color-bg-surface)', padding: '1.5rem', borderRadius: '0.5rem',
             marginBottom: '2rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
           }}
         >
@@ -872,7 +872,7 @@ export default function AdminCollection() {
 
       {/* Albums list */}
       <div style={{
-        backgroundColor: 'white', borderRadius: '0.5rem',
+        backgroundColor: 'var(--color-bg-surface)', borderRadius: '0.5rem',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', overflow: 'hidden'
       }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: '600' }}>

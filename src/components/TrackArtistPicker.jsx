@@ -78,7 +78,7 @@ const TrackArtistPicker = ({ artistName, onSelect, startEditing = false }) => {
         </button>
       </div>
       {results.length > 0 && (
-        <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: 'white', marginTop: '0.25rem' }}>
+        <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', marginTop: '0.25rem' }}>
           {results.map((artist) => (
             <div
               key={artist.id}

@@ -379,7 +379,7 @@ export default function AdminPlaylist() {
 
       {/* Playlist Metadata */}
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: 'var(--color-bg-surface)',
         padding: '1.5rem',
         borderRadius: '0.5rem',
         marginBottom: '2rem',
@@ -507,7 +507,7 @@ export default function AdminPlaylist() {
       {/* Track Search Modal */}
       {showSearch && (
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: 'var(--color-bg-surface)',
           padding: '1.5rem',
           borderRadius: '0.5rem',
           marginBottom: '2rem',
@@ -591,7 +591,7 @@ export default function AdminPlaylist() {
 
       {/* Tracks List */}
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: 'var(--color-bg-surface)',
         borderRadius: '0.5rem',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         overflow: 'hidden'

@@ -863,7 +863,7 @@ const AdminArtist = () => {
                   setAddRelationResults([]);
                   setAddRelationQuery('');
                 }}
-                style={{ padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}
+                style={{ padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)' }}
               >
                 <option value="similar_artist">Similar Artist (Manual)</option>
                 <option value="related_artist">Related Artist</option>
@@ -875,7 +875,7 @@ const AdminArtist = () => {
                 <select
                   value={addRelationRole}
                   onChange={(e) => setAddRelationRole(e.target.value)}
-                  style={{ padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}
+                  style={{ padding: '0.5rem', fontSize: '0.875rem', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)' }}
                 >
                   <option value="featured">Featured</option>
                   <option value="collaborator">Collaborator</option>
@@ -911,7 +911,7 @@ const AdminArtist = () => {
               </button>
             </form>
             {addRelationResults.length > 0 && (
-              <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white', marginBottom: '0.75rem' }}>
+              <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', marginBottom: '0.75rem' }}>
                 {addRelationResults.map(item => (
                   <div key={item.id} style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
@@ -1208,7 +1208,7 @@ const AdminArtist = () => {
         </button>
 
         {suggestedDuplicates !== null && (
-          <div style={{ backgroundColor: 'white', border: '1px solid #ffc107', borderRadius: '6px', padding: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ backgroundColor: 'var(--color-bg-surface)', border: '1px solid #ffc107', borderRadius: '6px', padding: '0.75rem', marginBottom: '1rem' }}>
             {suggestedDuplicates.length === 0 ? (
               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: 0 }}>No matching duplicates found.</p>
             ) : (
@@ -1298,7 +1298,7 @@ const AdminArtist = () => {
         </form>
 
         {mergeResults.length > 0 && !selectedMergeTarget && (
-          <div style={{ marginBottom: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto' }}>
+          <div style={{ marginBottom: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', maxHeight: '200px', overflowY: 'auto' }}>
             {mergeResults.map(artist => (
               <div
                 key={artist.id}

@@ -81,9 +81,9 @@ const TagFilterControl = ({ allowSetDefault = false, onSelect, variant = 'dark' 
               width: '100%',
               padding: '4px 6px',
               background: isLight ? '#f9fafb' : '#1a252f',
-              border: isLight ? '1px solid #d1d5db' : '1px solid #374151',
+              border: isLight ? '1px solid #d1d5db' : '1px solid var(--color-text-secondary)',
               borderRadius: '4px',
-              color: isLight ? '#111827' : '#e2e8f0',
+              color: isLight ? 'var(--color-text-primary)' : '#e2e8f0',
               fontSize: '0.8rem',
               outline: 'none',
               boxSizing: 'border-box'
@@ -101,7 +101,7 @@ const TagFilterControl = ({ allowSetDefault = false, onSelect, variant = 'dark' 
               left: 0,
               right: 0,
               backgroundColor: isLight ? 'white' : '#1a252f',
-              border: isLight ? '1px solid #d1d5db' : '1px solid #374151',
+              border: isLight ? '1px solid #d1d5db' : '1px solid var(--color-text-secondary)',
               borderRadius: '4px',
               zIndex: 60
             }}>
@@ -109,7 +109,7 @@ const TagFilterControl = ({ allowSetDefault = false, onSelect, variant = 'dark' 
                 <div
                   key={t.id}
                   onClick={() => selectTag(t.name)}
-                  style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', color: isLight ? '#111827' : '#e2e8f0' }}
+                  style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', color: isLight ? 'var(--color-text-primary)' : '#e2e8f0' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isLight ? '#f3f4f6' : '#2a3540'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >

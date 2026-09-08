@@ -204,7 +204,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
       >
         <div
           style={{
-            backgroundColor: 'white',
+            backgroundColor: 'var(--color-bg-surface)',
             borderRadius: '8px',
             padding: '1.5rem',
             maxWidth: '400px',
@@ -280,7 +280,7 @@ const AddToPlaylistModal = ({ track, onClose }) => {
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'var(--color-bg-surface)',
           borderRadius: '8px',
           padding: '1.5rem',
           maxWidth: '500px',

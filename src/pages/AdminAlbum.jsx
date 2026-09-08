@@ -915,7 +915,7 @@ const AdminAlbum = () => {
           <select
             value={transferMode}
             onChange={e => handleTransferModeChange(e.target.value)}
-            style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: 'white', color: '#856404', cursor: 'pointer' }}
+            style={{ padding: '0.5rem', fontSize: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)', color: '#856404', cursor: 'pointer' }}
           >
             <option value="move">Move to another artist</option>
             <option value="merge">Merge into another album</option>
@@ -1103,7 +1103,7 @@ const AdminAlbum = () => {
                   fontSize: '0.875rem',
                   border: '1px solid #86efac',
                   borderRadius: '4px',
-                  backgroundColor: 'white',
+                  backgroundColor: 'var(--color-bg-surface)',
                 }}
               >
                 <option value="featured">Featured</option>
@@ -1162,7 +1162,7 @@ const AdminAlbum = () => {
               </button>
             </form>
             {addArtistResults.length > 0 && (
-              <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'white' }}>
+              <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #86efac', borderRadius: '4px', backgroundColor: 'var(--color-bg-surface)' }}>
                 {addArtistResults.map(artist => (
                   <div
                     key={artist.id}

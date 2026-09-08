@@ -39,7 +39,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
           maxWidth: '28rem',
           width: '100%',
           padding: '2rem',
-          backgroundColor: 'white',
+          backgroundColor: 'var(--color-bg-surface)',
           borderRadius: '0.5rem',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
           textAlign: 'center'

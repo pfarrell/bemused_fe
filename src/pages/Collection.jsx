@@ -69,7 +69,7 @@ export default function Collection() {
           display: 'flex',
           gap: '2rem',
           marginBottom: '2rem',
-          backgroundColor: 'white',
+          backgroundColor: 'var(--color-bg-surface)',
           padding: '2rem',
           borderRadius: '0.5rem',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -183,7 +183,7 @@ export default function Collection() {
         </div>
       ) : (
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: 'var(--color-bg-surface)',
           borderRadius: '0.5rem',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
           padding: '2rem',

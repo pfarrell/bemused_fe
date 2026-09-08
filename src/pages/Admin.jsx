@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 
 const cardStyle = {
-  backgroundColor: 'white',
+  backgroundColor: 'var(--color-bg-surface)',
   border: '1px solid var(--color-border-strong)',
   borderRadius: '6px',
   padding: '1.25rem',
