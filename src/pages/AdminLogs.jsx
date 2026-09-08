@@ -47,7 +47,7 @@ export default function AdminLogs() {
     search: { bg: '#ede9fe', color: '#5b21b6' },
   };
 
-  const getActionColors = (action) => ACTION_COLORS[action] || { bg: '#e5e7eb', color: '#374151' };
+  const getActionColors = (action) => ACTION_COLORS[action] || { bg: 'var(--color-border)', color: 'var(--color-text-secondary)' };
 
   const handlePageChange = (newPage) => {
     if (newPage < 1 || (pagination && newPage > pagination.totalPages)) return;
@@ -59,13 +59,13 @@ export default function AdminLogs() {
   if (error) return <Retry message={error} onRetry={() => loadLogs(currentPage)} />;
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100%' }}>
+    <div style={{ padding: '2rem', backgroundColor: 'var(--color-bg-surface-muted)', minHeight: '100%' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
           Activity Logs
         </h1>
         {pagination && (
-          <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
+          <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
             Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total.toLocaleString()} entries
           </p>
         )}
@@ -81,29 +81,29 @@ export default function AdminLogs() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+              <tr style={{ backgroundColor: 'var(--color-bg-surface)', borderBottom: '1px solid var(--color-border)' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   ID
                 </th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   Date/Time
                 </th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   Action
                 </th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   Query
                 </th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   Track
                 </th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   Artist
                 </th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   Album
                 </th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: '600', fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   IP Address
                 </th>
               </tr>
@@ -111,7 +111,7 @@ export default function AdminLogs() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                  <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                     No log entries found
                   </td>
                 </tr>
@@ -119,11 +119,11 @@ export default function AdminLogs() {
                 logs.map((log) => {
                   const actionColors = getActionColors(log.action);
                   return (
-                  <tr key={log.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                  <tr key={log.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                       {log.id}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>
                       {formatDate(log.created_at)}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem' }}>
@@ -138,13 +138,13 @@ export default function AdminLogs() {
                         {log.action || 'N/A'}
                       </span>
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>
                       {log.query || '-'}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>
                       {log.track_title || '-'}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>
                       {log.artist_id ? (
                         <Link to={`/artist/${log.artist_id}`} style={{ color: '#3b82f6', textDecoration: 'none' }}>
                           {log.artist_name || '-'}
@@ -153,7 +153,7 @@ export default function AdminLogs() {
                         log.artist_name || '-'
                       )}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1f2937' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>
                       {log.album_id ? (
                         <Link to={`/album/${log.album_id}`} style={{ color: '#3b82f6', textDecoration: 'none' }}>
                           {log.album_title || '-'}
@@ -162,7 +162,7 @@ export default function AdminLogs() {
                         log.album_title || '-'
                       )}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#6b7280', fontFamily: 'monospace' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
                       {log.ip_address || '-'}
                     </td>
                   </tr>
@@ -188,8 +188,8 @@ export default function AdminLogs() {
             disabled={currentPage === 1}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: currentPage === 1 ? '#e5e7eb' : '#3b82f6',
-              color: currentPage === 1 ? '#9ca3af' : 'white',
+              backgroundColor: currentPage === 1 ? 'var(--color-border)' : '#3b82f6',
+              color: currentPage === 1 ? 'var(--color-text-faint)' : 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
@@ -220,8 +220,8 @@ export default function AdminLogs() {
                   style={{
                     padding: '0.5rem 0.75rem',
                     backgroundColor: currentPage === pageNum ? '#3b82f6' : 'white',
-                    color: currentPage === pageNum ? 'white' : '#374151',
-                    border: '1px solid #d1d5db',
+                    color: currentPage === pageNum ? 'white' : 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-border-strong)',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '0.875rem',
@@ -239,8 +239,8 @@ export default function AdminLogs() {
             disabled={currentPage === pagination.totalPages}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: currentPage === pagination.totalPages ? '#e5e7eb' : '#3b82f6',
-              color: currentPage === pagination.totalPages ? '#9ca3af' : 'white',
+              backgroundColor: currentPage === pagination.totalPages ? 'var(--color-border)' : '#3b82f6',
+              color: currentPage === pagination.totalPages ? 'var(--color-text-faint)' : 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
