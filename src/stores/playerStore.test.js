@@ -545,6 +545,20 @@ describe('playNext gapless handoff', () => {
     expect(active.load).toHaveBeenCalled();
   });
 
+  test('pauses the outgoing active element on handoff so it cannot keep playing in the background', () => {
+    const active = mockAudioElement();
+    active.paused = false; // still mid-playback — e.g. a manual/Bluetooth skip before natural 'ended'
+    const standby = mockAudioElement();
+    standby.src = '/stream/2';
+    standby.readyState = 3;
+    usePlayerStore.setState({
+      audioElementA: active, audioElementB: standby, activeSlot: 'a',
+      playlist: [track(1), track(2)], currentTrackIndex: 0, nextTrackIndex: 1,
+    });
+    usePlayerStore.getState().playNext({ manual: true });
+    expect(active.pause).toHaveBeenCalled();
+  });
+
   test('falls back when the standby element is loaded but for the wrong track', () => {
     const active = mockAudioElement();
     const standby = mockAudioElement();

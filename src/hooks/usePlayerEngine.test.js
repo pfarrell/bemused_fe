@@ -61,6 +61,15 @@ test('play DOM events on the standby element are ignored', () => {
   expect(usePlayerStore.getState().isPlaying).toBe(false);
 });
 
+test('a stray play on the standby element is paused immediately, regardless of what caused it', () => {
+  const audioRefA = makeAudioRef();
+  const audioRefB = makeAudioRef();
+  const pauseSpy = vi.spyOn(audioRefB.current, 'pause');
+  renderHook(() => usePlayerEngine(audioRefA, audioRefB));
+  audioRefB.current.dispatchEvent(new Event('play'));
+  expect(pauseSpy).toHaveBeenCalled();
+});
+
 test('waiting/playing DOM events on the active element toggle isBuffering', () => {
   const audioRefA = makeAudioRef();
   const audioRefB = makeAudioRef();

@@ -188,6 +188,10 @@ export const usePlayerStore = create((set, get) => ({
       currentTime: 0,
       duration: Number.isFinite(standby.duration) ? standby.duration : 0,
     });
+    // The outgoing element only stops on its own when it reaches a natural 'ended' — a manual
+    // skip (UI button, media-session/Bluetooth 'nexttrack') can land here while it's still mid-track,
+    // and without this it keeps playing in the background, inaudible to any further transport control.
+    audioElement?.pause();
     standby.play().catch((error) => console.error('Playback failed:', error));
     get().syncNextTrackIndex();
   },

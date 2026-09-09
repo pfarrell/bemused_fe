@@ -77,7 +77,14 @@ export const usePlayerEngine = (audioRefA, audioRefB) => {
       usePlayerStore.getState().setBuffering(false);
     };
     const handlePlay = (event) => {
-      if (!isActive(event.target)) return;
+      const audio = event.target;
+      if (!isActive(audio)) {
+        // Only the active element is ever allowed to be audibly playing. A stray 'play' here —
+        // a bug in a call site, a race between rapid skips, or the iOS silent-unlock clip — is
+        // paused immediately rather than trusting every call site to remember to do it.
+        audio.pause();
+        return;
+      }
       fiveSecondMarkFired = false;
       usePlayerStore.getState().setIsPlaying(true);
     };
